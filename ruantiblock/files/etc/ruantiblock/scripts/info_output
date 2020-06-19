@@ -1,0 +1,44 @@
+Info() {
+    local _set
+    if CheckStatus; then
+        printf "{\"status\":\"enabled\",\"last_blacklist_update\":{"
+        if [ -f "$UPDATE_STATUS_FILE" ]; then
+            $AWK_CMD '{
+                if(NF < 4)
+                    print "\"status\":false";
+                else
+                    print "\"status\":true,\"date\":\""$4"\",\"ip\":\""$1"\",\"cidr\":\""$2"\",\"fqdn\":\""$3"\"";
+            }' "$UPDATE_STATUS_FILE"
+        else
+            printf "\"status\":false"
+        fi
+        printf "},"
+        IptListChain | $AWK_CMD '
+        BEGIN {
+            printf "\"iptables\":{"
+        }
+        {
+            if(NR > 2)
+                printf "\""(($10 == "!") ? $12 : $11)"\":\""$2"\",";
+        }
+        END {
+            printf "\"_dummy\":false},";
+        }'
+        printf "\"ipset\":{";
+        for _set in "$IPSET_TOTAL_PROXY" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        do
+            $IPSET_CMD list "$_set" -terse | $AWK_CMD -F ": " '
+                {
+                    if($1 ~ /^Name/)
+                        printf "\""$2"\":[";
+                    else if($1 ~ /^Size in memory/)
+                        printf "\""$2"\",";
+                    else if($1 ~ /^Number of entries/)
+                        printf "\""$2"\"],";
+                }'
+        done
+        printf "\"_dummy\":false}}"
+    else
+        printf "{\"status\": \"disabled\"}"
+    fi
+}

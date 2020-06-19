@@ -1,0 +1,343 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "valid IP address"
+msgstr ""
+
+msgid "valid address#port"
+msgstr ""
+
+msgid "2nd level domains that are excluded from optimization"
+msgstr ""
+
+msgid "Add user entries to the blacklist when updating"
+msgstr ""
+
+msgid "All traffic goes through the proxy without applying rules"
+msgstr ""
+
+msgid "Apply"
+msgstr ""
+
+msgid "Apply proxy rules to router application traffic"
+msgstr ""
+
+msgid "Blacklist module"
+msgstr ""
+
+msgid "Blacklist settings"
+msgstr ""
+
+msgid "Blacklist source"
+msgstr ""
+
+msgid "Blacklist update mode"
+msgstr ""
+
+msgid "Blacklist updates"
+msgstr ""
+
+msgid "Bytes"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Changes have been saved."
+msgstr ""
+
+msgid "Clean up ipsets before updating blacklist"
+msgstr ""
+
+msgid ""
+"Complete service shutdown, as well as deleting ipsets and blacklist data"
+msgstr ""
+
+msgid "Contents have been saved."
+msgstr ""
+
+msgid "Convert cyrillic domains to punycode"
+msgstr ""
+
+msgid "Current schedule"
+msgstr ""
+
+msgid "DNS server that is used for FQDN entries"
+msgstr ""
+
+msgid "Day"
+msgstr ""
+
+msgid "Disable"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Dismiss"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Enable"
+msgstr ""
+
+msgid "Enable FQDN filter"
+msgstr ""
+
+msgid "Enable ip filter"
+msgstr ""
+
+msgid "Enable the 'total-proxy' option at startup"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Entries filters"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Exclude domains from blacklist by FQDN filter patterns"
+msgstr ""
+
+msgid "Exclude IP addresses from blacklist by IP filter patterns"
+msgstr ""
+
+msgid "Expecting:"
+msgstr ""
+
+msgid "Filter messages with a regexp"
+msgstr ""
+
+msgid "FQDN configuration"
+msgstr ""
+
+msgid "FQDN filter"
+msgstr ""
+
+msgid "Hour"
+msgstr ""
+
+msgid "Interval"
+msgstr ""
+
+msgid "IP configuration"
+msgstr ""
+
+msgid "IP filter"
+msgstr ""
+
+msgid "IP limit"
+msgstr ""
+
+msgid "IP subnet patterns (/24) that are excluded from optimization"
+msgstr ""
+
+msgid "Ipset"
+msgstr ""
+
+msgid "Iptables rules"
+msgstr ""
+
+msgid "LAN interface"
+msgstr ""
+
+msgid "Last blacklist update"
+msgstr ""
+
+msgid "Loading"
+msgstr ""
+
+msgid "Log"
+msgstr ""
+
+msgid "Logging events"
+msgstr ""
+
+msgid "Main settings"
+msgstr ""
+
+msgid "Match-set"
+msgstr ""
+
+msgid "Message filter"
+msgstr ""
+
+msgid "Minute"
+msgstr ""
+
+msgid "Module operation mode"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "No changes to save."
+msgstr ""
+
+msgid "No data"
+msgstr ""
+
+msgid "No matches..."
+msgstr ""
+
+msgid "No Shedule"
+msgstr ""
+
+msgid "Number of entries"
+msgstr ""
+
+msgid ""
+"One entry (IP, CIDR or FQDN) per line. In the FQDN records, you can specify "
+"the DNS server for resolving this domain (separated by a space). You can "
+"also comment on lines (<code>#</code> is the first character of a line).<br /"
+">Examples:"
+msgstr ""
+
+msgid "One of the following:"
+msgstr ""
+
+msgid "Optional DNS resolver for '.onion' zone"
+msgstr ""
+
+msgid "Optional DNS resolver"
+msgstr ""
+
+msgid "Options"
+msgstr ""
+
+msgid ""
+"Patterns can be strings or regular expressions. Each pattern in a separate "
+"line, the symbol <code>#</code> in the first position of the line - comments "
+"on the line.<br />Examples (dot is a special character):"
+msgstr ""
+
+msgid ""
+"Patterns can be strings or regular expressions. Each pattern in a separate "
+"line, the symbol <code>#</code> in the first position of the line - comments "
+"on the line.<br />Examples:"
+msgstr ""
+
+msgid "Proxy mode"
+msgstr ""
+
+msgid "Reduces RAM consumption during update"
+msgstr ""
+
+msgid "Reset"
+msgstr ""
+
+msgid "Run at startup"
+msgstr ""
+
+msgid "Service"
+msgstr ""
+
+msgid "Set"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Show only the last messages"
+msgstr ""
+
+msgid "Shutdown"
+msgstr ""
+
+msgid "Size in memory"
+msgstr ""
+
+msgid "Starting"
+msgstr ""
+
+msgid "Statistics"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Subdomains limit"
+msgstr ""
+
+msgid "Summarize '/24' networks"
+msgstr ""
+
+msgid "Summarize IP ranges"
+msgstr ""
+
+msgid ""
+"The number of IP addresses in the subnet, upon reaching which the entire "
+"'/24' subnet is added to the list"
+msgstr ""
+
+msgid ""
+"The number of subdomains in the domain, upon reaching which the entire 2nd "
+"level domain is added to the list"
+msgstr ""
+
+msgid ""
+"The service will be disabled and all blacklist data will be deleted. "
+"Continue?"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Tor configuration file"
+msgstr ""
+
+msgid "Tor mode"
+msgstr ""
+
+msgid "Total-proxy is on"
+msgstr ""
+
+msgid "Transparent proxy port for iptables rules"
+msgstr ""
+
+msgid "Unable to execute or read contents"
+msgstr ""
+
+msgid "Unable to read the contents"
+msgstr ""
+
+msgid "Unable to save the changes"
+msgstr ""
+
+msgid "Unable to save the contents"
+msgstr ""
+
+msgid "Update"
+msgstr ""
+
+msgid "Update blacklist"
+msgstr ""
+
+msgid "Updating"
+msgstr ""
+
+msgid "Use optional DNS resolver"
+msgstr ""
+
+msgid "User entries"
+msgstr ""
+
+msgid "VPN interface"
+msgstr ""
+
+msgid "VPN mode"
+msgstr ""
+
+msgid "VPN routing error! Need restart"
+msgstr ""
+
+msgid "ex:"
+msgstr ""
+
+msgid "user entries only"
+msgstr ""

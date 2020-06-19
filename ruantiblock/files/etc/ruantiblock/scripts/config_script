@@ -1,0 +1,25 @@
+
+AWK_CMD="awk"
+UCI_SECTION="ruantiblock.config"
+UCI_VARS="proxy_mode proxy_local_clients ipset_clear_sets if_lan if_vpn tor_trans_port onion_dns_addr add_user_entries user_entries_dns use_logger def_total_proxy bllist_module bllist_source bllist_mode ip_limit opt_exclude_nets summarize_ip summarize_cidr ip_filter sd_limit opt_exclude_sld fqdn_filter use_idn alt_nslookup alt_dns_addr"
+
+eval `uci show "$UCI_SECTION" | $AWK_CMD -F "=" -v UCI_VARS="$UCI_VARS" '
+    BEGIN {
+        split(UCI_VARS, split_array, " ");
+        for(i in split_array)
+            vars_array[split_array[i]]="";
+    }
+    {
+        sub(/^.*[.]/, "", $1);
+        gsub(/["\047]/, "", $2);
+        if($1 in vars_array) {
+            print toupper($1) "=\"" $2 "\"";
+            delete vars_array[$1];
+        };
+    }
+    END {
+        if(length(vars_array) > 0) {
+            for(i in vars_array)
+                print toupper(i) "=\"""\"";
+        };
+    }'`

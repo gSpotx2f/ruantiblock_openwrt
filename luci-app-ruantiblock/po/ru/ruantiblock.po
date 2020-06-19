@@ -1,0 +1,373 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ru\n"
+"X-Generator: Poedit 2.0.6\n"
+
+msgid "valid IP address"
+msgstr "верный IP-адрес"
+
+msgid "valid address#port"
+msgstr "верный IP-адрес#порт"
+
+msgid "2nd level domains that are excluded from optimization"
+msgstr "Домены 2-го уровня не подлежащие оптимизации"
+
+msgid "Add user entries to the blacklist when updating"
+msgstr "Добавлять записи пользователя в блэклист при обновлении"
+
+msgid "All traffic goes through the proxy without applying rules"
+msgstr "Весь трафик отправляется в прокси, без применения правил"
+
+msgid "Apply"
+msgstr "Применить"
+
+msgid "Apply proxy rules to router application traffic"
+msgstr "Применять правила прокси к трафику приложений роутера"
+
+msgid "Blacklist module"
+msgstr "Модуль блэклиста"
+
+msgid "Blacklist settings"
+msgstr "Настройки блэклиста"
+
+msgid "Blacklist source"
+msgstr "Источник блэклиста"
+
+msgid "Blacklist update mode"
+msgstr "Режим обновления блэклиста"
+
+msgid "Blacklist updates"
+msgstr "Обновления блэклиста"
+
+msgid "Bytes"
+msgstr "Байты"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Changes have been saved."
+msgstr "Изменения сохранены."
+
+msgid "Clean up ipsets before updating blacklist"
+msgstr "Очищать ipset'ы перед обновлением блэклиста"
+
+msgid ""
+"Complete service shutdown, as well as deleting ipsets and blacklist data"
+msgstr ""
+"Полное выключение службы, а также удаление ipset'ов и данных блэклиста"
+
+msgid "Contents have been saved."
+msgstr "Содержимое сохранено."
+
+msgid "Convert cyrillic domains to punycode"
+msgstr "Конвертировать кириллические домены в punycode"
+
+msgid "Current schedule"
+msgstr "Текущее расписание"
+
+msgid "DNS server that is used for FQDN entries"
+msgstr "DNS сервер для FQDN записей"
+
+msgid "Day"
+msgstr "День"
+
+msgid "Disable"
+msgstr "Отключить"
+
+msgid "Disabled"
+msgstr "Отключено"
+
+msgid "Dismiss"
+msgstr "Закрыть"
+
+msgid "Edit"
+msgstr "Изменить"
+
+msgid "Enable"
+msgstr "Включить"
+
+msgid "Enable FQDN filter"
+msgstr "Включить фильтр FQDN"
+
+msgid "Enable IP filter"
+msgstr "Включить фильтр IP"
+
+msgid "Enable the 'total-proxy' option at startup"
+msgstr "Включать 'total-proxy' при старте"
+
+msgid "Enabled"
+msgstr "Включено"
+
+msgid "Entries filters"
+msgstr "Фильтры записей"
+
+msgid "Error"
+msgstr "Ошибка"
+
+msgid "Exclude domains from blacklist by FQDN filter patterns"
+msgstr "Исключение доменов из блэклиста по шаблонам фильтра FQDN"
+
+msgid "Exclude IP addresses from blacklist by IP filter patterns"
+msgstr "Исключение IP адресов из блэклиста по шаблонам фильтра IP"
+
+msgid "Expecting:"
+msgstr "Ожидается:"
+
+msgid "Filter messages with a regexp"
+msgstr "Фильтровать сообщения с помощью регулярного выражения"
+
+msgid "FQDN configuration"
+msgstr "Конфигурация FQDN"
+
+msgid "FQDN filter"
+msgstr "Фильтр FQDN"
+
+msgid "Hour"
+msgstr "Час"
+
+msgid "Interval"
+msgstr "Интервал"
+
+msgid "IP configuration"
+msgstr "Конфигурация IP"
+
+msgid "IP filter"
+msgstr "Фильтр IP"
+
+msgid "IP limit"
+msgstr "Лимит IP адресов"
+
+msgid "IP subnet patterns (/24) that are excluded from optimization"
+msgstr "Шаблоны IP подсетей (/24) не подлежащих оптимизации"
+
+msgid "Ipset"
+msgstr "Ipset"
+
+msgid "Iptables rules"
+msgstr "Правила iptables"
+
+msgid "LAN interface"
+msgstr "LAN интерфейс"
+
+msgid "Last blacklist update"
+msgstr "Последнее обновление блэклиста"
+
+msgid "Loading"
+msgstr "Загрузка"
+
+msgid "Log"
+msgstr "Лог"
+
+msgid "Logging events"
+msgstr "Записывать события в лог"
+
+msgid "Main settings"
+msgstr "Основные настройки"
+
+msgid "Match-set"
+msgstr "Правило"
+
+msgid "Message filter"
+msgstr "Фильтр сообщений"
+
+msgid "Minute"
+msgstr "Минута"
+
+msgid "Module operation mode"
+msgstr "Режим работы модуля"
+
+msgid "Name"
+msgstr "Имя"
+
+msgid "No changes to save."
+msgstr "Нет изменений для сохранения."
+
+msgid "No data"
+msgstr "Нет данных"
+
+msgid "No matches..."
+msgstr "Нет совпадений..."
+
+msgid "No Shedule"
+msgstr "Нет расписания"
+
+msgid "Number of entries"
+msgstr "Кол-во записей"
+
+msgid ""
+"One entry (IP, CIDR or FQDN) per line. In the FQDN records, you can specify "
+"the DNS server for resolving this domain (separated by a space). You can "
+"also comment on lines (<code>#</code> is the first character of a line).<br /"
+">Examples:"
+msgstr ""
+"Одна запись (IP, CIDR или FQDN) на строку. В записях FQDN можно задать DNS-"
+"сервер для разрешения данного домена (через пробел). Также можно "
+"комментировать строки (<code>#</code> - первый символ строки).<br />Примеры:"
+
+msgid "One of the following:"
+msgstr "Одно из следующих значений:"
+
+msgid "Only messages that include the specified string will be displayed"
+msgstr "Будут показаны только сообщения включающие указанную строку"
+
+msgid "Optional DNS resolver for '.onion' zone"
+msgstr "Дополнительный DNS резолвер для '.onion' зоны"
+
+msgid "Optional DNS resolver"
+msgstr "Альтернативный DNS резолвер"
+
+msgid "Options"
+msgstr "Опции"
+
+msgid ""
+"Patterns can be strings or regular expressions. Each pattern in a separate "
+"line, the symbol <code>#</code> in the first position of the line - comments "
+"on the line.<br />Examples (dot is a special character):"
+msgstr ""
+"Шаблоны могут быть строками или регулярными выражениями. Каждый шаблон в "
+"отдельной строке, символ <code>#</code> в первой позиции строки - "
+"комментирует строку.<br />Примеры (точка - спецсимвол):"
+
+msgid ""
+"Patterns can be strings or regular expressions. Each pattern in a separate "
+"line, the symbol <code>#</code> in the first position of the line - comments "
+"on the line.<br />Examples:"
+msgstr ""
+"Шаблоны могут быть строками или регулярными выражениями. Каждый шаблон в "
+"отдельной строке, символ <code>#</code> в первой позиции строки - "
+"комментирует строку.<br />Примеры:"
+
+msgid "Proxy mode"
+msgstr "Режим прокси"
+
+msgid "Reduces RAM consumption during update"
+msgstr "Уменьшает потребление опреративной памяти при обновлении"
+
+msgid "Reset"
+msgstr "Сбросить"
+
+msgid "Run at startup"
+msgstr "Запуск при старте системы"
+
+msgid "Service"
+msgstr "Служба"
+
+msgid "Set"
+msgstr "Установить"
+
+msgid "Settings"
+msgstr "Настройки"
+
+msgid "Show only the last messages"
+msgstr "Показать только последние сообщения"
+
+msgid "Shutdown"
+msgstr "Выключение"
+
+msgid "Size in memory"
+msgstr "Размер в памяти"
+
+msgid "Starting"
+msgstr "Запускается"
+
+msgid "Statistics"
+msgstr "Статистика"
+
+msgid "Status"
+msgstr "Статус"
+
+msgid "Subdomains limit"
+msgstr "Лимит субдоменов"
+
+msgid "Summarize '/24' networks"
+msgstr "Суммировать '/24' подсети"
+
+msgid "Summarize IP ranges"
+msgstr "Суммировать IP диапазоны"
+
+msgid ""
+"The number of IP addresses in the subnet, upon reaching which the entire "
+"'/24' subnet is added to the list"
+msgstr ""
+"Количество IP адресов подсети, при достижении которого в список добавляется "
+"вся '/24' подсеть"
+
+msgid ""
+"The number of subdomains in the domain, upon reaching which the entire 2nd "
+"level domain is added to the list"
+msgstr ""
+"Количество субдоменов при достижении которого в список добавляется весь "
+"домен 2-го уровня"
+
+msgid ""
+"The service will be disabled and all blacklist data will be deleted. "
+"Continue?"
+msgstr ""
+"Служба будет выключена и все данные блэклиста будут удалены. Продолжить?"
+
+msgid "Time"
+msgstr "Время"
+
+msgid "Tor configuration file"
+msgstr "Конфигурационный файл Tor"
+
+msgid "Tor mode"
+msgstr "Режим Tor"
+
+msgid "Total-proxy is on"
+msgstr "Total-proxy включен"
+
+msgid "Transparent proxy port for iptables rules"
+msgstr "Порт прозрачного прокси для правил iptables"
+
+msgid "Unable to execute or read contents"
+msgstr "Невозможно выполнить или прочитать содержимое"
+
+msgid "Unable to read the contents"
+msgstr "Невозможно прочитать содержимое"
+
+msgid "Unable to save the changes"
+msgstr "Невозможно сохранить изменения"
+
+msgid "Unable to save the contents"
+msgstr "Невозможно сохранить содержимое"
+
+msgid "Update"
+msgstr "Обновить"
+
+msgid "Update blacklist"
+msgstr "Обновить блэклист"
+
+msgid "Updating"
+msgstr "Обновление"
+
+msgid "Use optional DNS resolver"
+msgstr "Использовать альтернативный  DNS резолвер"
+
+msgid "User entries"
+msgstr "Записи пользователя"
+
+msgid "VPN interface"
+msgstr "VPN интерфейс"
+
+msgid "VPN mode"
+msgstr "Режим VPN"
+
+msgid "VPN routing error! Need restart"
+msgstr "Ошибка маршрутизации VPN! Необходим перезапуск"
+
+msgid "ex:"
+msgstr "прим:"
+
+msgid "user entries only"
+msgstr "только записи пользователя"

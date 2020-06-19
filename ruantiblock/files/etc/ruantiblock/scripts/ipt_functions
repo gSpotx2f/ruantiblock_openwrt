@@ -1,0 +1,104 @@
+
+IP_CMD="ip"
+IPT_CMD="iptables"
+IPT_CHAIN="$NAME"
+IPT_FIRST_CHAIN="PREROUTING"
+VPN_ROUTE_TABLE=99
+
+### Tor
+IPT_TABLE="nat"
+IPT_FIRST_CHAIN_RULE="-i ${IF_LAN} -j ${IPT_CHAIN}"
+IPT_IPSET_TARGET="dst -p tcp -j REDIRECT --to-ports ${TOR_TRANS_PORT}"
+IPT_IPSETS="${IPSET_ONION} ${IPSET_CIDR} ${IPSET_IP} ${IPSET_DNSMASQ}"
+
+if [ "$PROXY_MODE" = "2" ]; then
+    ### VPN
+    IPT_TABLE="mangle"
+    IPT_FIRST_CHAIN_RULE="-j ${IPT_CHAIN}"
+    IPT_IPSET_TARGET="dst,src -j MARK --set-mark ${VPN_PKTS_MARK}"
+    IPT_IPSETS="${IPSET_CIDR} ${IPSET_IP} ${IPSET_DNSMASQ}"
+fi
+
+IptCmdWrapper() {
+    local _i=0 _attempts=10 _return_code=1
+    while [ $_i -lt $_attempts ]
+    do
+        if $*; then
+            _return_code=$?
+            break
+        fi
+        _i=`expr $_i + 1`
+    done
+    return $_return_code
+}
+
+IptVpnRouteAdd() {
+    VPN_IP=`$IP_CMD addr list dev $IF_VPN 2> /dev/null | $AWK_CMD '/inet/{sub("/[0-9]{1,2}$", "", $2); print $2; exit}'`
+    if [ -n "$VPN_IP" ]; then
+        echo 0 > /proc/sys/net/ipv4/conf/$IF_VPN/rp_filter
+        IptVpnRouteDel 2> /dev/null
+        $IP_CMD rule add fwmark $VPN_PKTS_MARK table $VPN_ROUTE_TABLE priority 1000
+        $IP_CMD route add default via $VPN_IP table $VPN_ROUTE_TABLE
+    fi
+}
+
+IptVpnRouteDel() {
+    $IP_CMD route flush table $VPN_ROUTE_TABLE
+    $IP_CMD rule del table $VPN_ROUTE_TABLE
+}
+
+IptVpnRouteStatus() {
+    [ -n "`$IP_CMD route show table $VPN_ROUTE_TABLE 2> /dev/null`" ] && return 0
+    return 1
+}
+
+IptMainAdd() {
+    local _set
+    $IPT_CMD -t "$IPT_TABLE" -N "$IPT_CHAIN"
+    $IPT_CMD -t "$IPT_TABLE" -I "$IPT_FIRST_CHAIN" 1 $IPT_FIRST_CHAIN_RULE
+    for _set in $IPT_IPSETS
+    do
+        IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -A "$IPT_CHAIN" -m set --match-set "$_set" $IPT_IPSET_TARGET
+    done
+    if [ "$PROXY_MODE" = "2" ]; then
+        IptVpnRouteAdd
+    fi
+}
+
+IptMainDel() {
+    IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -D "$IPT_FIRST_CHAIN" $IPT_FIRST_CHAIN_RULE
+    $IPT_CMD -t "$IPT_TABLE" -F "$IPT_CHAIN"
+    $IPT_CMD -t "$IPT_TABLE" -X "$IPT_CHAIN"
+    if [ "$PROXY_MODE" = "2" ]; then
+        IptVpnRouteDel 2> /dev/null
+    fi
+}
+
+IPT_TP_RULE="-m set ! --match-set ${IPSET_TOTAL_PROXY} ${IPT_IPSET_TARGET}"
+
+IptTotalProxyDel() {
+    IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -D "$IPT_CHAIN" $IPT_TP_RULE
+}
+
+IptTotalProxyAdd() {
+    $IPT_CMD -t "$IPT_TABLE" -I "$IPT_CHAIN" 1 $IPT_TP_RULE
+}
+
+IptTotalProxyStatus() {
+    $IPT_CMD -t "$IPT_TABLE" -L "$IPT_CHAIN" 2> /dev/null | $AWK_CMD -v IPSET_TOTAL_PROXY="$IPSET_TOTAL_PROXY" -v RET_CODE=1 '$0 ~ IPSET_TOTAL_PROXY {RET_CODE=0} END {exit RET_CODE}'
+    return $?
+}
+
+IPT_OUTPUT_FIRST_RULE="-j ${IPT_CHAIN}"
+
+IptLocalClientsAdd() {
+    $IPT_CMD -t "$IPT_TABLE" -I OUTPUT 1 $IPT_OUTPUT_FIRST_RULE
+}
+
+IptLocalClientsDel() {
+    IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -D OUTPUT $IPT_OUTPUT_FIRST_RULE
+}
+
+IptListChain() {
+    $IPT_CMD -t "$IPT_TABLE" -v -L "$IPT_CHAIN"
+}

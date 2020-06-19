@@ -1,0 +1,22 @@
+#!/bin/sh /etc/rc.common
+
+START=92
+STOP=01
+
+RUAB="/usr/bin/ruantiblock"
+
+start() {
+	$RUAB start
+}
+
+stop() {
+	$RUAB stop
+}
+
+restart() {
+    $RUAB restart
+}
+
+reload() {
+    $RUAB reload
+}

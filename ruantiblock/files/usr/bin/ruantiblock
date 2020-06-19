@@ -1,0 +1,713 @@
+#!/bin/sh
+
+########################################################################
+#
+# Ruantiblock
+# (с) 2020 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+#
+########################################################################
+
+export NAME="ruantiblock"
+export LANG="en_US.UTF-8"
+export LANGUAGE="en"
+
+#################### Platform-specific settings ########################
+
+CONFIG_DIR="/etc/${NAME}"
+CONFIG_FILE="${CONFIG_DIR}/${NAME}.conf"
+export DATA_DIR="${CONFIG_DIR}/var"
+export EXEC_DIR="/usr/bin"
+### Команда для перезапуска dnsmasq
+export DNSMASQ_RESTART_CMD="/etc/init.d/dnsmasq restart"
+### Директория для html-страницы статуса (не используется в OpenWrt)
+export HTML_DIR="/www"
+
+########################## Default Settings ############################
+
+### Режим обработки пакетов в правилах iptables (1 - Tor, 2 - VPN)
+export PROXY_MODE=1
+### Применять правила проксификации для трафика локальных сервисов роутера (0 - off, 1 - on)
+export PROXY_LOCAL_CLIENTS=1
+### Удаление записей из основных сетов перед началом заполнения временных сетов при обновлении (для освобождения оперативной памяти перед заполнением сетов) (0 - off, 1 - on)
+export IPSET_CLEAR_SETS=0
+### Входящий сетевой интерфейс для правил iptables
+export IF_LAN="eth0"
+### VPN интерфейс для правил iptables
+export IF_VPN="tun0"
+### Порт транспарентного proxy Tor (параметр TransPort в torrc)
+export TOR_TRANS_PORT=9040
+### DNS-сервер для резолвинга в домене .onion (Tor)
+export ONION_DNS_ADDR="127.0.0.1#9053"
+### Добавление в список блокировок пользовательских записей из файла $USER_ENTRIES_FILE (0 - off, 1 - on)
+###  В $DATA_DIR можно создать текстовый файл user_entries с записями IP, CIDR или FQDN (одна на строку). Эти записи будут добавлены в список блокировок
+###  В записях FQDN можно задать DNS-сервер для разрешения данного домена, через пробел (прим.: domain.com 8.8.8.8)
+###  Можно комментировать строки (#)
+export ADD_USER_ENTRIES=0
+### DNS-сервер для пользовательских записей (пустая строка - без DNS-сервера). Можно с портом: 8.8.8.8#53. Если в записи указан свой DNS-сервер - он имеет приоритет
+export USER_ENTRIES_DNS=""
+### Файл пользовательских записей
+export USER_ENTRIES_FILE="${CONFIG_DIR}/user_entries"
+### Запись событий в syslog (0 - off, 1 - on)
+export USE_LOGGER=1
+### Режим полного прокси при старте скрипта (0 - off, 1 - on). Если 1, то весь трафик всегда идёт через прокси. Все пакеты попадающие в цепочку $IPT_CHAIN попадают в tor или VPN, за исключением сетей из $TOTAL_PROXY_EXCLUDE_NETS. Списки блокировок не используются для фильтрации. Работает только при PROXY_LOCAL_CLIENTS=0
+export DEF_TOTAL_PROXY=0
+### Трафик в заданные сети идет напрямую, не попадая в Tor или VPN, в режиме total-proxy
+export TOTAL_PROXY_EXCLUDE_NETS="10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10"
+### Html-страница с инфо о текущем статусе (0 - off, 1 - on) (не используется в OpenWrt)
+export HTML_INFO=0
+### --set-mark для отбора пакетов в VPN туннель
+export VPN_PKTS_MARK=8
+### Максимальное кол-во элементов списка ipset
+export IPSET_MAXELEM=2000000
+### Таймаут для записей в сете $IPSET_DNSMASQ
+export IPSET_DNSMASQ_TIMEOUT=3600
+### Кол-во попыток обновления блэклиста (в случае неудачи)
+export MODULE_RUN_ATTEMPTS=3
+### Таймаут между попытками обновления
+export MODULE_RUN_TIMEOUT=60
+### Модули для получения и обработки блэклиста
+export BLLIST_MODULE=""
+#export BLLIST_MODULE="${EXEC_DIR}/ruab_parser.lua"
+#export BLLIST_MODULE="${EXEC_DIR}/ruab_parser.py"
+
+##############################
+
+### Источник для обновления списка блокировок (rublacklist, zapret-info, antifilter)
+export BLLIST_SOURCE="rublacklist"
+### Режим обхода блокировок: ip, fqdn
+export BLLIST_MODE="ip"
+### В случае если из источника получено менее указанного кол-ва записей, то обновления списков не происходит
+export BLLIST_MIN_ENTRS=30000
+
+### Лимит IP адресов. При достижении, в конфиг ipset будет добавлена вся подсеть /24 вместо множества IP адресов пренадлежащих этой сети (0 - off)
+export IP_LIMIT=0
+### Подсети класса C (/24). IP адреса из этих подсетей не группируются при оптимизации (записи д.б. в виде: 68.183.221. 149.154.162. и пр.). Прим.: OPT_EXCLUDE_NETS="68.183.221. 149.154.162."
+export OPT_EXCLUDE_NETS=""
+### Группировать идущие подряд IP адреса в подсетях /24 в диапазоны CIDR
+export SUMMARIZE_IP=0
+### Группировать идущие подряд подсети /24 в диапазоны CIDR
+export SUMMARIZE_CIDR=0
+### Фильтрация записей блэклиста по шаблонам из файла IP_FILTER_FILE. Записи (IP, CIDR) попадающие под шаблоны исключаются из кофига ipset (0 - off, 1 - on)
+export IP_FILTER=0
+### Файл с шаблонами IP для опции FQDN_FILTER (каждый шаблон в отдельной строке. # в первом символе строки - комментирует строку)
+export IP_FILTER_FILE="${CONFIG_DIR}/ip_filter"
+
+### Лимит для субдоменов. При достижении, в конфиг dnsmasq будет добавлен весь домен 2-го ур-ня вместо множества субдоменов (0 - off)
+export SD_LIMIT=16
+### SLD не подлежащие оптимизации (через пробел)
+export OPT_EXCLUDE_SLD="livejournal.com facebook.com vk.com blog.jp msk.ru net.ru org.ru net.ua com.ua org.ua co.uk amazonaws.com"
+### Не оптимизировать SLD попадающие под выражения (через пробел) ("[.][a-z]{2,3}[.][a-z]{2}$")
+export OPT_EXCLUDE_MASKS=""
+### Фильтрация записей блэклиста по шаблонам из файла ENTRIES_FILTER_FILE. Записи (FQDN) попадающие под шаблоны исключаются из кофига dnsmasq (0 - off, 1 - on)
+export FQDN_FILTER=0
+### Файл с шаблонами FQDN для опции FQDN_FILTER (каждый шаблон в отдельной строке. # в первом символе строки - комментирует строку)
+export FQDN_FILTER_FILE="${CONFIG_DIR}/fqdn_filter"
+### Обрезка www[0-9]. в FQDN (0 - off, 1 - on)
+export STRIP_WWW=1
+### Преобразование кириллических доменов в punycode (0 - off, 1 - on)
+export USE_IDN=0
+### Перенаправлять DNS-запросы на альтернативный DNS-сервер для заблокированных FQDN (0 - off, 1 - on)
+export ALT_NSLOOKUP=0
+### Альтернативный DNS-сервер
+export ALT_DNS_ADDR="8.8.8.8"
+
+### Источники блэклиста
+export RBL_ALL_URL="https://api.reserve-rbl.ru/api/v2/current/csv"
+export RBL_IP_URL="https://api.reserve-rbl.ru/api/v2/ips/csv"
+export ZI_ALL_URL="https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv"
+export AF_IP_URL="https://antifilter.download/list/allyouneed.lst"
+export AF_FQDN_URL="https://antifilter.download/list/domains.lst"
+export RBL_ENCODING=""
+export ZI_ENCODING="CP1251"
+export AF_ENCODING=""
+
+############################ Configuration #############################
+
+[ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
+
+CONFIG_SCRIPT="${CONFIG_DIR}/scripts/config_script"
+START_SCRIPT="${CONFIG_DIR}/scripts/start_script"
+STOP_SCRIPT="${CONFIG_DIR}/scripts/stop_script"
+
+[ -f "$CONFIG_SCRIPT" ] && . "$CONFIG_SCRIPT"
+
+AWK_CMD="awk"
+IPSET_CMD=`which ipset`
+if [ $? -ne 0 ]; then
+    echo " Error! Ipset doesn't exists" >&2
+    exit 1
+fi
+LOGGER_CMD=`which logger`
+if [ $USE_LOGGER = "1" -a $? -ne 0 ]; then
+    echo " Logger doesn't exists" >&2
+    USE_LOGGER=0
+fi
+LOGGER_PARAMS="-t `basename $0`[${$}] -p user.notice"
+export DNSMASQ_DATA_FILE="${DATA_DIR}/${NAME}.dnsmasq"
+export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
+export IPSET_IP="${NAME}-ip"
+export IPSET_IP_TMP="${IPSET_IP}-tmp"
+export IPSET_CIDR="${NAME}-cidr"
+export IPSET_CIDR_TMP="${IPSET_CIDR}-tmp"
+export IPSET_DNSMASQ="${NAME}-dnsmasq"
+export IPSET_ONION="onion"
+export IPSET_TOTAL_PROXY="total-proxy"
+export UPDATE_STATUS_FILE="${DATA_DIR}/update_status"
+UPDATE_PID_FILE="/var/run/${NAME}_update.pid"
+START_PID_FILE="/var/run/${NAME}_start.pid"
+TOKEN_FILE="/var/run/${NAME}.token"
+export HTML_OUTPUT="${HTML_DIR}/${NAME}.html"
+IPT_FUNCTIONS="${CONFIG_DIR}/scripts/ipt_functions"
+INFO_OUTPUT_FUNCTION="${CONFIG_DIR}/scripts/info_output"
+
+######################### External functions ###########################
+
+. "$IPT_FUNCTIONS"
+if [ -f "$INFO_OUTPUT_FUNCTION" ]; then
+    . "$INFO_OUTPUT_FUNCTION"
+else
+    HTML_INFO=0
+fi
+
+############################## Functions ###############################
+
+Help() {
+cat << EOF
+ Usage: `basename $0` start|force-start|stop|destroy|restart|update|force-update|data-files|total-proxy-on|total-proxy-off|renew-ipt|status|status-html|--help
+        start : Start
+        force-start :
+        stop : Stop
+        destroy : Stop + destroy ipsets and clear all data files
+        restart : Restart
+        reload : Renew iptables configuration
+        update : Update blacklist
+        force-update : Force update blacklist
+        data-files : Create ${IP_DATA_FILE} & ${DNSMASQ_DATA_FILE} (without network functions)
+        total-proxy-on : Turn on total-proxy mode
+        total-proxy-off : Turn off total-proxy mode
+        total-proxy-status : total-proxy status
+        status : Status & some info
+        raw-status : Return code: 0 - enabled, 1 - error, 2 - disabled, 3 - starting, 4 - updating
+        html-info : Return the html-info output
+        -h|--help : This message
+ Examples:
+        `basename $0` start
+        `basename $0` force-start
+        `basename $0` stop
+        `basename $0` destroy
+        `basename $0` restart
+        `basename $0` update
+        `basename $0` force-update
+        `basename $0` data-files
+        `basename $0` total-proxy-on
+        `basename $0` total-proxy-off
+        `basename $0` total-proxy-status
+        `basename $0` status
+        `basename $0` html-info
+EOF
+}
+
+MakeLogRecord() {
+    [ $USE_LOGGER = "1" ] && $LOGGER_CMD $LOGGER_PARAMS $1
+}
+
+DnsmasqRestart() {
+    eval `echo "$DNSMASQ_RESTART_CMD"`
+}
+
+IsIpsetExists() {
+    $IPSET_CMD list "$1" -terse &> /dev/null
+    return $?
+}
+
+FlushIpSets() {
+    local _set
+    for _set in "$@"
+    do
+        IsIpsetExists "$_set" && $IPSET_CMD flush "$_set"
+    done
+}
+
+DestroyIpsets() {
+    local _set
+    for _set in "$@"
+    do
+        IsIpsetExists "$_set" && $IPSET_CMD destroy "$_set"
+    done
+}
+
+FillTotalProxySet() {
+    local _entry
+    for _entry in $TOTAL_PROXY_EXCLUDE_NETS
+    do
+        $IPSET_CMD add "$IPSET_TOTAL_PROXY" "$_entry"
+    done
+}
+
+TotalProxyOn() {
+    if [ "$PROXY_LOCAL_CLIENTS" != "1" ]; then
+        IptTotalProxyDel &> /dev/null
+        IptTotalProxyAdd
+        if [ $? -eq 0 ]; then
+            echo " ${IPSET_TOTAL_PROXY} enabled"
+            MakeLogRecord "${IPSET_TOTAL_PROXY} enabled"
+        fi
+        MakeToken
+    fi
+}
+
+TotalProxyOff() {
+    if [ "$PROXY_LOCAL_CLIENTS" != "1" ]; then
+        IptTotalProxyDel &> /dev/null
+        if [ $? -ne 0 ]; then
+            echo " ${IPSET_TOTAL_PROXY} is already disabled" >&2
+        else
+            echo " ${IPSET_TOTAL_PROXY} disabled"
+            MakeLogRecord "${IPSET_TOTAL_PROXY} disabled"
+        fi
+        MakeToken
+    fi
+}
+
+TotalProxyStatus() {
+    IptTotalProxyStatus
+    return $?
+}
+
+AddIptRules() {
+    IptMainAdd
+    if [ "$PROXY_LOCAL_CLIENTS" = "1" ]; then
+        IptLocalClientsAdd
+    fi
+    if [ "$DEF_TOTAL_PROXY" = "1" ]; then
+        TotalProxyOn
+    fi
+}
+
+DelIptRules() {
+    IptLocalClientsDel
+    IptMainDel
+}
+
+SetNetConfig() {
+    local _set
+    for _set in "$IPSET_TOTAL_PROXY" "$IPSET_CIDR_TMP" "$IPSET_CIDR"
+    do
+        IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:net maxelem $IPSET_MAXELEM
+    done
+    for _set in "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_ONION"
+    do
+        IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:ip maxelem $IPSET_MAXELEM
+    done
+    IsIpsetExists "$IPSET_DNSMASQ" || $IPSET_CMD create "$IPSET_DNSMASQ" hash:ip maxelem $IPSET_MAXELEM timeout $IPSET_DNSMASQ_TIMEOUT
+    FillTotalProxySet
+    AddIptRules
+}
+
+DropNetConfig() {
+    DelIptRules
+    FlushIpSets "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION" "$IPSET_TOTAL_PROXY"
+}
+
+FillIpsets() {
+    local _set
+    if [ -f "$IP_DATA_FILE" ]; then
+        echo " Filling ipsets..."
+        FlushIpSets "$IPSET_IP_TMP" "$IPSET_CIDR_TMP"
+        IsIpsetExists "$IPSET_IP_TMP" && IsIpsetExists "$IPSET_CIDR_TMP" && IsIpsetExists "$IPSET_IP" && IsIpsetExists "$IPSET_CIDR" &&\
+        cat "$IP_DATA_FILE" | $IPSET_CMD restore && { $IPSET_CMD swap "$IPSET_IP_TMP" "$IPSET_IP"; $IPSET_CMD swap "$IPSET_CIDR_TMP" "$IPSET_CIDR"; }
+        if [ $? -eq 0 ]; then
+            echo " Ok"
+            FlushIpSets "$IPSET_IP_TMP" "$IPSET_CIDR_TMP"
+        else
+            echo " Error! Ipset wasn't updated" >&2
+            MakeLogRecord "Error! Ipset wasn't updated"
+        fi
+    fi
+}
+
+ClearDataFiles() {
+    if [ -d "$DATA_DIR" ]; then
+        printf "" > "$DNSMASQ_DATA_FILE"
+        printf "" > "$IP_DATA_FILE"
+        printf "0 0 0" > "$UPDATE_STATUS_FILE"
+    fi
+}
+
+CheckStatus() {
+    local _set _ipset_return=0 _return_code=1
+    if [ "$1" = "ipsets" ]; then
+        for _set in "$IPSET_TOTAL_PROXY" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        do
+            IsIpsetExists "$_set"
+            _ipset_return=$?
+            [ $_ipset_return -ne 0 ] && break
+        done
+    fi
+    if IptListChain &> /dev/null && [ $_ipset_return -eq 0 ]; then
+        _return_code=0
+    fi
+    return $_return_code
+}
+
+PreStartCheck() {
+    [ -d "$DATA_DIR" ] || mkdir -p "$DATA_DIR"
+    [ "$HTML_INFO" = "1" -a ! -d "$HTML_DIR" ] && mkdir -p "$HTML_DIR"
+    [ -e "$DNSMASQ_DATA_FILE" ] || printf "\n" > "$DNSMASQ_DATA_FILE"
+}
+
+AddUserEntries() {
+    if [ "$ADD_USER_ENTRIES" = "1" ]; then
+        if [ -f "$USER_ENTRIES_FILE" -a -s "$USER_ENTRIES_FILE" ]; then
+            $AWK_CMD 'BEGIN {
+                        null="";
+                        while((getline ip_string <ENVIRON["IP_DATA_FILE"]) > 0) {
+                            split(ip_string, ip_string_arr, " ");
+                            ip_data_array[ip_string_arr[3]]=null;
+                        };
+                        close(ENVIRON["IP_DATA_FILE"]);
+                        while((getline fqdn_string <ENVIRON["DNSMASQ_DATA_FILE"]) > 0) {
+                            split(fqdn_string, fqdn_string_arr, "/");
+                            fqdn_data_array[fqdn_string_arr[2]]=null;
+                        };
+                        close(ENVIRON["DNSMASQ_DATA_FILE"]);
+                    }
+                    function writeIpsetEntries(val, set) {
+                        printf "add %s %s\n", set, val >> ENVIRON["IP_DATA_FILE"];
+                    };
+                    function writeDNSData(val, dns) {
+                        if(length(dns) == 0 && length(ENVIRON["USER_ENTRIES_DNS"]) > 0)
+                            dns = ENVIRON["USER_ENTRIES_DNS"];
+                        if(length(dns) > 0)
+                            printf "server=/%s/%s\n", val, dns >> ENVIRON["DNSMASQ_DATA_FILE"];
+                        printf "ipset=/%s/%s\n", val, ENVIRON["IPSET_DNSMASQ"] >> ENVIRON["DNSMASQ_DATA_FILE"];
+                    };
+                    ($0 !~ /^([\040\011]*$|#)/) {
+                        if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/ && !($0 in ip_data_array))
+                            writeIpsetEntries($0, ENVIRON["IPSET_IP_TMP"]);
+                        else if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/ && !($0 in ip_data_array))
+                            writeIpsetEntries($0, ENVIRON["IPSET_CIDR_TMP"]);
+                        else if($0 ~ /^[a-z0-9.\052-]+[.]([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/ && !($1 in fqdn_data_array))
+                            writeDNSData($1, $2);
+                    }' "$USER_ENTRIES_FILE"
+        fi
+    fi
+}
+
+GetDataFiles() {
+    local _return_code=1 _attempt=1 _update_string
+    PreStartCheck
+    echo "$$" > "$UPDATE_PID_FILE"
+    if [ -n "$BLLIST_MODULE" ]; then
+        while :
+        do
+            $BLLIST_MODULE
+            _return_code=$?
+            [ $_return_code -eq 0 ] && break
+            echo " Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]"
+            MakeLogRecord "Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]"
+            _attempt=`expr $_attempt + 1`
+            [ $_attempt -gt $MODULE_RUN_ATTEMPTS ] && break
+            sleep $MODULE_RUN_TIMEOUT
+        done
+        AddUserEntries
+        if [ $_return_code -eq 0 ]; then
+            _update_string=`$AWK_CMD '{
+                printf "Received entries: %s\n", (NF < 3) ? "No data" : "IP: "$1", CIDR: "$2", FQDN: "$3;
+                exit;
+            }' "$UPDATE_STATUS_FILE"`
+            echo " ${_update_string}"
+            MakeLogRecord "${_update_string}"
+            printf " `date +%d.%m.%Y-%H:%M`\n" >> "$UPDATE_STATUS_FILE"
+        fi
+    else
+        ClearDataFiles
+        ADD_USER_ENTRIES=1
+        AddUserEntries
+        _return_code=0
+    fi
+    if [ "$PROXY_MODE" = "2" ]; then
+        printf "\n" >> "$DNSMASQ_DATA_FILE"
+    else
+        printf "server=/onion/%s\nipset=/onion/%s\n" "${ONION_DNS_ADDR}" "${IPSET_ONION}" >> "$DNSMASQ_DATA_FILE"
+    fi
+    rm -f "$UPDATE_PID_FILE"
+    return $_return_code
+}
+
+MakeToken() {
+    date +%s > "$TOKEN_FILE"
+}
+
+Update() {
+    local _return_code=0
+    if CheckStatus ipsets; then
+        :
+    else
+        echo " ${NAME} ${1} - Error! ${NAME} does not running or another error has occurred" >&2
+        return 1
+    fi
+    MakeToken
+    if [ -e "$UPDATE_PID_FILE" ] && [ "$1" != "force-update" ]; then
+        echo " ${NAME} ${1} - Error! Another instance of update is already running" >&2
+        MakeLogRecord "${1} - Error! Another instance of update is already running"
+        _return_code=2
+    else
+        echo " ${NAME} ${1}..."
+        MakeLogRecord "${1}..."
+        if [ "$IPSET_CLEAR_SETS" = "1" ]; then
+            FlushIpSets "$IPSET_IP" "$IPSET_CIDR" "$IPSET_DNSMASQ"
+        fi
+        GetDataFiles
+        case $? in
+            0)
+                echo " Blacklist updated"
+                MakeLogRecord "Blacklist updated"
+            ;;
+            2)
+                echo " Error! Blacklist update error" >&2
+                MakeLogRecord "Error! Blacklist update error"
+                _return_code=1
+            ;;
+            *)
+                echo " Module error! [${BLLIST_MODULE}]" >&2
+                MakeLogRecord "Module error! [${BLLIST_MODULE}]"
+                _return_code=1
+            ;;
+        esac
+        FlushIpSets "$IPSET_DNSMASQ"
+        FillIpsets
+        _return_code=$?
+        DnsmasqRestart
+    fi
+    MakeToken
+    return $_return_code
+}
+
+Start() {
+    local _return_code=1
+    if [ -e "$START_PID_FILE" ]; then
+        echo " ${NAME} is currently starting..." >&2
+        return 1
+    else
+        echo "$$" > "$START_PID_FILE"
+    fi
+    MakeToken
+    if CheckStatus; then
+        echo " ${NAME} is already running" >&2
+        _return_code=1
+    else
+        echo " ${NAME} ${1}..."
+        MakeLogRecord "${1}..."
+        DropNetConfig &> /dev/null
+        SetNetConfig
+        PreStartCheck
+        FillIpsets
+        _return_code=$?
+        ### Start script
+        [ -x "$START_SCRIPT" ] && $START_SCRIPT > /dev/null 2>&1 &
+    fi
+    rm -f "$START_PID_FILE"
+    MakeToken
+    return $_return_code
+}
+
+Stop() {
+    local _return_code=1
+    if CheckStatus; then
+        MakeToken
+        echo " ${NAME} ${1}..."
+        MakeLogRecord "${1}..."
+        DropNetConfig &> /dev/null
+        _return_code=$?
+        ### Stop script
+        [ -x "$STOP_SCRIPT" ] && $STOP_SCRIPT > /dev/null 2>&1 &
+        MakeToken
+    else
+        echo " ${NAME} does not running" >&2
+    fi
+    return $_return_code
+}
+
+Reload() {
+    local _i=0 _attempts=60
+    MakeToken
+    while [ -e "$START_PID_FILE" ]
+    do
+        if [ $_i -ge $_attempts ]; then
+            return 1
+        fi
+        _i=`expr $_i + 1`
+        sleep 1
+    done
+    echo " ${NAME} reload..."
+    DelIptRules &> /dev/null
+    AddIptRules &> /dev/null
+    MakeToken
+}
+
+Status() {
+    local _set
+    if CheckStatus; then
+        printf "\n \033[1m${NAME} status\033[m: \033[1;32mEnabled\033[m\n\n  PROXY_MODE: ${PROXY_MODE}\n  DEF_TOTAL_PROXY: ${DEF_TOTAL_PROXY}\n  PROXY_LOCAL_CLIENTS: ${PROXY_LOCAL_CLIENTS}\n  BLLIST_MODULE: ${BLLIST_MODULE}\n"
+        if [ -f "$UPDATE_STATUS_FILE" ]; then
+            $AWK_CMD '{
+                update_string=(NF < 4) ? "No data" : $4" (IP: "$1" | CIDR: "$2" | FQDN: "$3")";
+                printf "\n  Last blacklist update:  %s\n", update_string;
+            }' "$UPDATE_STATUS_FILE"
+        else
+            printf "\n  Last blacklist update:  No data\n"
+        fi
+        if [ "$PROXY_MODE" = "2" ] && ! IptVpnRouteStatus; then
+            printf "\n  \033[1;31mVPN ROUTING ERROR! (NEED THE RESTART)\033[m\n"
+        fi
+        printf "\n  \033[4mIptables rules\033[m:\n\n"
+        IptListChain | $AWK_CMD '
+            {
+                if(NR > 2) {
+                    match_set=(NR == 3 && $0 ~ ENVIRON["IPSET_TOTAL_PROXY"]) ? "\033[1;33m"ENVIRON["IPSET_TOTAL_PROXY"]" (Enabled!)\033[m" : $11;
+                    printf "   Match-set:  %s\n   Bytes:  %s\n\n", match_set, $2;
+                };
+            }'
+        printf "  \033[4mIp sets\033[m:\n\n"
+        for _set in "$IPSET_TOTAL_PROXY" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        do
+            $IPSET_CMD list "$_set" -terse | $AWK_CMD -F ":" '
+                {
+                    if($1 ~ /^(Name|Size in memory|Number of entries)/) {
+                        printf "   %s: %s\n", $1, $2;
+                        if($1 ~ /^Number of entries/) printf "\n";
+                    };
+                }'
+        done
+    else
+        printf "\n \033[1m${NAME} status\033[m: \033[1mDisabled\033[m\n\n"
+        exit 2
+    fi
+}
+
+StatusOutput() {
+    if [ "$HTML_INFO" = "1" -a -d "$HTML_DIR" ]; then
+        Info
+    fi
+}
+
+############################ Main section ##############################
+
+return_code=1
+case "$1" in
+    start|force-start)
+        [ "$1" == "force-start" ] && rm -f "$START_PID_FILE"
+        Start "$1"
+        return_code=$?
+        StatusOutput
+    ;;
+    stop)
+        Stop "$1"
+        return_code=$?
+        StatusOutput
+    ;;
+    restart)
+        Stop "stop"
+        Start "start"
+        return_code=$?
+        StatusOutput
+    ;;
+    reload)
+        Reload
+        return_code=$?
+        StatusOutput
+    ;;
+    destroy)
+        Stop "$1" &> /dev/null
+        DestroyIpsets "$IPSET_TOTAL_PROXY" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        ClearDataFiles
+        return_code=$?
+        rm -f "$UPDATE_PID_FILE" "$START_PID_FILE"
+        DnsmasqRestart
+        StatusOutput
+    ;;
+    update|force-update)
+        Update "$1"
+        return_code=$?
+        StatusOutput
+    ;;
+    data-files)
+        if [ -e "$UPDATE_PID_FILE" ] && [ "$1" != "force-update" ]; then
+            echo " ${NAME} - Error! Another instance of update is already running" >&2
+            exit 2
+        else
+            GetDataFiles
+            return_code=$?
+        fi
+    ;;
+    total-proxy-on)
+        if ! CheckStatus; then
+            echo " ${NAME} does not running" >&2
+            return_code=1
+        else
+            TotalProxyOn
+            return_code=$?
+        fi
+        StatusOutput
+    ;;
+    total-proxy-off)
+        if ! CheckStatus; then
+            echo " ${NAME} does not running" >&2
+            return_code=1
+        else
+            TotalProxyOff
+            return_code=$?
+        fi
+        StatusOutput
+    ;;
+    total-proxy-status)
+        TotalProxyStatus
+        return_code=$?
+        echo $return_code
+    ;;
+    status)
+        Status
+        return_code=$?
+    ;;
+    raw-status)
+        CheckStatus
+        return_code=$?
+        case $return_code in
+            0)
+                if [ -e "$START_PID_FILE" ]; then
+                    return_code=3
+                    echo 3
+                elif [ -e "$UPDATE_PID_FILE" ]; then
+                    return_code=4
+                    echo 4
+                else
+                    echo 0
+                fi
+            ;;
+            *)
+                return_code=2
+                echo 2
+            ;;
+        esac
+    ;;
+    vpn-route-status)
+        IptVpnRouteStatus
+        return_code=$?
+        echo $return_code
+    ;;
+    html-info)
+        Info
+        return_code=$?
+    ;;
+    -h|--help|help)
+        Help
+        exit 0
+    ;;
+    *)
+        Help
+        exit 1
+    ;;
+esac
+
+exit $return_code;
