@@ -244,8 +244,8 @@ return L.view.extend({
         // OPT_EXCLUDE_NETS
         o = s.taboption('parser_settings', form.DynamicList, 'opt_exclude_nets');
         o.title = _('IP subnet patterns (/24) that are excluded from optimization');
-        o.description = _('ex:') + ' <code>192.168.1.</code>';
-        o.placeholder = _('ex:') + ' 192.168.1.';
+        o.description = _('e.g:') + ' <code>192.168.1.</code>';
+        o.placeholder = _('e.g:') + ' 192.168.1.';
         o.default = '';
         depends_bllist_module(o);
 

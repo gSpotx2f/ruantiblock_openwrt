@@ -360,7 +360,7 @@ msgstr "Режим VPN"
 msgid "VPN routing error! Need restart"
 msgstr "Ошибка маршрутизации VPN! Необходим перезапуск"
 
-msgid "ex:"
+msgid "e.g:"
 msgstr "прим:"
 
 msgid "user entries only"

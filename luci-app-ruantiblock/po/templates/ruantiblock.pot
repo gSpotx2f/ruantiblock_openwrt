@@ -330,7 +330,7 @@ msgstr ""
 msgid "VPN routing error! Need restart"
 msgstr ""
 
-msgid "ex:"
+msgid "e.g:"
 msgstr ""
 
 msgid "user entries only"
