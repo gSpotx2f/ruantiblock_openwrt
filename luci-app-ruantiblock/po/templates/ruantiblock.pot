@@ -1,12 +1,6 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
-msgid "valid IP address"
-msgstr ""
-
-msgid "valid address#port"
-msgstr ""
-
 msgid "2nd level domains that are excluded from optimization"
 msgstr ""
 
@@ -340,4 +334,10 @@ msgid "ex:"
 msgstr ""
 
 msgid "user entries only"
+msgstr ""
+
+msgid "valid IP address"
+msgstr ""
+
+msgid "valid address#port"
 msgstr ""

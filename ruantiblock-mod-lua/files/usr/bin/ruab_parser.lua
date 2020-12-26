@@ -512,7 +512,7 @@ local Rbl = Class(BlackListParser, {
 function Rbl:sink()
     return function(chunk)
         if chunk and chunk ~= "" then
-            for ip_str, fqdn_str in chunk:gmatch("%[([a-f0-9/.:', ]+)%],([^,]-),.-" .. self.records_separator) do
+            for ip_str, fqdn_str in chunk:gmatch("%[([a-f0-9/.:', ]+)%],([^,]-),.-" .. self.records_separator .. "?") do
                 fqdn_sink_func(self, ip_str, fqdn_str)
             end
         end

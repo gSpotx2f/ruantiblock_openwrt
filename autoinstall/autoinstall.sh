@@ -105,7 +105,7 @@ InstallPackages() {
     for _pkg in $@
     do
         if [ -z "`$OPKG_CMD list-installed $_pkg`" ]; then
-            $OPKG_CMD install $_pkg
+            $OPKG_CMD --force-overwrite install $_pkg
             if [ $? -ne 0 ]; then
                 echo "Error during installation of the package (${_pkg})" >&2
                 exit 1

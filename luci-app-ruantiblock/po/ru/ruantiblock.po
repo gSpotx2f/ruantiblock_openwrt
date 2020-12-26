@@ -13,12 +13,6 @@ msgstr ""
 "Language: ru\n"
 "X-Generator: Poedit 2.0.6\n"
 
-msgid "valid IP address"
-msgstr "верный IP-адрес"
-
-msgid "valid address#port"
-msgstr "верный IP-адрес#порт"
-
 msgid "2nd level domains that are excluded from optimization"
 msgstr "Домены 2-го уровня не подлежащие оптимизации"
 
@@ -371,3 +365,9 @@ msgstr "прим:"
 
 msgid "user entries only"
 msgstr "только записи пользователя"
+
+msgid "valid IP address"
+msgstr "верный IP-адрес"
+
+msgid "valid address#port"
+msgstr "верный IP-адрес#порт"
