@@ -8,79 +8,54 @@ RAM_CONFIG=0
 LUA_MODULE=1
 LUCI_APP=1
 
-### ruantiblock
-URL_CONFIG="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/etc/ruantiblock/ruantiblock.conf"
-URL_FQDN_FILTER="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/etc/ruantiblock/fqdn_filter"
-URL_CONFIG_SCRIPT="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/etc/ruantiblock/scripts/config_script"
-URL_INFO_OUTPUT="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/etc/ruantiblock/scripts/info_output"
-URL_IPT_FUNCTIONS="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/etc/ruantiblock/scripts/ipt_functions"
-URL_START_SCRIPT="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/etc/ruantiblock/scripts/start_script"
-URL_UCI_CONFIG="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/etc/config/ruantiblock"
-URL_INIT_SCRIPT="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/etc/init.d/ruantiblock"
-URL_MAIN_SCRIPT="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/usr/bin/ruantiblock"
-URL_VPN_UP="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock/files/etc/hotplug.d/iface/40-ruantiblock"
+OWRT_VERSION="19.07"
+RUAB_VERSION="0.9.0-1"
+BASE_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master"
+PKG_DIR="/tmp"
+
+if [ -n "$1" ]; then
+    OWRT_VERSION="$1"
+fi
+
+### URLs
+
+### packages
+URL_RUAB_PKG="${BASE_URL}/packages/${OWRT_VERSION}/ruantiblock_${RUAB_VERSION}_all.ipk"
+URL_MOD_LUA_PKG="${BASE_URL}/packages/${OWRT_VERSION}/ruantiblock-mod-lua_${RUAB_VERSION}_all.ipk"
+URL_LUCI_APP_PKG="${BASE_URL}/packages/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_VERSION}_all.ipk"
+URL_LUCI_APP_RU_PKG="${BASE_URL}/packages/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_VERSION}_all.ipk"
 ### tor
-URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/tor/etc/tor/torrc"
+URL_TORRC="${BASE_URL}/tor/etc/tor/torrc"
 ### ruantiblock-mod-lua
-URL_PARSER_LUA="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock-mod-lua/files/usr/bin/ruab_parser.lua"
 URL_LUA_IPTOOL="https://raw.githubusercontent.com/gSpotx2f/iptool-lua/master/5.1/iptool.lua"
-URL_LUA_SUM_IP="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/ruantiblock-mod-lua/files/usr/lib/lua/ruab_sum_ip.lua"
 URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
-### luci-app-ruantiblock
-URL_LUCI_CONTROLLER="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/luasrc/controller/ruantiblock.lua"
-URL_LUCI_MENU="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/root/usr/share/luci/menu.d/luci-app-ruantiblock.json"
-URL_LUCI_RPCD_ACL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/root/usr/share/rpcd/acl.d/luci-app-ruantiblock.json"
-URL_LUCI_JS_CRON="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/htdocs/luci-static/resources/view/ruantiblock/cron.js"
-URL_LUCI_JS_INFO="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/htdocs/luci-static/resources/view/ruantiblock/info.js"
-URL_LUCI_JS_SERVICE="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/htdocs/luci-static/resources/view/ruantiblock/service.js"
-URL_LUCI_JS_SETTINGS="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/htdocs/luci-static/resources/view/ruantiblock/settings.js"
-URL_LUCI_JS_TOOLS="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/htdocs/luci-static/resources/view/ruantiblock/tools.js"
-URL_LUCI_JS_LOG="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/htdocs/luci-static/resources/view/ruantiblock/log.js"
-URL_LUCI_JS_STATUS="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/luci-app-ruantiblock/htdocs/luci-static/resources/view/status/include/80_ruantiblock.js"
-URL_LUCI_I18N_RU="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/translations/ruantiblock.ru.lmo"
+
+### Local files
 
 RUAB_CFG_DIR="${PREFIX}/etc/ruantiblock"
 EXEC_DIR="${PREFIX}/usr/bin"
-LUCI_ROOT="${PREFIX}/usr/lib/lua/luci"
-HTDOCS_VIEW="${PREFIX}/www/luci-static/resources/view"
-HTDOCS_RUAB="${HTDOCS_VIEW}/ruantiblock"
 BACKUP_DIR="${RUAB_CFG_DIR}/autoinstall.bak"
 DATA_DIR="${RUAB_CFG_DIR}/var"
 DATA_DIR_RAM="/var/ruantiblock"
 RC_LOCAL="/etc/rc.local"
-
+### packages
+FILE_RUAB_PKG="${PKG_DIR}/ruantiblock_${RUAB_VERSION}_all.ipk"
+FILE_MOD_LUA_PKG="${PKG_DIR}/ruantiblock-mod-lua_${RUAB_VERSION}_all.ipk"
+FILE_LUCI_APP_PKG="${PKG_DIR}/luci-app-ruantiblock_${RUAB_VERSION}_all.ipk"
+FILE_LUCI_APP_RU_PKG="${PKG_DIR}/luci-i18n-ruantiblock-ru_${RUAB_VERSION}_all.ipk"
 ### ruantiblock
 FILE_CONFIG="${RUAB_CFG_DIR}/ruantiblock.conf"
 FILE_FQDN_FILTER="${RUAB_CFG_DIR}/fqdn_filter"
 FILE_IP_FILTER="${RUAB_CFG_DIR}/ip_filter"
 FILE_USER_ENTRIES="${RUAB_CFG_DIR}/user_entries"
-FILE_CONFIG_SCRIPT="${RUAB_CFG_DIR}/scripts/config_script"
-FILE_INFO_OUTPUT="${RUAB_CFG_DIR}/scripts/info_output"
-FILE_IPT_FUNCTIONS="${RUAB_CFG_DIR}/scripts/ipt_functions"
-FILE_START_SCRIPT="${RUAB_CFG_DIR}/scripts/start_script"
 FILE_UCI_CONFIG="${PREFIX}/etc/config/ruantiblock"
 FILE_INIT_SCRIPT="${PREFIX}/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="${EXEC_DIR}/ruantiblock"
-FILE_VPN_UP="${PREFIX}/etc/hotplug.d/iface/40-ruantiblock"
 ### tor
 FILE_TORRC="${PREFIX}/etc/tor/torrc"
 ### ruantiblock-mod-lua
-FILE_PARSER_LUA="${EXEC_DIR}/ruab_parser.lua"
 FILE_LUA_IPTOOL="${PREFIX}/usr/lib/lua/iptool.lua"
-FILE_LUA_SUM_IP="${PREFIX}/usr/lib/lua/ruab_sum_ip.lua"
 FILE_LUA_IDN="${PREFIX}/usr/lib/lua/idn.lua"
-### luci-app-ruantiblock
-FILE_LUCI_CONTROLLER="${LUCI_ROOT}/controller/ruantiblock.lua"
-FILE_LUCI_I18N_RU="${LUCI_ROOT}/i18n/ruantiblock.ru.lmo"
-FILE_LUCI_MENU="${PREFIX}/usr/share/luci/menu.d/luci-app-ruantiblock.json"
-FILE_LUCI_RPCD_ACL="${PREFIX}/usr/share/rpcd/acl.d/luci-app-ruantiblock.json"
-FILE_LUCI_JS_CRON="${HTDOCS_RUAB}/cron.js"
-FILE_LUCI_JS_INFO="${HTDOCS_RUAB}/info.js"
-FILE_LUCI_JS_SERVICE="${HTDOCS_RUAB}/service.js"
-FILE_LUCI_JS_SETTINGS="${HTDOCS_RUAB}/settings.js"
-FILE_LUCI_JS_TOOLS="${HTDOCS_RUAB}/tools.js"
-FILE_LUCI_JS_LOG="${HTDOCS_RUAB}/log.js"
-FILE_LUCI_JS_STATUS="${HTDOCS_VIEW}/status/include/80_ruantiblock.js"
 
 AWK_CMD="awk"
 WGET_CMD=`which wget`
@@ -100,20 +75,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-InstallPackages() {
-    local _pkg
-    for _pkg in $@
-    do
-        if [ -z "`$OPKG_CMD list-installed $_pkg`" ]; then
-            $OPKG_CMD --force-overwrite install $_pkg
-            if [ $? -ne 0 ]; then
-                echo "Error during installation of the package (${_pkg})" >&2
-                exit 1
-            fi
-        fi
-    done
-}
-
 FileExists() {
     test -e "$1"
 }
@@ -130,8 +91,11 @@ ChmodExec() {
     chmod 755 "$1"
 }
 
-UpdatePackagesList() {
-    $OPKG_CMD update
+RemoveFile() {
+    if [ -e "$1" ]; then
+        echo "Removing ${1}"
+        rm -f "$1"
+    fi
 }
 
 DlFile() {
@@ -164,18 +128,61 @@ BackupCurrentConfig() {
     done
 }
 
+RunAtStartup() {
+    $FILE_INIT_SCRIPT enable
+}
+
+AppStop() {
+    FileExists "$FILE_MAIN_SCRIPT" && $FILE_MAIN_SCRIPT destroy
+}
+
+AppStart() {
+    modprobe ip_set > /dev/null
+    modprobe ip_set_hash_ip > /dev/null
+    modprobe ip_set_hash_net > /dev/null
+    modprobe ip_set_list_set > /dev/null
+    modprobe xt_set > /dev/null
+    $FILE_INIT_SCRIPT start
+}
+
+SetCronTask() {
+    echo "0 3 */3 * * ${FILE_MAIN_SCRIPT} update" >> /etc/crontabs/root
+    /etc/init.d/cron restart 2> /dev/null
+    /etc/init.d/cron enable
+}
+
+Reboot() {
+    reboot
+}
+
+UpdatePackagesList() {
+    $OPKG_CMD update
+}
+
+InstallPackages() {
+    local _pkg
+    for _pkg in $@
+    do
+        if [ -z "`$OPKG_CMD list-installed $_pkg`" ]; then
+            $OPKG_CMD --force-overwrite install $_pkg
+            if [ $? -ne 0 ]; then
+                echo "Error during installation of the package (${_pkg})" >&2
+                exit 1
+            fi
+        else
+            :
+        fi
+    done
+}
+
 InstallBaseConfig() {
+    _return_code=1
     InstallPackages "ipset" "kmod-ipt-ipset" "dnsmasq-full"
-    DlFile "$URL_CONFIG" "$FILE_CONFIG"
-    DlFile "$URL_FQDN_FILTER" "$FILE_FQDN_FILTER"
-    DlFile "$URL_CONFIG_SCRIPT" "$FILE_CONFIG_SCRIPT"
-    DlFile "$URL_INFO_OUTPUT" "$FILE_INFO_OUTPUT"
-    DlFile "$URL_IPT_FUNCTIONS" "$FILE_IPT_FUNCTIONS"
-    DlFile "$URL_START_SCRIPT" "$FILE_START_SCRIPT" && ChmodExec "$FILE_START_SCRIPT"
-    DlFile "$URL_UCI_CONFIG" "$FILE_UCI_CONFIG"
-    DlFile "$URL_INIT_SCRIPT" "$FILE_INIT_SCRIPT" && ChmodExec "$FILE_INIT_SCRIPT"
-    DlFile "$URL_MAIN_SCRIPT" "$FILE_MAIN_SCRIPT" && ChmodExec "$FILE_MAIN_SCRIPT"
-    DlFile "$URL_VPN_UP" "$FILE_VPN_UP" && ChmodExec "$FILE_VPN_UP"
+    RemoveFile "$FILE_RUAB_PKG" > /dev/null
+    DlFile "$URL_RUAB_PKG" "$FILE_RUAB_PKG" && $OPKG_CMD install "$FILE_RUAB_PKG" > /dev/null
+    _return_code=$?
+    AppStop
+    return $_return_code
 }
 
 InstallVPNConfig() {
@@ -229,58 +236,23 @@ RamConfigPrepare() {
 
 InstallLuaModule() {
     InstallPackages "lua" "luasocket" "luasec" "luabitop"
-    DlFile "$URL_PARSER_LUA" "$FILE_PARSER_LUA" && ChmodExec "$FILE_PARSER_LUA"
-    DlFile "$URL_LUA_IPTOOL" "$FILE_LUA_IPTOOL"
-    DlFile "$URL_LUA_SUM_IP" "$FILE_LUA_SUM_IP"
+    RemoveFile "$FILE_MOD_LUA_PKG" > /dev/null
+    DlFile "$URL_MOD_LUA_PKG" "$FILE_MOD_LUA_PKG" && $OPKG_CMD install "$FILE_MOD_LUA_PKG"
+    FileExists "$FILE_LUA_IPTOOL" || DlFile "$URL_LUA_IPTOOL" "$FILE_LUA_IPTOOL"
     FileExists "$FILE_LUA_IDN" || DlFile "$URL_LUA_IDN" "$FILE_LUA_IDN"
     $UCI_CMD set ruantiblock.config.bllist_module="/usr/bin/ruab_parser.lua"
     $UCI_CMD commit
 }
 
 InstallLuciApp() {
-    InstallPackages "luci-mod-rpc" "rpcd-mod-luci" "uhttpd-mod-ubus"
-    DlFile "$URL_LUCI_CONTROLLER" "$FILE_LUCI_CONTROLLER"
-    DlFile "$URL_LUCI_I18N_RU" "$FILE_LUCI_I18N_RU"
-    DlFile "$URL_LUCI_MENU" "$FILE_LUCI_MENU"
-    DlFile "$URL_LUCI_RPCD_ACL" "$FILE_LUCI_RPCD_ACL"
-    DlFile "$URL_LUCI_JS_CRON" "$FILE_LUCI_JS_CRON"
-    DlFile "$URL_LUCI_JS_INFO" "$FILE_LUCI_JS_INFO"
-    DlFile "$URL_LUCI_JS_SERVICE" "$FILE_LUCI_JS_SERVICE"
-    DlFile "$URL_LUCI_JS_SETTINGS" "$FILE_LUCI_JS_SETTINGS"
-    DlFile "$URL_LUCI_JS_TOOLS" "$FILE_LUCI_JS_TOOLS"
-    DlFile "$URL_LUCI_JS_LOG" "$FILE_LUCI_JS_LOG"
-    DlFile "$URL_LUCI_JS_STATUS" "$FILE_LUCI_JS_STATUS"
+    RemoveFile "$FILE_LUCI_APP_PKG" > /dev/null
+    RemoveFile "$FILE_LUCI_APP_RU_PKG" > /dev/null
+    DlFile "$URL_LUCI_APP_PKG" "$FILE_LUCI_APP_PKG" && $OPKG_CMD install "$FILE_LUCI_APP_PKG" && \
+    DlFile "$URL_LUCI_APP_RU_PKG" "$FILE_LUCI_APP_RU_PKG" && $OPKG_CMD install "$FILE_LUCI_APP_RU_PKG"
     rm -f /tmp/luci-modulecache/*
     rm -f /tmp/luci-indexcache
     /etc/init.d/rpcd restart
     /etc/init.d/uhttpd restart
-}
-
-RunAtStartup() {
-    $FILE_INIT_SCRIPT enable
-}
-
-AppStop() {
-    FileExists "$FILE_MAIN_SCRIPT" && $FILE_MAIN_SCRIPT destroy
-}
-
-AppStart() {
-    modprobe ip_set > /dev/null
-    modprobe ip_set_hash_ip > /dev/null
-    modprobe ip_set_hash_net > /dev/null
-    modprobe ip_set_list_set > /dev/null
-    modprobe xt_set > /dev/null
-    $FILE_INIT_SCRIPT start
-}
-
-SetCronTask() {
-    echo "0 3 */3 * * ${FILE_MAIN_SCRIPT} update" >> /etc/crontabs/root
-    /etc/init.d/cron restart 2> /dev/null
-    /etc/init.d/cron enable
-}
-
-Reboot() {
-    reboot
 }
 
 PrintBold() {
@@ -400,7 +372,6 @@ ConfirmProxyMode
 ConfirmRamConfig
 ConfirmLuciApp
 ConfirmProcessing
-
 AppStop
 PrintBold "Updating packages list..."
 UpdatePackagesList
@@ -408,34 +379,38 @@ PrintBold "Saving current configuration..."
 BackupCurrentConfig
 PrintBold "Installing basic configuration..."
 InstallBaseConfig
+if [ $? -eq 0 ]; then
 
-if [ $PROXY_MODE = 2 ]; then
-    PrintBold "Installing VPN configuration..."
-    InstallVPNConfig
-else
-    PrintBold "Installing Tor configuration..."
-    InstallTorConfig
-    if `/etc/init.d/tor enabled`; then
-        /etc/init.d/tor restart
+    if [ $PROXY_MODE = 2 ]; then
+        PrintBold "Installing VPN configuration..."
+        InstallVPNConfig
+    else
+        PrintBold "Installing Tor configuration..."
+        InstallTorConfig
+        if `/etc/init.d/tor enabled`; then
+            /etc/init.d/tor restart
+        fi
     fi
-fi
 
-if [ $RAM_CONFIG = 1 ]; then
-    PrintBold "Setting the RAM-configuration..."
-    RamConfigPrepare
-fi
+    if [ $RAM_CONFIG = 1 ]; then
+        PrintBold "Setting the RAM-configuration..."
+        RamConfigPrepare
+    fi
 
-if [ $LUA_MODULE = 1 ]; then
-    PrintBold "Installing lua module..."
-    InstallLuaModule
-fi
+    if [ $LUA_MODULE = 1 ]; then
+        PrintBold "Installing lua module..."
+        InstallLuaModule
+    fi
 
-if [ $LUCI_APP = 1 ]; then
-    PrintBold "Installing luci app..."
-    InstallLuciApp
-fi
+    if [ $LUCI_APP = 1 ]; then
+        PrintBold "Installing luci app..."
+        InstallLuciApp
+    fi
 
-RunAtStartup
-SetCronTask
+    RunAtStartup
+    SetCronTask
+else
+    PrintBold "An error occurred while installing the ruantiblock package!"
+fi
 
 exit 0
