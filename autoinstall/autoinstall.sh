@@ -34,7 +34,7 @@ URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
 
 RUAB_CFG_DIR="${PREFIX}/etc/ruantiblock"
 EXEC_DIR="${PREFIX}/usr/bin"
-BACKUP_DIR="${RUAB_CFG_DIR}/autoinstall.bak"
+BACKUP_DIR="${RUAB_CFG_DIR}/autoinstall.bak.`date +%s`"
 DATA_DIR="${RUAB_CFG_DIR}/var"
 DATA_DIR_RAM="/var/ruantiblock"
 RC_LOCAL="/etc/rc.local"

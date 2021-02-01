@@ -6,6 +6,7 @@ PREFIX=""
 
 RUAB_CFG_DIR="${PREFIX}/etc/ruantiblock"
 EXEC_DIR="${PREFIX}/usr/bin"
+BACKUP_DIR="${RUAB_CFG_DIR}/autoinstall.bak.`date +%s`"
 HTDOCS_VIEW="${PREFIX}/www/luci-static/resources/view"
 HTDOCS_RUAB="${HTDOCS_VIEW}/ruantiblock"
 CRONTAB_FILE="/etc/crontabs/root"
@@ -14,11 +15,15 @@ DATA_DIR_RAM="/var/ruantiblock"
 RC_LOCAL="/etc/rc.local"
 DNSMASQ_CONF_LINK="/tmp/dnsmasq.d/ruantiblock.conf"
 ### ruantiblock
+FILE_CONFIG="${RUAB_CFG_DIR}/ruantiblock.conf"
+FILE_FQDN_FILTER="${RUAB_CFG_DIR}/fqdn_filter"
+FILE_IP_FILTER="${RUAB_CFG_DIR}/ip_filter"
+FILE_USER_ENTRIES="${RUAB_CFG_DIR}/user_entries"
+FILE_UCI_CONFIG="${PREFIX}/etc/config/ruantiblock"
 FILE_INIT_SCRIPT="${PREFIX}/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="${EXEC_DIR}/ruantiblock"
 ### tor
 FILE_TORRC="${PREFIX}/etc/tor/torrc"
-### ruantiblock-mod-lua
 
 AWK_CMD="awk"
 OPKG_CMD=`which opkg`
@@ -31,11 +36,28 @@ FileExists() {
     test -e "$1"
 }
 
+MakeDir() {
+    [ -d "$1" ] || mkdir -p "$1"
+    if [ $? -ne 0 ]; then
+        echo "Error! Can't create directory (${1})" >&2
+        exit 1
+    fi
+}
+
 RemoveFile() {
     if [ -e "$1" ]; then
         echo "Removing ${1}"
         rm -f "$1"
     fi
+}
+
+BackupCurrentConfig() {
+    local _file
+    MakeDir "$BACKUP_DIR"
+    for _file in "$FILE_CONFIG" "$FILE_FQDN_FILTER" "$FILE_IP_FILTER" "$FILE_USER_ENTRIES" "$FILE_UCI_CONFIG" "$FILE_TORRC"
+    do
+        [ -e "$_file" ] && cp -f "$_file" "${BACKUP_DIR}/`basename ${_file}`"
+    done
 }
 
 AppStop() {
@@ -105,6 +127,7 @@ ConfirmRemove() {
 
 ConfirmRemove
 AppStop
+BackupCurrentConfig
 DisableStartup
 RemoveCronTask
 RemoveRcLocalEntry
