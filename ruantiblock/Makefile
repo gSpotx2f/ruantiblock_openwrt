@@ -60,7 +60,7 @@ define Package/$(PKG_NAME)/preinst
 
 RUAB_CFG_DIR="/etc/ruantiblock"
 EXEC_DIR="/usr/bin"
-BACKUP_DIR="$${RUAB_CFG_DIR}/autoinstall.bak"
+BACKUP_DIR="$${RUAB_CFG_DIR}/autoinstall.bak.`date +%s`"
 FILE_CONFIG="$${RUAB_CFG_DIR}/ruantiblock.conf"
 FILE_FQDN_FILTER="$${RUAB_CFG_DIR}/ruab_fqdn_filter"
 FILE_IP_FILTER="$${RUAB_CFG_DIR}/ruab_ip_filter"

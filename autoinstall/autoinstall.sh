@@ -376,7 +376,7 @@ AppStop
 PrintBold "Updating packages list..."
 UpdatePackagesList
 PrintBold "Saving current configuration..."
-BackupCurrentConfig
+#BackupCurrentConfig
 PrintBold "Installing basic configuration..."
 InstallBaseConfig
 if [ $? -eq 0 ]; then
