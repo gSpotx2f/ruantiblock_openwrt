@@ -27,6 +27,7 @@ endef
 
 define Package/$(PKG_NAME)/conffiles
 	/etc/config/ruantiblock
+	/etc/ruantiblock/ruantiblock.conf
 	/etc/ruantiblock/fqdn_filter
 	/etc/ruantiblock/ip_filter
 	/etc/ruantiblock/user_entries
