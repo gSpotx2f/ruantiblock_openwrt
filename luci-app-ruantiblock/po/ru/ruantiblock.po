@@ -245,7 +245,7 @@ msgid "Proxy mode"
 msgstr "Режим прокси"
 
 msgid "Reduces RAM consumption during update"
-msgstr "Уменьшает потребление опреративной памяти при обновлении"
+msgstr "Уменьшает потребление оперативной памяти при обновлении"
 
 msgid "Reset"
 msgstr "Сбросить"
