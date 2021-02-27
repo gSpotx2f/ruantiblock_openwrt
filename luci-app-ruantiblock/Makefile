@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_VERSION:=0.9.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 LUCI_TITLE:=LuCI support for ruantiblock
 LUCI_DEPENDS:=+ruantiblock +luci-mod-admin-full
 LUCI_PKGARCH:=all

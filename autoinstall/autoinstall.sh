@@ -10,6 +10,8 @@ LUCI_APP=1
 
 OWRT_VERSION="19.07"
 RUAB_VERSION="0.9.0-1"
+RUAB_MOD_LUA_VERSION="0.9.0-1"
+RUAB_LUCI_APP_VERSION="0.9.0-2"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master"
 PKG_DIR="/tmp"
 
@@ -21,9 +23,9 @@ fi
 
 ### packages
 URL_RUAB_PKG="${BASE_URL}/packages/${OWRT_VERSION}/ruantiblock_${RUAB_VERSION}_all.ipk"
-URL_MOD_LUA_PKG="${BASE_URL}/packages/${OWRT_VERSION}/ruantiblock-mod-lua_${RUAB_VERSION}_all.ipk"
-URL_LUCI_APP_PKG="${BASE_URL}/packages/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_VERSION}_all.ipk"
-URL_LUCI_APP_RU_PKG="${BASE_URL}/packages/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_VERSION}_all.ipk"
+URL_MOD_LUA_PKG="${BASE_URL}/packages/${OWRT_VERSION}/ruantiblock-mod-lua_${RUAB_MOD_LUA_VERSION}_all.ipk"
+URL_LUCI_APP_PKG="${BASE_URL}/packages/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
+URL_LUCI_APP_RU_PKG="${BASE_URL}/packages/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
 ### tor
 URL_TORRC="${BASE_URL}/tor/etc/tor/torrc"
 ### ruantiblock-mod-lua
@@ -40,9 +42,9 @@ DATA_DIR_RAM="/var/ruantiblock"
 RC_LOCAL="/etc/rc.local"
 ### packages
 FILE_RUAB_PKG="${PKG_DIR}/ruantiblock_${RUAB_VERSION}_all.ipk"
-FILE_MOD_LUA_PKG="${PKG_DIR}/ruantiblock-mod-lua_${RUAB_VERSION}_all.ipk"
-FILE_LUCI_APP_PKG="${PKG_DIR}/luci-app-ruantiblock_${RUAB_VERSION}_all.ipk"
-FILE_LUCI_APP_RU_PKG="${PKG_DIR}/luci-i18n-ruantiblock-ru_${RUAB_VERSION}_all.ipk"
+FILE_MOD_LUA_PKG="${PKG_DIR}/ruantiblock-mod-lua_${RUAB_MOD_LUA_VERSION}_all.ipk"
+FILE_LUCI_APP_PKG="${PKG_DIR}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
+FILE_LUCI_APP_RU_PKG="${PKG_DIR}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
 ### ruantiblock
 FILE_CONFIG="${RUAB_CFG_DIR}/ruantiblock.conf"
 FILE_FQDN_FILTER="${RUAB_CFG_DIR}/fqdn_filter"

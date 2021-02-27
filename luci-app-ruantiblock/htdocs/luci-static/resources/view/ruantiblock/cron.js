@@ -94,7 +94,6 @@ function onchange_hour_interval(e) {
     cron_hour.disabled = bool;
     cron_day_interval.disabled = bool;
 
-    // For luci-theme-material
     if(bool) {
         cron_hour.style.opacity = '50%';
         cron_day_interval.style.opacity = '50%';
@@ -121,7 +120,7 @@ return L.view.extend({
         let cron_status = E('textarea', {
             'id': 'cron_status',
             'name': 'cron_status',
-            'style': 'width:30em; padding:5px 10px 5px 10px !important; vertical-align:middle; resize:none !important;',
+            'style': 'width:100% !important; padding:5px 10px 5px 10px !important; resize:none !important;',
             'readonly': 'readonly',
             'wrap': 'off',
             'rows': 2,
@@ -139,7 +138,11 @@ return L.view.extend({
             E('div', { 'class': 'cbi-value' }, [
                 E('label', { 'class': 'cbi-value-title', 'for': 'cron_status' },
                     _('Current schedule')),
-                E('div', { 'class': 'cbi-value-field' }, [ cron_status, ' ', btn_cron_del ]),
+                E('div', { 'class': 'cbi-value-field' }, cron_status),
+            ]),
+            E('div', { 'class': 'cbi-value' }, [
+                E('label', { 'class': 'cbi-value-title', 'for': 'btn_cron_del' }),
+                E('div', { 'class': 'cbi-value-field' }, btn_cron_del),
             ])
         ]);
 

@@ -89,8 +89,8 @@ return L.Class.extend({
                 app_status_label = this.info_label_error;
                 return `<div class="table">
                             <div class="tr">
-                                <div class="td left" style="width:33%">
-                                    ${_('Status')}
+                                <div class="td left" style="min-width:33%%">
+                                    ${_('Status')}:
                                 </div>
                                 <div class="td left">
                                     ${app_status_label}
@@ -101,24 +101,24 @@ return L.Class.extend({
 
         return `<div class="table">
                     <div class="tr">
-                        <div class="td left" style="width:33%%">
-                            ${_('Status')}
+                        <div class="td left" style="min-width:33%%">
+                            ${_('Status')}:
                         </div>
                         <div class="td left%s">
                             %s %s %s
                         </div>
                     </div>
                     <div class="tr">
-                        <div class="td left" style="width:33%%">
-                            ${_('Proxy mode')}
+                        <div class="td left">
+                            ${_('Proxy mode')}:
                         </div>
                         <div class="td left">
                             %s
                         </div>
                     </div>
                     <div class="tr">
-                        <div class="td left" style="width:33%%">
-                            ${_('Blacklist update mode')}
+                        <div class="td left">
+                            ${_('Blacklist update mode')}:
                         </div>
                         <div class="td left">
                             %s
@@ -136,16 +136,17 @@ return L.Class.extend({
                     + _('VPN routing error! Need restart') + '</span>' : '',
             (proxy_mode == 1) ? 'Tor' : 'VPN',
             (!bllist_module || bllist_module === '') ? _('user entries only') : bllist_mode,
-            (!bllist_module || bllist_module === '') ? '' : `<div class="tr">
-                <div class="td left" style="width:33%%">
-                    ${_('Blacklist source')}
-                </div>
-                <div class="td left">
-                    <span style="cursor:help; border-bottom:1px dotted" data-tooltip="${this.blacklist_sources[bllist_source]}">
-                        ${bllist_source}
-                    </span>
-                </div>
-            </div>`
+            (!bllist_module || bllist_module === '') ? '' :
+                    `<div class="tr">
+                        <div class="td left">
+                            ${_('Blacklist source')}:
+                        </div>
+                        <div class="td left">
+                            <span style="cursor:help; border-bottom:1px dotted" data-tooltip="${this.blacklist_sources[bllist_source]}">
+                                ${bllist_source}
+                            </span>
+                        </div>
+                    </div>`
         );
     },
 

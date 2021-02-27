@@ -247,6 +247,7 @@ return L.view.extend({
         o.description = _('e.g:') + ' <code>192.168.1.</code>';
         o.placeholder = _('e.g:') + ' 192.168.1.';
         o.default = '';
+
         depends_bllist_module(o);
 
         // SUMMARIZE_IP

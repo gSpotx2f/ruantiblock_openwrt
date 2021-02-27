@@ -31,13 +31,13 @@ return L.view.extend({
     },
 
     render: function(logdata) {
-        let nav_btns_top = '120px';
+        let nav_btns_top = '1px';
         let loglines = this.parse_log_data(logdata);
 
          let log_textarea = E('textarea', {
             'id': 'syslog',
             'class': 'cbi-input-textarea',
-            'style': 'width:100% !important; padding: 0 0 0 45px; font-size:12px',
+            'style': 'width:100% !important; resize:horizontal; padding: 0 0 0 45px; font-size:12px',
             'readonly': 'readonly',
             'wrap': 'off',
             'rows': this.tail_default,
@@ -50,7 +50,7 @@ return L.view.extend({
             'type': 'text',
             'form': 'log_form',
             'class': 'cbi-input-text',
-            'style': 'width:4em !important; min-width:4em !important',
+            'style': 'width:4em !important; min-width:4em !important; margin-bottom:0.3em !important',
             'maxlength': 5,
         });
         tail_value.value = this.tail_default;
@@ -62,7 +62,7 @@ return L.view.extend({
             'type': 'text',
             'form': 'log_form',
             'class': 'cbi-input-text',
-            'style': 'margin-left:1em !important; width:16em !important; min-width:16em !important',
+            'style': 'min-width:16em !important; margin-right:1em !important; margin-bottom:0.3em !important',
             'placeholder': _('Message filter'),
             'data-tooltip': _('Filter messages with a regexp'),
         });
@@ -70,8 +70,8 @@ return L.view.extend({
         let log_form_submit_btn = E('input', {
             'type': 'submit',
             'form': 'log_form',
-            'class': 'cbi-button btn',
-            'style': 'margin-left:1em !important; vertical-align:middle',
+            'class': 'cbi-button btn cbi-button-action',
+            'style': 'margin-right:1em !important; margin-bottom:0.3em !important;',
             'value': _('Apply'),
             'click': ev => ev.target.blur(),
         });
@@ -113,8 +113,11 @@ return L.view.extend({
             E('div', { 'class': 'cbi-section fade-in' },
                 E('div', { 'class': 'cbi-section-node' },
                     E('div', { 'class': 'cbi-value' }, [
-                        E('label', { 'class': 'cbi-value-title', 'for': 'tail_value' },
-                            _('Show only the last messages')),
+                        E('label', {
+                            'class': 'cbi-value-title',
+                            'for': 'tailValue',
+                            'style': 'margin-bottom:0.3em !important',
+                        }, _('Show only the last messages')),
                         E('div', { 'class': 'cbi-value-field' }, [
                             tail_value,
                             E('input', {
@@ -127,25 +130,14 @@ return L.view.extend({
                                     log_form_submit_btn.click();
                                     ev.target.blur();
                                 },
-
+                                'style': 'margin-right:1em !important; margin-bottom:0.3em !important; max-width:4em !important',
                             }),
                             log_filter,
-                            E('input', {
-                                'type': 'button',
-                                'form': 'log_form',
-                                'class': 'cbi-button btn cbi-button-reset',
-                                'value': 'Χ',
-                                'click': ev => {
-                                    log_filter.value = null;
-                                    log_form_submit_btn.click();
-                                    ev.target.blur();
-                                },
-                            }),
                             log_form_submit_btn,
                             E('form', {
                                 'id': 'log_form',
                                 'name': 'log_form',
-                                'style': 'display:inline-block; margin-left:1em !important',
+                                'style': 'display:inline-block; margin-bottom:0.3em !important',
                                 'submit': ui.createHandlerFn(this, function(ev) {
                                     ev.preventDefault();
                                     let form_elems = Array.from(document.forms.log_form.elements);
@@ -154,6 +146,8 @@ return L.view.extend({
                                     return this.load().then(logdata => {
                                         let loglines = set_log_filter(set_log_tail(
                                             this.parse_log_data(logdata)));
+                                        log_textarea.rows = (loglines.length < this.tail_default) ?
+                                            this.tail_default : loglines.length;
                                         log_textarea.value = loglines.join('\n');
                                     }).finally(() => {
                                         form_elems.forEach(e => e.disabled = false);
@@ -173,7 +167,7 @@ return L.view.extend({
                                 'style': 'position:relative; display:block; margin:0 !important; left:1px; top:'
                                     + nav_btns_top,
                                 'click': ev => {
-                                    log_textarea.scrollTop = 0;
+                                    document.getElementById('log_title').scrollIntoView(true);
                                     ev.target.blur();
                                 },
                             }, '&#8593;'),
@@ -182,7 +176,7 @@ return L.view.extend({
                                 'style': 'position:relative; display:block; margin:0 !important; margin-top:1px !important; left:1px; top:'
                                     + nav_btns_top,
                                 'click': ev => {
-                                    log_textarea.scrollTop = log_textarea.scrollHeight;
+                                    log_textarea.scrollIntoView(false);
                                     ev.target.blur();
                                 },
                             }, '&#8595;'),

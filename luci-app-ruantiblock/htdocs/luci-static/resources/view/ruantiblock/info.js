@@ -105,23 +105,23 @@ return L.view.extend({
                 if(data.last_blacklist_update.status) {
                     update_status.append(
                         E('div', { 'class': 'tr' }, [
-                            E('div', { 'class': 'td left', 'width': '33%' },
-                                _('Last blacklist update')),
+                            E('div', { 'class': 'td left', 'style': 'min-width:33%' },
+                                _('Last blacklist update') + ':'),
                             E('div', { 'class': 'td left', 'id': 'last_blacklist_update.date' },
                                 data.last_blacklist_update.date),
                         ]),
                         E('div', { 'class': 'tr' }, [
-                            E('div', { 'class': 'td left', 'width': '33%' }, 'IP'),
+                            E('div', { 'class': 'td left' }, 'IP:'),
                             E('div', { 'class': 'td left', 'id': 'last_blacklist_update.ip' },
                                 data.last_blacklist_update.ip),
                         ]),
                         E('div', { 'class': 'tr' }, [
-                            E('div', { 'class': 'td left', 'width': '33%' }, 'CIDR'),
+                            E('div', { 'class': 'td left' }, 'CIDR:'),
                             E('div', { 'class': 'td left', 'id': 'last_blacklist_update.cidr' },
                                 data.last_blacklist_update.cidr),
                         ]),
                         E('div', { 'class': 'tr' }, [
-                            E('div', { 'class': 'td left', 'width': '33%' }, 'FQDN'),
+                            E('div', { 'class': 'td left' }, 'FQDN:'),
                             E('div', { 'class': 'td left', 'id': 'last_blacklist_update.fqdn' },
                                 data.last_blacklist_update.fqdn),
                         ])
@@ -129,7 +129,7 @@ return L.view.extend({
                 } else {
                     update_status.append(
                         E('div', { 'class': 'tr' }, [
-                            E('div', { 'class': 'td left', 'width': '33%' },
+                            E('div', { 'class': 'td left' },
                                 _('Last blacklist update')),
                             E('div', { 'class': 'td left' }, _('No data')),
                         ])
@@ -139,7 +139,7 @@ return L.view.extend({
                 if(data.iptables) {
                     let table_iptables = E('div', { 'class': 'table' }, [
                         E('div', { 'class': 'tr table-titles' }, [
-                            E('div', { 'class': 'th left', 'width': '33%' },
+                            E('div', { 'class': 'th left', 'style': 'min-width:33%' },
                                 _('Match-set')),
                             E('div', { 'class': 'th left' }, _('Bytes')),
                         ]),
@@ -150,10 +150,15 @@ return L.view.extend({
 
                         table_iptables.append(
                             E('div', { 'class': 'tr' }, [
-                                E('div', { 'class': 'td left', 'width': '33%' },
-                                    k),
-                                E('div', { 'class': 'td left', 'id': 'iptables.' + k },
-                                    v),
+                                E('div', {
+                                    'class': 'td left',
+                                    'data-title': _('Match-set'),
+                                }, k),
+                                E('div', {
+                                    'class': 'td left',
+                                    'id': 'iptables.' + k,
+                                    'data-title': _('Bytes'),
+                                }, v),
                             ])
                         );
                     };
@@ -167,7 +172,7 @@ return L.view.extend({
                 if(data.ipset) {
                     let table_ipset = E('div', { 'class': 'table' },
                         E('div', { 'class': 'tr table-titles' }, [
-                            E('div', { 'class': 'th left', 'width': '33%' }, _('Name')),
+                            E('div', { 'class': 'th left', 'style': 'min-width:33%' }, _('Name')),
                             E('div', { 'class': 'th left' }, _('Size in memory')),
                             E('div', { 'class': 'th left' }, _('Number of entries')),
                         ])
@@ -178,11 +183,20 @@ return L.view.extend({
 
                         table_ipset.append(
                             E('div', { 'class': 'tr' }, [
-                                E('div', { 'class': 'td left', 'width': '33%' }, k),
-                                E('div', { 'class': 'td left', 'id': 'ipset.' + k + '.' + '0' },
-                                    v[0]),
-                                E('div', { 'class': 'td left', 'id': 'ipset.' + k + '.' + '1' },
-                                    v[1]),
+                                E('div', {
+                                    'class': 'td left',
+                                    'data-title': _('Name'),
+                                }, k),
+                                E('div', {
+                                    'class': 'td left',
+                                    'id': 'ipset.' + k + '.' + '0',
+                                    'data-title': _('Size in memory'),
+                                }, v[0]),
+                                E('div', {
+                                    'class': 'td left',
+                                    'id': 'ipset.' + k + '.' + '1',
+                                    'data-title': _('Number of entries'),
+                                }, v[1]),
                             ])
                         );
                     };
