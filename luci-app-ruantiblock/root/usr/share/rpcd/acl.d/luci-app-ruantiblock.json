@@ -18,8 +18,8 @@
                 "/etc/init.d/cron enabled": [ "exec" ],
                 "/etc/init.d/cron enable": [ "exec" ],
                 "/etc/init.d/cron restart": [ "exec" ],
-                "/sbin/logread -e ruantiblock": [ "exec" ],
-                "/usr/sbin/logread -e ruantiblock": [ "exec" ]
+                "/sbin/logread -e ^ruantiblock": [ "exec" ],
+                "/usr/sbin/logread -e ^ruantiblock": [ "exec" ]
             },
             "uci": [ "network", "ruantiblock" ]
         },

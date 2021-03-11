@@ -17,6 +17,7 @@ CONFIG_DIR="/etc/${NAME}"
 CONFIG_FILE="${CONFIG_DIR}/${NAME}.conf"
 export DATA_DIR="${CONFIG_DIR}/var"
 export EXEC_DIR="/usr/bin"
+
 ### Команда для перезапуска dnsmasq
 export DNSMASQ_RESTART_CMD="/etc/init.d/dnsmasq restart"
 ### Директория для html-страницы статуса (не используется в OpenWrt)
@@ -123,12 +124,14 @@ export AF_ENCODING=""
 
 ############################ Configuration #############################
 
+### External config
 [ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
 
 CONFIG_SCRIPT="${CONFIG_DIR}/scripts/config_script"
 START_SCRIPT="${CONFIG_DIR}/scripts/start_script"
 STOP_SCRIPT="${CONFIG_DIR}/scripts/stop_script"
 
+### Config script
 [ -f "$CONFIG_SCRIPT" ] && . "$CONFIG_SCRIPT"
 
 AWK_CMD="awk"
@@ -208,7 +211,15 @@ EOF
 }
 
 MakeLogRecord() {
-    [ $USE_LOGGER = "1" ] && $LOGGER_CMD $LOGGER_PARAMS $1
+    local _log_level
+    if [ $USE_LOGGER = "1" ]; then
+        if [ -z "$2" ]; then
+            _log_level="info"
+        else
+            _log_level="$2"
+        fi
+        $LOGGER_CMD $LOGGER_PARAMS -p "user.${_log_level}" "$1"
+    fi
 }
 
 DnsmasqRestart() {
@@ -250,7 +261,7 @@ TotalProxyOn() {
         IptTotalProxyAdd
         if [ $? -eq 0 ]; then
             echo " ${IPSET_TOTAL_PROXY} enabled"
-            MakeLogRecord "${IPSET_TOTAL_PROXY} enabled"
+            MakeLogRecord "${IPSET_TOTAL_PROXY} enabled" "notice"
         fi
         MakeToken
     fi
@@ -263,7 +274,7 @@ TotalProxyOff() {
             echo " ${IPSET_TOTAL_PROXY} is already disabled" >&2
         else
             echo " ${IPSET_TOTAL_PROXY} disabled"
-            MakeLogRecord "${IPSET_TOTAL_PROXY} disabled"
+            MakeLogRecord "${IPSET_TOTAL_PROXY} disabled" "notice"
         fi
         MakeToken
     fi
@@ -291,6 +302,7 @@ DelIptRules() {
 
 SetNetConfig() {
     local _set
+    ### Создание списков ipset. Проверка на наличие списка с таким же именем, если нет, то создается новый
     for _set in "$IPSET_TOTAL_PROXY" "$IPSET_CIDR_TMP" "$IPSET_CIDR"
     do
         IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:net maxelem $IPSET_MAXELEM
@@ -311,6 +323,7 @@ DropNetConfig() {
 
 FillIpsets() {
     local _set
+    ### Заполнение списков ipset $IPSET_IP и $IPSET_CIDR. Сначала restore загружает во временные списки, а затем swap из временных добавляет в основные
     if [ -f "$IP_DATA_FILE" ]; then
         echo " Filling ipsets..."
         FlushIpSets "$IPSET_IP_TMP" "$IPSET_CIDR_TMP"
@@ -321,7 +334,7 @@ FillIpsets() {
             FlushIpSets "$IPSET_IP_TMP" "$IPSET_CIDR_TMP"
         else
             echo " Error! Ipset wasn't updated" >&2
-            MakeLogRecord "Error! Ipset wasn't updated"
+            MakeLogRecord "Error! Ipset wasn't updated" "err"
         fi
     fi
 }
@@ -353,6 +366,7 @@ CheckStatus() {
 PreStartCheck() {
     [ -d "$DATA_DIR" ] || mkdir -p "$DATA_DIR"
     [ "$HTML_INFO" = "1" -a ! -d "$HTML_DIR" ] && mkdir -p "$HTML_DIR"
+    ### Костыль для старта dnsmasq
     [ -e "$DNSMASQ_DATA_FILE" ] || printf "\n" > "$DNSMASQ_DATA_FILE"
 }
 
@@ -404,8 +418,9 @@ GetDataFiles() {
             $BLLIST_MODULE
             _return_code=$?
             [ $_return_code -eq 0 ] && break
+            ### STDOUT
             echo " Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]"
-            MakeLogRecord "Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]"
+            MakeLogRecord "Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]" "err"
             _attempt=`expr $_attempt + 1`
             [ $_attempt -gt $MODULE_RUN_ATTEMPTS ] && break
             sleep $MODULE_RUN_TIMEOUT
@@ -416,8 +431,9 @@ GetDataFiles() {
                 printf "Received entries: %s\n", (NF < 3) ? "No data" : "IP: "$1", CIDR: "$2", FQDN: "$3;
                 exit;
             }' "$UPDATE_STATUS_FILE"`
+            ### STDOUT
             echo " ${_update_string}"
-            MakeLogRecord "${_update_string}"
+            MakeLogRecord "${_update_string}" "info"
             printf " `date +%d.%m.%Y-%H:%M`\n" >> "$UPDATE_STATUS_FILE"
         fi
     else
@@ -429,6 +445,7 @@ GetDataFiles() {
     if [ "$PROXY_MODE" = "2" ]; then
         printf "\n" >> "$DNSMASQ_DATA_FILE"
     else
+        ### Запись для .onion в $DNSMASQ_DATA_FILE
         printf "server=/onion/%s\nipset=/onion/%s\n" "${ONION_DNS_ADDR}" "${IPSET_ONION}" >> "$DNSMASQ_DATA_FILE"
     fi
     rm -f "$UPDATE_PID_FILE"
@@ -450,11 +467,11 @@ Update() {
     MakeToken
     if [ -e "$UPDATE_PID_FILE" ] && [ "$1" != "force-update" ]; then
         echo " ${NAME} ${1} - Error! Another instance of update is already running" >&2
-        MakeLogRecord "${1} - Error! Another instance of update is already running"
+        MakeLogRecord "${1} - Error! Another instance of update is already running" "err"
         _return_code=2
     else
         echo " ${NAME} ${1}..."
-        MakeLogRecord "${1}..."
+        MakeLogRecord "${1}..." "notice"
         if [ "$IPSET_CLEAR_SETS" = "1" ]; then
             FlushIpSets "$IPSET_IP" "$IPSET_CIDR" "$IPSET_DNSMASQ"
         fi
@@ -462,16 +479,16 @@ Update() {
         case $? in
             0)
                 echo " Blacklist updated"
-                MakeLogRecord "Blacklist updated"
+                MakeLogRecord "Blacklist updated" "info"
             ;;
             2)
                 echo " Error! Blacklist update error" >&2
-                MakeLogRecord "Error! Blacklist update error"
+                MakeLogRecord "Error! Blacklist update error" "err"
                 _return_code=1
             ;;
             *)
                 echo " Module error! [${BLLIST_MODULE}]" >&2
-                MakeLogRecord "Module error! [${BLLIST_MODULE}]"
+                MakeLogRecord "Module error! [${BLLIST_MODULE}]" "err"
                 _return_code=1
             ;;
         esac
@@ -498,7 +515,7 @@ Start() {
         _return_code=1
     else
         echo " ${NAME} ${1}..."
-        MakeLogRecord "${1}..."
+        MakeLogRecord "${1}..." "notice"
         DropNetConfig &> /dev/null
         SetNetConfig
         PreStartCheck
@@ -517,7 +534,7 @@ Stop() {
     if CheckStatus; then
         MakeToken
         echo " ${NAME} ${1}..."
-        MakeLogRecord "${1}..."
+        MakeLogRecord "${1}..." "notice"
         DropNetConfig &> /dev/null
         _return_code=$?
         ### Stop script

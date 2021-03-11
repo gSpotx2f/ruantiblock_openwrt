@@ -104,9 +104,6 @@ msgstr ""
 msgid "Expecting:"
 msgstr ""
 
-msgid "Filter messages with a regexp"
-msgstr ""
-
 msgid "FQDN configuration"
 msgstr ""
 
@@ -158,9 +155,6 @@ msgstr ""
 msgid "Match-set"
 msgstr ""
 
-msgid "Message filter"
-msgstr ""
-
 msgid "Minute"
 msgstr ""
 
@@ -174,9 +168,6 @@ msgid "No changes to save."
 msgstr ""
 
 msgid "No data"
-msgstr ""
-
-msgid "No matches..."
 msgstr ""
 
 msgid "No Shedule"
@@ -235,9 +226,6 @@ msgid "Set"
 msgstr ""
 
 msgid "Settings"
-msgstr ""
-
-msgid "Show only the last messages"
 msgstr ""
 
 msgid "Shutdown"
@@ -340,4 +328,78 @@ msgid "valid IP address"
 msgstr ""
 
 msgid "valid address#port"
+msgstr ""
+
+
+
+msgid "Alert"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "Critical"
+msgstr ""
+
+msgid "Debug"
+msgstr ""
+
+msgid "Download log"
+msgstr ""
+
+msgid "Emergency"
+msgstr ""
+
+msgid "Entries"
+msgstr ""
+
+msgid "Facility"
+msgstr ""
+
+msgid "Info"
+msgstr ""
+
+msgid "Invalid regular expression"
+msgstr ""
+
+msgid "Last entries"
+msgstr ""
+
+msgid "Level"
+msgstr ""
+
+msgid "Logging levels"
+msgstr ""
+
+msgid "Message"
+msgstr ""
+
+msgid "Message filter"
+msgstr ""
+
+msgid "No entries available..."
+msgstr ""
+
+msgid "Notice"
+msgstr ""
+
+msgid "Sorting entries"
+msgstr ""
+
+msgid "Timestamp"
+msgstr ""
+
+msgid "Type an expression..."
+msgstr ""
+
+msgid "Unable to load log data:"
+msgstr ""
+
+msgid "Warning"
+msgstr ""
+
+msgid "ascending"
+msgstr ""
+
+msgid "descending"
 msgstr ""

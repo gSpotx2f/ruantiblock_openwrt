@@ -9,9 +9,9 @@ LUA_MODULE=1
 LUCI_APP=1
 
 OWRT_VERSION="19.07"
-RUAB_VERSION="0.9.0-1"
-RUAB_MOD_LUA_VERSION="0.9.0-1"
-RUAB_LUCI_APP_VERSION="0.9.0-2"
+RUAB_VERSION="0.9.0-2"
+RUAB_MOD_LUA_VERSION="0.9.0-2"
+RUAB_LUCI_APP_VERSION="0.9.0-3"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master"
 PKG_DIR="/tmp"
 

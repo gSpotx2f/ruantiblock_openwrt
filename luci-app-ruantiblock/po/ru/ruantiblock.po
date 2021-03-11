@@ -117,9 +117,6 @@ msgstr "Исключение IP адресов из блэклиста по ша
 msgid "Expecting:"
 msgstr "Ожидается:"
 
-msgid "Filter messages with a regexp"
-msgstr "Фильтровать сообщения с помощью регулярного выражения"
-
 msgid "FQDN configuration"
 msgstr "Конфигурация FQDN"
 
@@ -171,9 +168,6 @@ msgstr "Основные настройки"
 msgid "Match-set"
 msgstr "Правило"
 
-msgid "Message filter"
-msgstr "Фильтр сообщений"
-
 msgid "Minute"
 msgstr "Минута"
 
@@ -188,9 +182,6 @@ msgstr "Нет изменений для сохранения."
 
 msgid "No data"
 msgstr "Нет данных"
-
-msgid "No matches..."
-msgstr "Нет совпадений..."
 
 msgid "No Shedule"
 msgstr "Нет расписания"
@@ -261,9 +252,6 @@ msgstr "Установить"
 
 msgid "Settings"
 msgstr "Настройки"
-
-msgid "Show only the last messages"
-msgstr "Показать только последние сообщения"
 
 msgid "Shutdown"
 msgstr "Выключение"
@@ -371,3 +359,77 @@ msgstr "верный IP-адрес"
 
 msgid "valid address#port"
 msgstr "верный IP-адрес#порт"
+
+
+
+msgid "Alert"
+msgstr "Тревога"
+
+msgid "All"
+msgstr "Все"
+
+msgid "Critical"
+msgstr "Критическая ситуация"
+
+msgid "Debug"
+msgstr "Отладка"
+
+msgid "Download log"
+msgstr "Скачать лог"
+
+msgid "Emergency"
+msgstr "Чрезвычайная ситуация"
+
+msgid "Entries"
+msgstr "Записи"
+
+msgid "Facility"
+msgstr "Категория"
+
+msgid "Info"
+msgstr "Информация"
+
+msgid "Invalid regular expression"
+msgstr "Неправильное регулярное выражение"
+
+msgid "Last entries"
+msgstr "Последние записи"
+
+msgid "Level"
+msgstr "Уровень"
+
+msgid "Logging levels"
+msgstr "Уровни логирования"
+
+msgid "Message"
+msgstr "Сообщение"
+
+msgid "Message filter"
+msgstr "Фильтр сообщений"
+
+msgid "No entries available..."
+msgstr "Нет доступных записей..."
+
+msgid "Notice"
+msgstr "Сообщение"
+
+msgid "Sorting entries"
+msgstr "Сортировка записей"
+
+msgid "Timestamp"
+msgstr "Время"
+
+msgid "Type an expression..."
+msgstr "Введите выражение..."
+
+msgid "Unable to load log data:"
+msgstr "Невозможно загрузить данные лога:"
+
+msgid "Warning"
+msgstr "Внимание"
+
+msgid "ascending"
+msgstr "по возрастанию"
+
+msgid "descending"
+msgstr "по убыванию"
