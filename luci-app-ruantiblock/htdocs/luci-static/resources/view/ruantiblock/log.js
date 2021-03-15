@@ -1,12 +1,43 @@
 'require fs';
 'require ui';
-'require view.ruantiblock.baselog as baselog';
+'require view.log.baselog as baselog';
 'require view.ruantiblock.tools as tools';
 
 return baselog.view.extend({
-	viewName: 'ruantiblock-log',
+	viewName: 'ruantiblock',
 
 	title: _('Ruantiblock') + ' - ' + _('Log'),
+
+	appRegexp: new RegExp(`^.*${tools.app_name}\[[0-9]+\].*$`, 'gm'),
+
+	testRegexp: new RegExp(/([0-9]{2}:){2}[0-9]{2}/),
+
+	isLoggerChecked: false,
+
+	entriesHandler: null,
+
+	// logd
+	logdHandler: function(strArray, lineNum) {
+		let logLevel = strArray[5].split('.');
+		return [
+			lineNum,										// #			(Number)
+			strArray.slice(0, 5).join(' '),					// Timestamp	(String)
+			logLevel[1],									// Level		(String)
+			logLevel[0],									// Facility		(String)
+			this.htmlEntities(strArray.slice(6).join(' ')),	// Message		(String)
+		];
+	},
+
+	// syslog-ng
+	syslog_ngHandler: function(strArray, lineNum) {
+		return [
+			lineNum,										// #			(Number)
+			strArray.slice(0, 3).join(' '),					// Timestamp	(String)
+			null,											// Level		(String)
+			null,											// Facility		(String)
+			this.htmlEntities(strArray.slice(4).join(' ')),	// Message		(String)
+		];
+	},
 
 	getLogData: function(tail) {
 		return Promise.all([
@@ -16,10 +47,8 @@ return baselog.view.extend({
 			let logger = (stat[0]) ? stat[0].path : (stat[1]) ? stat[1].path : null;
 
 			if(logger) {
-				return fs.exec_direct(logger, [ '-e', '^' + tools.app_name ]).catch(err => {
-					ui.addNotification(null, E('p', _('Unable to execute or read contents')
-                        + ': %s<br />[ %s ]'.format(err.message, logger)
-                    ));
+				return fs.exec_direct(logger, [ '-e', tools.app_name ]).catch(err => {
+					ui.addNotification(null, E('p', {}, _('Unable to load log data: ' + err.message)));
 					return '';
 				});
 			};
@@ -31,7 +60,7 @@ return baselog.view.extend({
 			return [];
 		};
 
-		let strings = logdata.trim().split(/\n/);
+		let strings = logdata.trim().match(this.appRegexp) || [];
 
 		if(tail && tail > 0 && strings) {
 			strings = strings.slice(-tail);
@@ -41,15 +70,22 @@ return baselog.view.extend({
 
 		let entriesArray = strings.map((e, i) => {
 			let strArray = e.split(/\s+/);
-			let logLevel = strArray[5].split('.');
 
-			return [
-				i + 1,											// #			(Number)
-				strArray.slice(0, 5).join(' '),					// Timestamp	(String)
-				logLevel[1],									// Level		(String)
-				logLevel[0],									// Facility		(String)
-				this.htmlEntities(strArray.slice(6).join(' ')),	// Message		(String)
-			];
+			if(!this.isLoggerChecked) {
+				/**
+				 * Checking the third field of a line.
+				 * If it contains time then syslog-ng.
+				*/
+				if(this.testRegexp.test(strArray[2])) {
+					this.logLevels = {};
+					this.entriesHandler = this.syslog_ngHandler;
+				} else {
+					this.entriesHandler = this.logdHandler;
+				};
+				this.isLoggerChecked = true;
+			};
+
+			return this.entriesHandler(strArray, i + 1);
 		});
 
 		if(this.logSortingValue === 'desc') {

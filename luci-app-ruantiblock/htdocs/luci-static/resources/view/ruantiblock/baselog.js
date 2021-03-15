@@ -44,7 +44,8 @@ return L.Class.extend({
 				/&/g, '&#38;').replace(
 				/</g, '&#60;').replace(
 				/>/g, '&#62;').replace(
-				/"/g, '&#34;');
+				/"/g, '&#34;').replace(
+				/'/g, '&#39;');
 		},
 
 		/**
@@ -70,6 +71,44 @@ return L.Class.extend({
 			throw new Error('parseLogData needs to be reloaded in subclass');
 		},
 
+		setLevelFilter: function(cArr) {
+			let logLevelsKeys = Object.keys(this.logLevels);
+			if(logLevelsKeys.length > 0) {
+				let selectedLevels = this.logLevelsDropdown.getValue();
+				if(logLevelsKeys.length === selectedLevels.length) {
+					return cArr;
+				};
+				return cArr.filter(s => selectedLevels.length === 0 || selectedLevels.includes(s[2]));
+			};
+			return cArr;
+		},
+
+		setRegexpFilter: function(cArr) {
+			let fPattern = document.getElementById('logFilter').value;
+			if(!fPattern) {
+				return cArr;
+			};
+			let fArr = [];
+			try {
+				let regExp = new RegExp(`(${fPattern})`, 'giu');
+				cArr.forEach((e, i) => {
+					if(e[4] !== null && regExp.test(e[4])) {
+						e[4] = e[4].replace(regExp, '<span class="log-highlight-item">$1</span>');
+						fArr.push(e);
+					};
+				});
+			} catch(err) {
+				if(err.name === 'SyntaxError') {
+					ui.addNotification(null,
+						E('p', {}, _('Invalid regular expression') + ': ' + err.message));
+					return cArr;
+				} else {
+					throw err;
+				};
+			};
+			return fArr;
+		},
+
 		makeLogArea: function(logdataArray) {
 			let lines = `<div class="tr"><div class="td center log-entry-empty">${_('No entries available...')}</div></div>`;
 			let logTable = E('div', { 'id': 'logTable', 'class': 'table' });
@@ -81,15 +120,16 @@ return L.Class.extend({
 			if(logdataArray.length > 0) {
 				lines = [];
 				logdataArray.forEach((e, i) => {
-					this.logLevelsStat[e[2]] = (this.logLevelsStat[e[2]] != undefined) ?
-							this.logLevelsStat[e[2]] + 1 : 1;
+					if(e[2] in this.logLevels) {
+						this.logLevelsStat[e[2]] = this.logLevelsStat[e[2]] + 1;
+					};
 
 					lines.push(
 						`<div class="tr log-${e[2] || 'empty'}"><div class="td left" data-title="#">${e[0]}</div>` +
 						((e[1]) ? `<div class="td left" data-title="${_('Timestamp')}">${e[1]}</div>` : '') +
 						((e[2]) ? `<div class="td left" data-title="${_('Level')}">${e[2]}</div>` : '') +
 						((e[3]) ? `<div class="td left" data-title="${_('Facility')}">${e[3]}</div>` : '') +
-						((e[4]) ? `<div class="td left" data-title="${_('Message')}">${e[4]}</div>` : '') +
+						((e[4]) ? `<div class="td left log-entry-message-cell" data-title="${_('Message')}">${e[4]}</div>` : '') +
 						`</div>`
 					);
 				});
@@ -119,7 +159,7 @@ return L.Class.extend({
 			let levelsStatString = '';
 			if((Object.values(this.logLevelsStat).reduce((s,c) => s + c, 0)) > 0) {
 				Object.entries(this.logLevelsStat).forEach(e => {
-					if(e[1] > 0) {
+					if(e[0] in this.logLevels && e[1] > 0) {
 						levelsStatString += `<span class="log-entries-count-level log-${e[0]}" title="${e[0]}">${e[1]}</span>`;
 					};
 				});
@@ -133,52 +173,14 @@ return L.Class.extend({
 			]);
 		},
 
-		setLevelFilter: function(cArr) {
-			let logLevelsKeys = Object.keys(this.logLevels);
-			if(logLevelsKeys.length > 0) {
-				let selectedLevels = this.logLevelsDropdown.getValue();
-				if(logLevelsKeys.length === selectedLevels.length) {
-					return cArr;
-				};
-				return cArr.filter(s => selectedLevels.length === 0 || selectedLevels.includes(s[2]));
-			};
-			return cArr;
-		},
-
-		setRegexpFilter: function(cArr) {
-			let fPattern = document.getElementById('logFilter').value;
-			if(!fPattern) {
-				return cArr;
-			};
-			let fArr = [];
-			try {
-				let regExp = new RegExp(`(${fPattern})`, 'giu');
-				cArr.forEach((e, i) => {
-					if(regExp.test(e[4])) {
-						e[4] = e[4].replace(regExp, '<span class="log-highlight-item">$1</span>');
-						fArr.push(e);
-					};
-				});
-			} catch(err) {
-				if(err.name === 'SyntaxError') {
-					ui.addNotification(null,
-						E('p', {}, _('Invalid regular expression') + ': ' + err.message));
-					return cArr;
-				} else {
-					throw err;
-				};
-			};
-			return fArr;
-		},
-
-		downloadLog: function() {
+		downloadLog: function(ev) {
 			let formElems = Array.from(document.forms.logForm.elements);
 			formElems.forEach(e => e.disabled = true);
 
 			return this.getLogData(0).then(logdata => {
 				logdata = logdata || '';
 				let link = E('a', {
-					'download': this.viewName + '.txt',
+					'download': this.viewName + '.log',
 					'href': URL.createObjectURL(
 						new Blob([ logdata ], { type: 'text/plain' })),
 				});
@@ -228,15 +230,31 @@ return L.Class.extend({
 .log-entry-message {
 	min-width: 25em !important;
 }
+.log-entry-message-cell {
+	overflow-x: hidden !important;
+	text-overflow: ellipsis !important;
+}
 .log-empty {
 }
 .log-emerg {
 	background-color: #a93734 !important;
 	color: #fff;
 }
+log-emerg .td {
+	color: #fff !important;
+}
+log-emerg td {
+	color: #fff !important;
+}
 .log-alert {
 	background-color: #ff7968 !important;
 	color: #fff;
+}
+.log-alert .td {
+	color: #fff !important;
+}
+.log-alert td {
+	color: #fff !important;
 }
 .log-crit {
 	background-color: #fcc3bf !important;
@@ -354,6 +372,7 @@ return L.Class.extend({
 
 			let logSorting = E('select', {
 				'id': 'logSorting',
+				'name': 'logSorting',
 				'form': 'logForm',
 				'class': "cbi-input-select",
 			}, [
@@ -363,6 +382,8 @@ return L.Class.extend({
 			logSorting.value = this.logSortingValue;
 
 			let logDownloadBtn = E('button', {
+				'id': 'logDownloadBtn',
+				'name': 'logDownloadBtn',
 				'class': 'cbi-button btn',
 				'click': ui.createHandlerFn(this, this.downloadLog),
 			}, _('Download log'));
@@ -412,7 +433,7 @@ return L.Class.extend({
 								E('form', {
 									'id': 'logForm',
 									'name': 'logForm',
-									'style': 'display:inline-block',
+									'style': 'display:inline-block; margin-top:0.5em',
 									'submit': ui.createHandlerFn(this, function(ev) {
 										ev.preventDefault();
 										let formElems = Array.from(document.forms.logForm.elements);
@@ -458,38 +479,33 @@ return L.Class.extend({
 					])
 				),
 				E('div', { 'class': 'cbi-section fade-in' },
-					E('div', { 'class': 'cbi-section-node' },
-						E('div', { 'class': 'cbi-value' }, [
-							E('div', { 'style': 'position:fixed; z-index:1 !important' }, [
-								E('button', {
-									'class': 'btn',
-									'style': 'position:relative; display:block; margin:0 !important; left:1px; top:1px',
-									'click': ev => {
-										document.getElementById('logTitle').scrollIntoView(true);
-										ev.target.blur();
-									},
-								}, '&#8593;'),
-								E('button', {
-									'class': 'btn',
-									'style': 'position:relative; display:block; margin:0 !important; margin-top:1px !important; left:1px; top:1px',
-									'click': ev => {
-										logWrapper.scrollIntoView(false);
-										ev.target.blur();
-									},
-								}, '&#8595;'),
-							]),
-							logWrapper,
-						])
-					)
+					E('div', { 'class': 'cbi-section-node' }, [
+						E('div', { 'style': 'position:fixed; z-index:1 !important' }, [
+							E('button', {
+								'class': 'btn',
+								'style': 'position:relative; display:block; margin:0 !important; left:1px; top:1px',
+								'click': ev => {
+									document.getElementById('logTitle').scrollIntoView(true);
+									ev.target.blur();
+								},
+							}, '&#8593;'),
+							E('button', {
+								'class': 'btn',
+								'style': 'position:relative; display:block; margin:0 !important; margin-top:1px !important; left:1px; top:1px',
+								'click': ev => {
+									logWrapper.scrollIntoView(false);
+									ev.target.blur();
+								},
+							}, '&#8595;'),
+						]),
+						logWrapper,
+					])
 				),
 				E('div', { 'class': 'cbi-section fade-in' },
 					E('div', { 'class': 'cbi-section-node' },
 						E('div', { 'class': 'cbi-value' },
-							E('div', { 'style': 'width:100%; text-align:right !important' }, [
-								E('hr'),
-								logDownloadBtn,
-							])
-						)
+							E('div', { 'style': 'width:100%; text-align:right !important' }, logDownloadBtn)
+						),
 					)
 				),
 			]);
