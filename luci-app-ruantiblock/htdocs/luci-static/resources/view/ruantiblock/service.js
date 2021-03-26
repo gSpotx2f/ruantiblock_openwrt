@@ -250,8 +250,6 @@ return L.view.extend({
         let proxy_local_clients = (typeof(section) === 'object') ? section.proxy_local_clients : null;
         status_token_value = (Array.isArray(status_array)) ? tools.normalize_value(status_array[4]) : null;
 
-        document.head.append(E('style', {'type': 'text/css'}, tools.css));
-
         let status_string = E('div', {
             'id': 'status',
             'name': 'status',

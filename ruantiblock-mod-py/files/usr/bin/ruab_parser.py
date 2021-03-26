@@ -294,7 +294,7 @@ class BlackListParser(Config):
                 raise FieldValueError()
 
     def parser_func(self):
-        """Needs to be reloaded in subclass"""
+        """Must be overridden by a subclass"""
         raise NotImplementedError()
 
     def _check_sld_masks(self, sld):

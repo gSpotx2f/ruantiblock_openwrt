@@ -2,30 +2,8 @@
 'require fs';
 'require ui';
 
-return L.Class.extend({
-    app_name: 'ruantiblock',
-    exec_path: '/usr/bin/ruantiblock',
-    init_path: '/etc/init.d/ruantiblock',
-    token_file: '/var/run/ruantiblock.token',
-    parsers_dir: '/usr/bin',
-    torrc_file: '/etc/tor/torrc',
-    user_entries_file: '/etc/ruantiblock/user_entries',
-    fqdn_filter_file: '/etc/ruantiblock/fqdn_filter',
-    ip_filter_file: '/etc/ruantiblock/ip_filter',
-    crontab_file: '/etc/crontabs/root',
-    info_label_starting: '<span class="label-status starting">' + _('Starting') + '</span>',
-    info_label_running: '<span class="label-status running">' + _('Enabled') + '</span>',
-    info_label_updating: '<span class="label-status updating">' + _('Updating') + '</span>',
-    info_label_stopped: '<span class="label-status stopped">' + _('Disabled') + '</span>',
-    info_label_error: '<span class="label-status error">' + _('Error') + '</span>',
-
-    blacklist_sources: {
-        'rublacklist': 'https://rublacklist.net',
-        'zapret-info': 'https://github.com/zapret-info/z-i',
-        'antifilter': 'https://antifilter.download',
-    },
-
-    css: `
+document.head.append(E('style', {'type': 'text/css'},
+`
 .label-status {
     display: inline;
     margin: 0px 2px 0px 0 !important;
@@ -53,7 +31,31 @@ return L.Class.extend({
 }
 .total-proxy {
     background-color: #ffb937 !important;
-}`,
+}
+`));
+
+return L.Class.extend({
+    app_name: 'ruantiblock',
+    exec_path: '/usr/bin/ruantiblock',
+    init_path: '/etc/init.d/ruantiblock',
+    token_file: '/var/run/ruantiblock.token',
+    parsers_dir: '/usr/bin',
+    torrc_file: '/etc/tor/torrc',
+    user_entries_file: '/etc/ruantiblock/user_entries',
+    fqdn_filter_file: '/etc/ruantiblock/fqdn_filter',
+    ip_filter_file: '/etc/ruantiblock/ip_filter',
+    crontab_file: '/etc/crontabs/root',
+    info_label_starting: '<span class="label-status starting">' + _('Starting') + '</span>',
+    info_label_running: '<span class="label-status running">' + _('Enabled') + '</span>',
+    info_label_updating: '<span class="label-status updating">' + _('Updating') + '</span>',
+    info_label_stopped: '<span class="label-status stopped">' + _('Disabled') + '</span>',
+    info_label_error: '<span class="label-status error">' + _('Error') + '</span>',
+
+    blacklist_sources: {
+        'rublacklist': 'https://rublacklist.net',
+        'zapret-info': 'https://github.com/zapret-info/z-i',
+        'antifilter': 'https://antifilter.download',
+    },
 
     normalize_value: function(v) {
         return (v && typeof(v) === 'string') ? v.trim().replace(/\r?\n/g, '') : v;

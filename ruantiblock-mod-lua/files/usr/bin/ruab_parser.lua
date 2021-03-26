@@ -317,8 +317,8 @@ function BlackListParser:fill_domain_tables(val)
 end
 
 function BlackListParser:sink()
-    -- Needs to be reloaded in subclass
-    error("Method BlackListParser:sink() needs to be reloaded in subclass!")
+    -- Must be overridden by a subclass
+    error("Method BlackListParser:sink() must be overridden by a subclass!")
 end
 
 function BlackListParser:optimize_ip_table()

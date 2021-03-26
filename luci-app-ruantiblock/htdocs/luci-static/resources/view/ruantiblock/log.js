@@ -1,9 +1,9 @@
 'require fs';
 'require ui';
-'require view.log.baselog as baselog';
+'require view.log.abstract-log as abc';
 'require view.ruantiblock.tools as tools';
 
-return baselog.view.extend({
+return abc.view.extend({
 	viewName: 'ruantiblock',
 
 	title: _('Ruantiblock') + ' - ' + _('Log'),
@@ -22,6 +22,7 @@ return baselog.view.extend({
 		return [
 			lineNum,										// #			(Number)
 			strArray.slice(0, 5).join(' '),					// Timestamp	(String)
+			null,											// Host			(String)
 			logLevel[1],									// Level		(String)
 			logLevel[0],									// Facility		(String)
 			this.htmlEntities(strArray.slice(6).join(' ')),	// Message		(String)
@@ -30,9 +31,14 @@ return baselog.view.extend({
 
 	// syslog-ng
 	syslog_ngHandler: function(strArray, lineNum) {
+		if(!(strArray[3] in this.logHosts)) {
+			this.logHosts[strArray[3]] = this.makelogHostsDropdownItem(strArray[3]);
+		};
+
 		return [
 			lineNum,										// #			(Number)
 			strArray.slice(0, 3).join(' '),					// Timestamp	(String)
+			strArray[3],									// Host			(String)
 			null,											// Level		(String)
 			null,											// Facility		(String)
 			this.htmlEntities(strArray.slice(4).join(' ')),	// Message		(String)
@@ -48,7 +54,7 @@ return baselog.view.extend({
 
 			if(logger) {
 				return fs.exec_direct(logger, [ '-e', tools.app_name ]).catch(err => {
-					ui.addNotification(null, E('p', {}, _('Unable to load log data: ' + err.message)));
+					ui.addNotification(null, E('p', {}, _('Unable to load log data:') + ' ' + err.message));
 					return '';
 				});
 			};

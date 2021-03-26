@@ -113,6 +113,9 @@ msgstr ""
 msgid "Hour"
 msgstr ""
 
+msgid "Hour"
+msgstr ""
+
 msgid "Interval"
 msgstr ""
 
@@ -356,6 +359,12 @@ msgstr ""
 msgid "Facility"
 msgstr ""
 
+msgid "Host"
+msgstr ""
+
+msgid "Hosts"
+msgstr ""
+
 msgid "Info"
 msgstr ""
 
@@ -381,6 +390,9 @@ msgid "No entries available..."
 msgstr ""
 
 msgid "Notice"
+msgstr ""
+
+msgid "Refresh log"
 msgstr ""
 
 msgid "Sorting entries"
