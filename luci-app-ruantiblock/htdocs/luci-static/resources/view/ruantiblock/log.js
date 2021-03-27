@@ -83,9 +83,11 @@ return abc.view.extend({
 				 * If it contains time then syslog-ng.
 				*/
 				if(this.testRegexp.test(strArray[2])) {
+					this.isHosts = true;
 					this.logLevels = {};
 					this.entriesHandler = this.syslog_ngHandler;
 				} else {
+					this.isLevels = true;
 					this.entriesHandler = this.logdHandler;
 				};
 				this.isLoggerChecked = true;

@@ -94,8 +94,17 @@ log-emerg td {
 
 return L.Class.extend({
 	view: L.view.extend({
+
+		/**
+		 * View name (for local storage).
+		 * Must be overridden by a subclass!
+		*/
 		viewName: null,
 
+		/**
+		 * Page title.
+		 * Must be overridden by a subclass!
+		*/
 		title: null,
 
 		logLevels: {
@@ -113,9 +122,13 @@ return L.Class.extend({
 
 		logSortingValue: 'asc',
 
-		logLevelsStat: {},
+		isHosts: false,
+
+		isLevels: false,
 
 		logHosts: {},
+
+		logLevelsStat: {},
 
 		logHostsDropdown: null,
 
@@ -132,7 +145,7 @@ return L.Class.extend({
 				/'/g, '&#39;');
 		},
 
-		makelogHostsDropdownItem: function(host) {
+		makeLogHostsDropdownItem: function(host) {
 			return E(
 				'span',
 				{ 'class': 'zonebadge log-host-dropdown-item' },
@@ -140,24 +153,73 @@ return L.Class.extend({
 			);
 		},
 
+		makeLogHostsDropdownSection: function() {
+			this.logHostsDropdown = new ui.Dropdown(
+				null,
+				this.logHosts,
+				{
+					id: 'logHostsDropdown',
+					multiple: true,
+					select_placeholder: _('All'),
+				}
+			);
+			return E(
+				'div', { 'class': 'cbi-value' }, [
+					E('label', {
+						'class': 'cbi-value-title',
+						'for': 'logHostsDropdown',
+					}, _('Hosts')),
+					E('div', { 'class': 'cbi-value-field' },
+						this.logHostsDropdown.render()
+					),
+				]
+			);
+		},
+
+		makeLogLevelsDropdownSection: function(){
+			this.logLevelsDropdown = new ui.Dropdown(
+				null,
+				this.logLevels,
+				{
+					id: 'logLevelsDropdown',
+					sort: Object.keys(this.logLevels),
+					multiple: true,
+					select_placeholder: _('All'),
+				}
+			);
+			return E(
+				'div', { 'class': 'cbi-value' }, [
+					E('label', {
+						'class': 'cbi-value-title',
+						'for': 'logLevelsDropdown',
+					}, _('Logging levels')),
+					E('div', { 'class': 'cbi-value-field' },
+						this.logLevelsDropdown.render()
+					),
+				]
+			);
+		},
+
 		/**
+		* Receives raw log data.
+		* Abstract method, must be overridden by a subclass!
 		*
 		* @param {number} tail
 		* @returns {string}
 		* Returns the raw content of the log
-		*
 		*/
 		getLogData: function(tail) {
 			throw new Error('getLogData must be overridden by a subclass');
 		},
 
 		/**
+		* Parses log data.
+		* Abstract method, must be overridden by a subclass!
 		*
 		* @param {string} logdata
 		* @param {number} tail
 		* @returns {Array<number, string|null, string|null, string|null, string|null, string|null>}
 		* Returns an array of values: [ #, Timestamp, Host, Level, Facility, Message ]
-		*
 		*/
 		parseLogData: function(logdata, tail) {
 			throw new Error('parseLogData must be overridden by a subclass');
@@ -165,9 +227,9 @@ return L.Class.extend({
 
 		setHostFilter: function(cArr) {
 			let logHostsKeys = Object.keys(this.logHosts);
-			if(logHostsKeys.length > 0) {
+			if(logHostsKeys.length > 0 && this.logHostsDropdown) {
 				let selectedHosts = this.logHostsDropdown.getValue();
-				this.logHostsDropdown.addChoices(Object.keys(this.logHosts), this.logHosts);
+				this.logHostsDropdown.addChoices(logHostsKeys, this.logHosts);
 				if(selectedHosts.length === 0 || logHostsKeys.length === selectedHosts.length) {
 					return cArr;
 				};
@@ -178,7 +240,7 @@ return L.Class.extend({
 
 		setLevelFilter: function(cArr) {
 			let logLevelsKeys = Object.keys(this.logLevels);
-			if(logLevelsKeys.length > 0) {
+			if(logLevelsKeys.length > 0 && this.logLevelsDropdown) {
 				let selectedLevels = this.logLevelsDropdown.getValue();
 				if(selectedLevels.length === 0 || logLevelsKeys.length === selectedLevels.length) {
 					return cArr;
@@ -347,54 +409,12 @@ return L.Class.extend({
 			});
 
 			let logHostsDropdownElem = '';
-			let logHostsKeys = Object.keys(this.logHosts);
-			if(logHostsKeys.length > 0) {
-				this.logHostsDropdown = new ui.Dropdown(
-					null,
-					this.logHosts,
-					{
-						id: 'logHostsDropdown',
-						multiple: true,
-						select_placeholder: _('All'),
-					}
-				);
-				logHostsDropdownElem = E(
-					'div', { 'class': 'cbi-value' }, [
-						E('label', {
-							'class': 'cbi-value-title',
-							'for': 'logHostsDropdown',
-						}, _('Hosts')),
-						E('div', { 'class': 'cbi-value-field' },
-							this.logHostsDropdown.render()
-						),
-					]
-				);
-			};
-
 			let logLevelsDropdownElem = '';
-			let logLevelsKeys = Object.keys(this.logLevels);
-			if(logLevelsKeys.length > 0) {
-				this.logLevelsDropdown = new ui.Dropdown(
-					null,
-					this.logLevels,
-					{
-						id: 'logLevelsDropdown',
-						sort: logLevelsKeys,
-						multiple: true,
-						select_placeholder: _('All'),
-					}
-				);
-				logLevelsDropdownElem = E(
-					'div', { 'class': 'cbi-value' }, [
-						E('label', {
-							'class': 'cbi-value-title',
-							'for': 'logLevelsDropdown',
-						}, _('Logging levels')),
-						E('div', { 'class': 'cbi-value-field' },
-							this.logLevelsDropdown.render()
-						),
-					]
-				);
+			if(this.isLevels) {
+				logLevelsDropdownElem = this.makeLogLevelsDropdownSection();
+			};
+			if(this.isHosts) {
+				logHostsDropdownElem = this.makeLogHostsDropdownSection();
 			};
 
 			let logFilter = E('input', {
@@ -439,7 +459,7 @@ return L.Class.extend({
 				E('div', { 'class': 'cbi-section fade-in' },
 					E('div', { 'class': 'cbi-section-node' }, [
 
-						E('div', { 'class': 'cbi-value' }, [
+						E('div', { 'id': 'tailInputSection', 'class': 'cbi-value' }, [
 							E('label', {
 								'class': 'cbi-value-title',
 								'for': 'tailInput',
@@ -513,11 +533,20 @@ return L.Class.extend({
 													)
 												)
 											);
+
+											if(logdata) {
+												let tailInputSection = document.getElementById('tailInputSection');
+												if(this.isLevels && !this.logLevelsDropdown) {
+													tailInputSection.after(this.makeLogLevelsDropdownSection());
+												};
+												if(this.isHosts && !this.logHostsDropdown) {
+													tailInputSection.after(this.makeLogHostsDropdownSection());
+												};
+											};
 										}).finally(() => {
 											formElems.forEach(e => e.disabled = false);
 											logDownloadBtn.disabled = false;
 										});
-
 									}),
 								}, E('span', {}, '&#160;')),
 							]),
