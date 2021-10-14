@@ -222,6 +222,9 @@ InstallTorConfig() {
         _if_lan="eth0"
     fi
     $UCI_CMD set ruantiblock.config.if_lan="$_if_lan"
+    # dnsmasq rebind protection
+    $UCI_CMD set dhcp.@dnsmasq[0].rebind_localhost='1'
+    $UCI_CMD set dhcp.@dnsmasq[0].rebind_domain='.onion'
     $UCI_CMD commit
 }
 

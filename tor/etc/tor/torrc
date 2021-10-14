@@ -1,12 +1,10 @@
-User admin
-PidFile /var/run/tor.pid
+User tor
 DataDirectory /var/lib/tor
 VirtualAddrNetwork 10.254.0.0/16
 AutomapHostsOnResolve 1
 TransPort 192.168.1.1:9040
 TransPort 127.0.0.1:9040
-DNSPort 9053
-DNSListenAddress 127.0.0.1
+DNSPort 127.0.0.1:9053
 #SOCKSPort 192.168.1.1:9050         # Tor socks-proxy
 GeoIPFile /usr/share/tor/geoip
 GeoIPv6File /usr/share/tor/geoip6

@@ -446,7 +446,7 @@ GetDataFiles() {
         printf "\n" >> "$DNSMASQ_DATA_FILE"
     else
         ### Запись для .onion в $DNSMASQ_DATA_FILE
-        printf "server=/onion/%s\nipset=/onion/%s\n" "${ONION_DNS_ADDR}" "${IPSET_ONION}" >> "$DNSMASQ_DATA_FILE"
+        printf "server=/.onion/%s\nipset=/.onion/%s\n" "${ONION_DNS_ADDR}" "${IPSET_ONION}" >> "$DNSMASQ_DATA_FILE"
     fi
     rm -f "$UPDATE_PID_FILE"
     return $_return_code
