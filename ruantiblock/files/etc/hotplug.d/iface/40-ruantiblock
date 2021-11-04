@@ -4,5 +4,5 @@ IF_VPN=`uci get ruantiblock.config.if_vpn`
 PROXY_MODE=`uci get ruantiblock.config.proxy_mode`
 
 if [ "$ACTION" = "ifup" ] && [ "$PROXY_MODE" = "2" ] && [ "$DEVICE" = "$IF_VPN" ]; then
-    [ `/usr/bin/ruantiblock raw-status` -ne 2 ] && /usr/bin/ruantiblock reload
+	[ `/usr/bin/ruantiblock raw-status` -ne 2 ] && /usr/bin/ruantiblock reload
 fi

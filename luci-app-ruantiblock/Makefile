@@ -5,11 +5,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_VERSION:=0.9.0
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 LUCI_TITLE:=LuCI support for ruantiblock
-LUCI_DEPENDS:=+ruantiblock +luci-mod-admin-full
+LUCI_DEPENDS:=+ruantiblock
 LUCI_PKGARCH:=all
 
-include ../../luci.mk
+#include ../../luci.mk
+include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

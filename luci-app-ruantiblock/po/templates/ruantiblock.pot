@@ -7,6 +7,12 @@ msgstr ""
 msgid "Add user entries to the blacklist when updating"
 msgstr ""
 
+msgid "Alert"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
 msgid "All traffic goes through the proxy without applying rules"
 msgstr ""
 
@@ -14,6 +20,9 @@ msgid "Apply"
 msgstr ""
 
 msgid "Apply proxy rules to router application traffic"
+msgstr ""
+
+msgid "Blacklist entry filters"
 msgstr ""
 
 msgid "Blacklist module"
@@ -43,6 +52,9 @@ msgstr ""
 msgid "Clean up ipsets before updating blacklist"
 msgstr ""
 
+msgid "Command failed"
+msgstr ""
+
 msgid ""
 "Complete service shutdown, as well as deleting ipsets and blacklist data"
 msgstr ""
@@ -51,6 +63,9 @@ msgid "Contents have been saved."
 msgstr ""
 
 msgid "Convert cyrillic domains to punycode"
+msgstr ""
+
+msgid "Critical"
 msgstr ""
 
 msgid "Current schedule"
@@ -62,43 +77,47 @@ msgstr ""
 msgid "Day"
 msgstr ""
 
-msgid "Disable"
+msgid "Debug"
 msgstr ""
-
 msgid "Disabled"
 msgstr ""
 
 msgid "Dismiss"
 msgstr ""
 
+msgid "Download error"
+msgstr ""
+
+msgid "Download log"
+msgstr ""
 msgid "Edit"
 msgstr ""
 
+msgid "Emergency"
+msgstr ""
 msgid "Enable"
 msgstr ""
 
 msgid "Enable FQDN filter"
 msgstr ""
 
-msgid "Enable ip filter"
+msgid "Enable IP filter"
 msgstr ""
 
 msgid "Enable the 'total-proxy' option at startup"
 msgstr ""
-
 msgid "Enabled"
 msgstr ""
 
-msgid "Entries filters"
+msgid "Entries"
 msgstr ""
-
 msgid "Error"
 msgstr ""
 
-msgid "Exclude domains from blacklist by FQDN filter patterns"
+msgid "Exclude IP addresses from blacklist by IP filter patterns"
 msgstr ""
 
-msgid "Exclude IP addresses from blacklist by IP filter patterns"
+msgid "Exclude domains from blacklist by FQDN filter patterns"
 msgstr ""
 
 msgid "Expecting:"
@@ -110,13 +129,22 @@ msgstr ""
 msgid "FQDN filter"
 msgstr ""
 
-msgid "Hour"
+msgid "Facility"
+msgstr ""
+
+msgid "Failed to get %s init status: %s"
+msgstr ""
+
+msgid "HTML/XML error"
+msgstr ""
+
+msgid "Host"
+msgstr ""
+
+msgid "Hosts"
 msgstr ""
 
 msgid "Hour"
-msgstr ""
-
-msgid "Interval"
 msgstr ""
 
 msgid "IP configuration"
@@ -131,6 +159,15 @@ msgstr ""
 msgid "IP subnet patterns (/24) that are excluded from optimization"
 msgstr ""
 
+msgid "Info"
+msgstr ""
+
+msgid "Interval"
+msgstr ""
+
+msgid "Invalid regular expression"
+msgstr ""
+
 msgid "Ipset"
 msgstr ""
 
@@ -143,6 +180,12 @@ msgstr ""
 msgid "Last blacklist update"
 msgstr ""
 
+msgid "Last entries"
+msgstr ""
+
+msgid "Level"
+msgstr ""
+
 msgid "Loading"
 msgstr ""
 
@@ -152,10 +195,19 @@ msgstr ""
 msgid "Logging events"
 msgstr ""
 
+msgid "Logging levels"
+msgstr ""
+
 msgid "Main settings"
 msgstr ""
 
 msgid "Match-set"
+msgstr ""
+
+msgid "Message"
+msgstr ""
+
+msgid "Message filter"
 msgstr ""
 
 msgid "Minute"
@@ -167,13 +219,19 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
+msgid "No Shedule"
+msgstr ""
+
 msgid "No changes to save."
 msgstr ""
 
 msgid "No data"
 msgstr ""
 
-msgid "No Shedule"
+msgid "No entries available..."
+msgstr ""
+
+msgid "Notice"
 msgstr ""
 
 msgid "Number of entries"
@@ -189,10 +247,10 @@ msgstr ""
 msgid "One of the following:"
 msgstr ""
 
-msgid "Optional DNS resolver for '.onion' zone"
+msgid "Optional DNS resolver"
 msgstr ""
 
-msgid "Optional DNS resolver"
+msgid "Optional DNS resolver for '.onion' zone"
 msgstr ""
 
 msgid "Options"
@@ -216,13 +274,25 @@ msgstr ""
 msgid "Reduces RAM consumption during update"
 msgstr ""
 
+msgid "Refresh log"
+msgstr ""
+
 msgid "Reset"
+msgstr ""
+
+msgid "Ruantiblock"
 msgstr ""
 
 msgid "Run at startup"
 msgstr ""
 
+msgid "Save"
+msgstr ""
+
 msgid "Service"
+msgstr ""
+
+msgid "Service action failed \"%s %s\": %s"
 msgstr ""
 
 msgid "Set"
@@ -230,11 +300,13 @@ msgstr ""
 
 msgid "Settings"
 msgstr ""
-
 msgid "Shutdown"
 msgstr ""
 
 msgid "Size in memory"
+msgstr ""
+
+msgid "Sorting entries"
 msgstr ""
 
 msgid "Starting"
@@ -242,7 +314,6 @@ msgstr ""
 
 msgid "Statistics"
 msgstr ""
-
 msgid "Status"
 msgstr ""
 
@@ -273,10 +344,16 @@ msgstr ""
 msgid "Time"
 msgstr ""
 
+msgid "Timestamp"
+msgstr ""
+
 msgid "Tor configuration file"
 msgstr ""
 
 msgid "Tor mode"
+msgstr ""
+
+msgid "Total-proxy"
 msgstr ""
 
 msgid "Total-proxy is on"
@@ -285,9 +362,13 @@ msgstr ""
 msgid "Transparent proxy port for iptables rules"
 msgstr ""
 
+msgid "Type an expression..."
+msgstr ""
 msgid "Unable to execute or read contents"
 msgstr ""
 
+msgid "Unable to load log data:"
+msgstr ""
 msgid "Unable to read the contents"
 msgstr ""
 
@@ -308,7 +389,6 @@ msgstr ""
 
 msgid "Use optional DNS resolver"
 msgstr ""
-
 msgid "User entries"
 msgstr ""
 
@@ -321,7 +401,25 @@ msgstr ""
 msgid "VPN routing error! Need restart"
 msgstr ""
 
+msgid "Warning"
+msgstr ""
+
+msgid "ascending"
+msgstr ""
+
+msgid "descending"
+msgstr ""
+
+msgid "disabled"
+msgstr ""
+
 msgid "e.g:"
+msgstr ""
+
+msgid "net pattern"
+msgstr ""
+
+msgid "none (user entries only)"
 msgstr ""
 
 msgid "user entries only"
@@ -331,87 +429,4 @@ msgid "valid IP address"
 msgstr ""
 
 msgid "valid address#port"
-msgstr ""
-
-
-
-msgid "Alert"
-msgstr ""
-
-msgid "All"
-msgstr ""
-
-msgid "Critical"
-msgstr ""
-
-msgid "Debug"
-msgstr ""
-
-msgid "Download log"
-msgstr ""
-
-msgid "Emergency"
-msgstr ""
-
-msgid "Entries"
-msgstr ""
-
-msgid "Facility"
-msgstr ""
-
-msgid "Host"
-msgstr ""
-
-msgid "Hosts"
-msgstr ""
-
-msgid "Info"
-msgstr ""
-
-msgid "Invalid regular expression"
-msgstr ""
-
-msgid "Last entries"
-msgstr ""
-
-msgid "Level"
-msgstr ""
-
-msgid "Logging levels"
-msgstr ""
-
-msgid "Message"
-msgstr ""
-
-msgid "Message filter"
-msgstr ""
-
-msgid "No entries available..."
-msgstr ""
-
-msgid "Notice"
-msgstr ""
-
-msgid "Refresh log"
-msgstr ""
-
-msgid "Sorting entries"
-msgstr ""
-
-msgid "Timestamp"
-msgstr ""
-
-msgid "Type an expression..."
-msgstr ""
-
-msgid "Unable to load log data:"
-msgstr ""
-
-msgid "Warning"
-msgstr ""
-
-msgid "ascending"
-msgstr ""
-
-msgid "descending"
 msgstr ""

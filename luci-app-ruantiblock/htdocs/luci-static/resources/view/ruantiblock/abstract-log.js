@@ -139,15 +139,15 @@ return L.Class.extend({
 		 * View name (for local storage and downloads).
 		 * Must be overridden by a subclass!
 		*/
-		viewName: null,
+		viewName         : null,
 
 		/**
 		 * Page title.
 		 * Must be overridden by a subclass!
 		*/
-		title: null,
+		title            : null,
 
-		logLevels: {
+		logLevels        : {
 			'emerg':	E('span', { 'class': 'zonebadge log-emerg' }, E('strong', _('Emergency'))),
 			'alert':	E('span', { 'class': 'zonebadge log-alert' }, E('strong', _('Alert'))),
 			'crit':		E('span', { 'class': 'zonebadge log-crit' }, E('strong', _('Critical'))),
@@ -158,25 +158,25 @@ return L.Class.extend({
 			'debug':	E('span', { 'class': 'zonebadge log-debug' }, E('strong', _('Debug'))),
 		},
 
-		tailValue: 25,
+		tailValue        : 25,
 
-		logSortingValue: 'asc',
+		logSortingValue  : 'asc',
 
-		isHosts: false,
+		isHosts          : false,
 
-		isLevels: false,
+		isLevels         : false,
 
-		logHosts: {},
+		logHosts         : {},
 
-		logLevelsStat: {},
+		logLevelsStat    : {},
 
-		logHostsDropdown: null,
+		logHostsDropdown : null,
 
 		logLevelsDropdown: null,
 
-		totalLogLines: 0,
+		totalLogLines    : 0,
 
-		htmlEntities: function(str) {
+		htmlEntities     : function(str) {
 			return String(str).replace(
 				/&/g, '&#38;').replace(
 				/</g, '&#60;').replace(
@@ -426,15 +426,15 @@ return L.Class.extend({
 
 		render: function(logdata) {
 			let logWrapper = E('div', {
-				'id': 'logWrapper',
+				'id'   : 'logWrapper',
 				'style': 'width:100%; min-height:20em; padding: 0 0 0 45px; font-size:0.9em !important'
 			}, this.makeLogArea(this.parseLogData(logdata, this.tailValue)));
 
 			let tailInput = E('input', {
-				'id': 'tailInput',
-				'name': 'tailInput',
-				'type': 'text',
-				'form': 'logForm',
+				'id'   : 'tailInput',
+				'name' : 'tailInput',
+				'type' : 'text',
+				'form' : 'logForm',
 				'class': 'cbi-input-text',
 				'style': 'width:4em !important; min-width:4em !important',
 				'maxlength': 5,
@@ -443,8 +443,8 @@ return L.Class.extend({
 			ui.addValidator(tailInput, 'uinteger', true);
 
 			let tailReset = E('input', {
-				'type': 'button',
-				'form': 'logForm',
+				'type' : 'button',
+				'form' : 'logForm',
 				'class': 'cbi-button btn cbi-button-reset',
 				'value': 'Χ',
 				'click': ev => {
@@ -455,27 +455,27 @@ return L.Class.extend({
 				'style': 'max-width:4em !important',
 			});
 
-			let logHostsDropdownElem = '';
+			let logHostsDropdownElem  = '';
 			let logLevelsDropdownElem = '';
 			if(this.isLevels) {
 				logLevelsDropdownElem = this.makeLogLevelsDropdownSection();
 			};
 			if(this.isHosts) {
-				logHostsDropdownElem = this.makeLogHostsDropdownSection();
+				logHostsDropdownElem  = this.makeLogHostsDropdownSection();
 			};
 
 			let logFilter = E('input', {
-				'id': 'logFilter',
-				'name': 'logFilter',
-				'type': 'text',
-				'form': 'logForm',
-				'class': 'cbi-input-text',
+				'id'         : 'logFilter',
+				'name'       : 'logFilter',
+				'type'       : 'text',
+				'form'       : 'logForm',
+				'class'      : 'cbi-input-text',
 				'placeholder': _('Type an expression...'),
 			});
 
 			let logFormSubmitBtn = E('input', {
-				'type': 'submit',
-				'form': 'logForm',
+				'type' : 'submit',
+				'form' : 'logForm',
 				'class': 'cbi-button btn cbi-button-action',
 				'value': _('Apply'),
 				'click': ev => ev.target.blur(),
@@ -483,9 +483,9 @@ return L.Class.extend({
 			});
 
 			let logSorting = E('select', {
-				'id': 'logSorting',
-				'name': 'logSorting',
-				'form': 'logForm',
+				'id'   : 'logSorting',
+				'name' : 'logSorting',
+				'form' : 'logForm',
 				'class': "cbi-input-select",
 			}, [
 				E('option', { 'value': 'asc' }, _('ascending')),
@@ -494,8 +494,8 @@ return L.Class.extend({
 			logSorting.value = this.logSortingValue;
 
 			let logDownloadBtn = E('button', {
-				'id': 'logDownloadBtn',
-				'name': 'logDownloadBtn',
+				'id'   : 'logDownloadBtn',
+				'name' : 'logDownloadBtn',
 				'class': 'cbi-button btn',
 				'click': ui.createHandlerFn(this, this.downloadLog),
 			}, _('Download log'));
@@ -509,7 +509,7 @@ return L.Class.extend({
 						E('div', { 'id': 'tailInputSection', 'class': 'cbi-value' }, [
 							E('label', {
 								'class': 'cbi-value-title',
-								'for': 'tailInput',
+								'for'  : 'tailInput',
 							}, _('Last entries')),
 							E('div', { 'class': 'cbi-value-field' }, [
 								tailInput,
@@ -523,7 +523,7 @@ return L.Class.extend({
 						E('div', { 'class': 'cbi-value' }, [
 							E('label', {
 								'class': 'cbi-value-title',
-								'for': 'logFilter',
+								'for'  : 'logFilter',
 							}, _('Message filter')),
 							E('div', { 'class': 'cbi-value-field' }, logFilter),
 						]),
@@ -531,7 +531,7 @@ return L.Class.extend({
 						E('div', { 'class': 'cbi-value' }, [
 							E('label', {
 								'class': 'cbi-value-title',
-								'for': 'logSorting',
+								'for'  : 'logSorting',
 							}, _('Sorting entries')),
 							E('div', { 'class': 'cbi-value-field' }, logSorting,),
 						]),
@@ -539,14 +539,14 @@ return L.Class.extend({
 						E('div', { 'class': 'cbi-value' }, [
 							E('label', {
 								'class': 'cbi-value-title',
-								'for': 'logFilter',
+								'for'  : 'logFilter',
 							}, _('Refresh log')),
 							E('div', { 'class': 'cbi-value-field' }, [
 								logFormSubmitBtn,
 								E('form', {
-									'id': 'logForm',
-									'name': 'logForm',
-									'style': 'display:inline-block; margin-top:0.5em',
+									'id'    : 'logForm',
+									'name'  : 'logForm',
+									'style' : 'display:inline-block; margin-top:0.5em',
 									'submit': ui.createHandlerFn(this, function(ev) {
 										ev.preventDefault();
 										let formElems = Array.from(document.forms.logForm.elements);
@@ -633,8 +633,8 @@ return L.Class.extend({
 			]);
 		},
 
+		handleSave     : null,
 		handleSaveApply: null,
-		handleSave: null,
-		handleReset: null,
+		handleReset    : null,
 	}),
 })
