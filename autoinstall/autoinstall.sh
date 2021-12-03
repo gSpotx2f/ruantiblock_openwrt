@@ -12,7 +12,7 @@ OWRT_VERSION="19.07"
 RUAB_VERSION="0.9.0-2"
 RUAB_MOD_LUA_VERSION="0.9.0-2"
 RUAB_LUCI_APP_VERSION="0.9.0-7"
-BASE_URL="https://github.com/gSpotx2f/ruantiblock_openwrt/raw/master"
+BASE_URL="https://github.com/gSpotx2f/packages-openwrt/raw/master"
 PKG_DIR="/tmp"
 
 if [ -n "$1" ]; then
@@ -22,12 +22,12 @@ fi
 ### URLs
 
 ### packages
-URL_RUAB_PKG="${BASE_URL}/packages/${OWRT_VERSION}/ruantiblock_${RUAB_VERSION}_all.ipk"
-URL_MOD_LUA_PKG="${BASE_URL}/packages/${OWRT_VERSION}/ruantiblock-mod-lua_${RUAB_MOD_LUA_VERSION}_all.ipk"
-URL_LUCI_APP_PKG="${BASE_URL}/packages/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
-URL_LUCI_APP_RU_PKG="${BASE_URL}/packages/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
+URL_RUAB_PKG="${BASE_URL}/${OWRT_VERSION}/ruantiblock_${RUAB_VERSION}_all.ipk"
+URL_MOD_LUA_PKG="${BASE_URL}/${OWRT_VERSION}/ruantiblock-mod-lua_${RUAB_MOD_LUA_VERSION}_all.ipk"
+URL_LUCI_APP_PKG="${BASE_URL}/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
+URL_LUCI_APP_RU_PKG="${BASE_URL}/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
 ### tor
-URL_TORRC="${BASE_URL}/tor/etc/tor/torrc"
+URL_TORRC="https://github.com/gSpotx2f/ruantiblock_openwrt/raw/master/tor/etc/tor/torrc"
 ### ruantiblock-mod-lua
 URL_LUA_IPTOOL="https://github.com/gSpotx2f/iptool-lua/raw/master/5.1/iptool.lua"
 URL_LUA_IDN="https://github.com/haste/lua-idn/raw/master/idn.lua"
