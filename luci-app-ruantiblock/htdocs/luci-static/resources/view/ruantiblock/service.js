@@ -1,7 +1,9 @@
 'use strict';
 'require fs';
+'require poll';
 'require uci';
 'require ui';
+'require view';
 'require view.ruantiblock.tools as tools';
 
 const btn_style_neutral  = 'btn'
@@ -10,7 +12,7 @@ const btn_style_positive = 'btn cbi-button-save important';
 const btn_style_negative = 'btn cbi-button-reset important';
 const btn_style_warning  = 'btn cbi-button-negative important'
 
-return L.view.extend({
+return view.extend({
 	statusTokenValue: null,
 
 	disableButtons: function(bool, btn, elems=[]) {
@@ -155,8 +157,8 @@ return L.view.extend({
 								tp_status_code,
 								vpn_route_status_code);
 
-		if(!L.Poll.active()) {
-			L.Poll.start();
+		if(!poll.active()) {
+			poll.start();
 		};
 	},
 
@@ -166,7 +168,7 @@ return L.view.extend({
 			this.disableButtons(true, elem);
 		};
 
-		L.Poll.stop();
+		poll.stop();
 
 		return tools.handleServiceAction(tools.appName, action).then(() => {
 			return this.getAppStatus().then(
@@ -183,7 +185,7 @@ return L.view.extend({
 			this.disableButtons(true, elem);
 		};
 
-		L.Poll.stop();
+		poll.stop();
 
 		if(action === 'update') {
 			this.getAppStatus().then(status_array => {
@@ -326,7 +328,7 @@ return L.view.extend({
 			btn_destroy,
 		]);
 
-		L.Poll.add(L.bind(this.statusPoll, this));
+		poll.add(L.bind(this.statusPoll, this));
 
 		return E([
 			E('h2', { 'class': 'fade-in' }, _('Ruantiblock')),

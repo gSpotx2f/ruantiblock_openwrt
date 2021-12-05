@@ -4,9 +4,9 @@
 'require view.ruantiblock.tools as tools';
 
 return abc.view.extend({
-	viewName: 'ruantiblock',
+	viewName       : 'ruantiblock',
 
-	title: _('Ruantiblock') + ' - ' + _('Log'),
+	title          : _('Ruantiblock') + ' - ' + _('Log'),
 
 	appRegexp      : new RegExp(`^.*${tools.appName}\[[0-9]+\].*$`, 'gm'),
 
@@ -20,12 +20,12 @@ return abc.view.extend({
 	logdHandler: function(strArray, lineNum) {
 		let logLevel = strArray[5].split('.');
 		return [
-			lineNum,										// #			(Number)
-			strArray.slice(0, 5).join(' '),					// Timestamp	(String)
-			null,											// Host			(String)
-			logLevel[1],									// Level		(String)
-			logLevel[0],									// Facility		(String)
-			this.htmlEntities(strArray.slice(6).join(' ')),	// Message		(String)
+			lineNum,                                        // #         (Number)
+			strArray.slice(0, 5).join(' '),                 // Timestamp (String)
+			null,                                           // Host      (String)
+			logLevel[1],                                    // Level     (String)
+			logLevel[0],                                    // Facility  (String)
+			this.htmlEntities(strArray.slice(6).join(' ')), // Message   (String)
 		];
 	},
 
@@ -36,12 +36,12 @@ return abc.view.extend({
 		};
 
 		return [
-			lineNum,										// #			(Number)
-			strArray.slice(0, 3).join(' '),					// Timestamp	(String)
-			strArray[3],									// Host			(String)
-			null,											// Level		(String)
-			null,											// Facility		(String)
-			this.htmlEntities(strArray.slice(4).join(' ')),	// Message		(String)
+			lineNum,                                        // #         (Number)
+			strArray.slice(0, 3).join(' '),                 // Timestamp (String)
+			strArray[3],                                    // Host      (String)
+			null,                                           // Level     (String)
+			null,                                           // Facility  (String)
+			this.htmlEntities(strArray.slice(4).join(' ')), // Message   (String)
 		];
 	},
 
@@ -84,11 +84,11 @@ return abc.view.extend({
 				 * If it contains time then syslog-ng.
 				*/
 				if(this.testRegexp.test(strArray[2])) {
-					this.isHosts = true;
-					this.logLevels = {};
+					this.isHosts        = true;
+					this.logLevels      = {};
 					this.entriesHandler = this.syslog_ngHandler;
 				} else {
-					this.isLevels = true;
+					this.isLevels       = true;
 					this.entriesHandler = this.logdHandler;
 				};
 				this.isLoggerChecked = true;

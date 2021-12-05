@@ -1,4 +1,5 @@
 'use strict';
+'require baseclass';
 'require fs';
 'require rpc';
 'require ui';
@@ -35,7 +36,7 @@ document.head.append(E('style', {'type': 'text/css'},
 }
 `));
 
-return L.Class.extend({
+return baseclass.extend({
 	appName          : 'ruantiblock',
 	execPath         : '/usr/bin/ruantiblock',
 	tokenFile        : '/var/run/ruantiblock.token',
@@ -191,7 +192,7 @@ return L.Class.extend({
 		);
 	},
 
-	fileEditDialog: L.Class.extend({
+	fileEditDialog: baseclass.extend({
 		__init__: function(file, title, description, callback, file_exists=false) {
 			this.file        = file;
 			this.title       = title;

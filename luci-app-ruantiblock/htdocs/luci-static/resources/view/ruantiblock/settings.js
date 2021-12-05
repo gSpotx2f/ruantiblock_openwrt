@@ -4,9 +4,10 @@
 'require form';
 'require ui';
 'require tools.widgets as widgets';
+'require view';
 'require view.ruantiblock.tools as tools';
 
-return L.view.extend({
+return view.extend({
 	availableParsers: {},
 
 	appStatusCode   : null,

@@ -1,9 +1,10 @@
 'use strict';
 'require fs';
 'require ui';
+'require view';
 'require view.ruantiblock.tools as tools';
 
-return L.view.extend({
+return view.extend({
 	crontabRegexp: new RegExp(
 		`^(\\*?\\/?(\\d){0,2}\\s){5}${tools.execPath} update(\n)?`, 'gm'),
 

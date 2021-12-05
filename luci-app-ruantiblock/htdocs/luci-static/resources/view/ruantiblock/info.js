@@ -1,15 +1,17 @@
 'use strict';
 'require fs';
+'require poll';
 'require ui';
+'require view';
 'require view.ruantiblock.tools as tools';
 
-return L.view.extend({
+return view.extend({
 	infoPoll: function() {
 		return fs.exec_direct(tools.execPath, [ 'html-info' ], 'json').catch(e => {
 			ui.addNotification(null, E('p', _('Unable to execute or read contents')
 				+ ': %s [ %s ]'.format(e.message, tools.execPath)
 			));
-			L.Poll.stop();
+			poll.stop();
 		}).then(data => {
 			if(!data) {
 				return;
@@ -71,8 +73,8 @@ return L.view.extend({
 					};
 				};
 			} else {
-				if(L.Poll.active()) {
-					L.Poll.stop();
+				if(poll.active()) {
+					poll.stop();
 				};
 			};
 		});
@@ -151,6 +153,7 @@ return L.view.extend({
 
 					for(let [k, v] of Object.entries(data.iptables)) {
 						if(k === '_dummy') continue;
+
 						table_iptables.append(
 							E('div', { 'class': 'tr' }, [
 								E('div', {
@@ -190,7 +193,7 @@ return L.view.extend({
 						table_ipset.append(
 							E('div', { 'class': 'tr' }, [
 								E('div', {
-									'class'     : 'td left',
+									'class': 'td left',
 									'data-title': _('Name'),
 								}, k),
 								E('div', {
@@ -213,7 +216,7 @@ return L.view.extend({
 					]);
 				};
 
-				L.Poll.add(this.infoPoll);
+				poll.add(this.infoPoll);
 			} else {
 				update_status = E('em', {}, _('Status') + ' : ' + _('disabled'));
 			};

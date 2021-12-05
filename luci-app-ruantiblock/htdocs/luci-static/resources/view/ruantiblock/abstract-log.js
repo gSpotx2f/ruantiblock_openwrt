@@ -1,5 +1,7 @@
 'use strict';
+'require baseclass';
 'require ui';
+'require view';
 
 document.head.append(E('style', {'type': 'text/css'},
 `
@@ -132,9 +134,8 @@ log-emerg td {
 }
 `));
 
-return L.Class.extend({
-	view: L.view.extend({
-
+return baseclass.extend({
+	view: view.extend({
 		/**
 		 * View name (for local storage and downloads).
 		 * Must be overridden by a subclass!
@@ -148,14 +149,14 @@ return L.Class.extend({
 		title            : null,
 
 		logLevels        : {
-			'emerg':	E('span', { 'class': 'zonebadge log-emerg' }, E('strong', _('Emergency'))),
-			'alert':	E('span', { 'class': 'zonebadge log-alert' }, E('strong', _('Alert'))),
-			'crit':		E('span', { 'class': 'zonebadge log-crit' }, E('strong', _('Critical'))),
-			'err':		E('span', { 'class': 'zonebadge log-err' }, E('strong', _('Error'))),
-			'warn':		E('span', { 'class': 'zonebadge log-warn' }, E('strong', _('Warning'))),
-			'notice':	E('span', { 'class': 'zonebadge log-notice' }, E('strong', _('Notice'))),
-			'info':		E('span', { 'class': 'zonebadge log-info' }, E('strong', _('Info'))),
-			'debug':	E('span', { 'class': 'zonebadge log-debug' }, E('strong', _('Debug'))),
+			'emerg' : E('span', { 'class': 'zonebadge log-emerg' }, E('strong', _('Emergency'))),
+			'alert' : E('span', { 'class': 'zonebadge log-alert' }, E('strong', _('Alert'))),
+			'crit'  : E('span', { 'class': 'zonebadge log-crit' }, E('strong', _('Critical'))),
+			'err'   : E('span', { 'class': 'zonebadge log-err' }, E('strong', _('Error'))),
+			'warn'  : E('span', { 'class': 'zonebadge log-warn' }, E('strong', _('Warning'))),
+			'notice': E('span', { 'class': 'zonebadge log-notice' }, E('strong', _('Notice'))),
+			'info'  : E('span', { 'class': 'zonebadge log-info' }, E('strong', _('Info'))),
+			'debug' : E('span', { 'class': 'zonebadge log-debug' }, E('strong', _('Debug'))),
 		},
 
 		tailValue        : 25,
@@ -176,7 +177,7 @@ return L.Class.extend({
 
 		totalLogLines    : 0,
 
-		htmlEntities     : function(str) {
+		htmlEntities: function(str) {
 			return String(str).replace(
 				/&/g, '&#38;').replace(
 				/</g, '&#60;').replace(
@@ -198,8 +199,8 @@ return L.Class.extend({
 				null,
 				this.logHosts,
 				{
-					id: 'logHostsDropdown',
-					multiple: true,
+					id                : 'logHostsDropdown',
+					multiple          : true,
 					select_placeholder: _('All'),
 				}
 			);
@@ -207,7 +208,7 @@ return L.Class.extend({
 				'div', { 'class': 'cbi-value' }, [
 					E('label', {
 						'class': 'cbi-value-title',
-						'for': 'logHostsDropdown',
+						'for'  : 'logHostsDropdown',
 					}, _('Hosts')),
 					E('div', { 'class': 'cbi-value-field' },
 						this.logHostsDropdown.render()
@@ -221,9 +222,9 @@ return L.Class.extend({
 				null,
 				this.logLevels,
 				{
-					id: 'logLevelsDropdown',
-					sort: Object.keys(this.logLevels),
-					multiple: true,
+					id                : 'logLevelsDropdown',
+					sort              : Object.keys(this.logLevels),
+					multiple          : true,
 					select_placeholder: _('All'),
 				}
 			);
@@ -231,7 +232,7 @@ return L.Class.extend({
 				'div', { 'class': 'cbi-value' }, [
 					E('label', {
 						'class': 'cbi-value-title',
-						'for': 'logLevelsDropdown',
+						'for'  : 'logLevelsDropdown',
 					}, _('Logging levels')),
 					E('div', { 'class': 'cbi-value-field' },
 						this.logLevelsDropdown.render()
@@ -324,7 +325,7 @@ return L.Class.extend({
 		},
 
 		makeLogArea: function(logdataArray) {
-			let lines = `<div class="tr"><div class="td center log-entry-empty">${_('No entries available...')}</div></div>`;
+			let lines    = `<div class="tr"><div class="td center log-entry-empty">${_('No entries available...')}</div></div>`;
 			let logTable = E('div', { 'id': 'logTable', 'class': 'table' });
 
 			for(let level of Object.keys(this.logLevels)) {
@@ -420,7 +421,6 @@ return L.Class.extend({
 			if(logSortingLocal) {
 				this.logSortingValue = logSortingLocal;
 			};
-
 			return this.getLogData(this.tailValue);
 		},
 
@@ -431,12 +431,12 @@ return L.Class.extend({
 			}, this.makeLogArea(this.parseLogData(logdata, this.tailValue)));
 
 			let tailInput = E('input', {
-				'id'   : 'tailInput',
-				'name' : 'tailInput',
-				'type' : 'text',
-				'form' : 'logForm',
-				'class': 'cbi-input-text',
-				'style': 'width:4em !important; min-width:4em !important',
+				'id'       : 'tailInput',
+				'name'     : 'tailInput',
+				'type'     : 'text',
+				'form'     : 'logForm',
+				'class'    : 'cbi-input-text',
+				'style'    : 'width:4em !important; min-width:4em !important',
 				'maxlength': 5,
 			});
 			tailInput.value = (this.tailValue === 0) ? null : this.tailValue;
@@ -461,7 +461,7 @@ return L.Class.extend({
 				logLevelsDropdownElem = this.makeLogLevelsDropdownSection();
 			};
 			if(this.isHosts) {
-				logHostsDropdownElem  = this.makeLogHostsDropdownSection();
+				logHostsDropdownElem = this.makeLogHostsDropdownSection();
 			};
 
 			let logFilter = E('input', {
@@ -633,8 +633,8 @@ return L.Class.extend({
 			]);
 		},
 
-		handleSave     : null,
 		handleSaveApply: null,
+		handleSave     : null,
 		handleReset    : null,
 	}),
 })
