@@ -102,65 +102,64 @@ return view.extend({
 			ipset = null;
 		if(data) {
 			if(data.status === 'enabled') {
-				update_status = E('div', { 'class': 'table' });
+				update_status = E('table', { 'class': 'table' });
 
 				if(data.last_blacklist_update.status) {
 					update_status.append(
-						E('div', { 'class': 'tr' }, [
-							E('div', { 'class': 'td left', 'style': 'min-width:33%' },
+						E('tr', { 'class': 'tr' }, [
+							E('td', { 'class': 'td left', 'style': 'min-width:33%' },
 								_('Last blacklist update') + ':'),
-							E('div', { 'class': 'td left',
+							E('td', { 'class': 'td left',
 										'id': 'last_blacklist_update.date' },
 								data.last_blacklist_update.date),
 						]),
-						E('div', { 'class': 'tr' }, [
-							E('div', { 'class': 'td left' }, 'IP:'),
-							E('div', { 'class': 'td left',
+						E('tr', { 'class': 'tr' }, [
+							E('td', { 'class': 'td left' }, 'IP:'),
+							E('td', { 'class': 'td left',
 										'id': 'last_blacklist_update.ip' },
 								data.last_blacklist_update.ip),
 						]),
-						E('div', { 'class': 'tr' }, [
-							E('div', { 'class': 'td left' }, 'CIDR:'),
-							E('div', { 'class': 'td left',
+						E('tr', { 'class': 'tr' }, [
+							E('td', { 'class': 'td left' }, 'CIDR:'),
+							E('td', { 'class': 'td left',
 										'id': 'last_blacklist_update.cidr' },
 								data.last_blacklist_update.cidr),
 						]),
-						E('div', { 'class': 'tr' }, [
-							E('div', { 'class': 'td left' }, 'FQDN:'),
-							E('div', { 'class': 'td left',
+						E('tr', { 'class': 'tr' }, [
+							E('td', { 'class': 'td left' }, 'FQDN:'),
+							E('td', { 'class': 'td left',
 										'id': 'last_blacklist_update.fqdn' },
 								data.last_blacklist_update.fqdn),
 						])
 					);
 				} else {
 					update_status.append(
-						E('div', { 'class': 'tr' }, [
-							E('div', { 'class': 'td left' },
+						E('tr', { 'class': 'tr' }, [
+							E('td', { 'class': 'td left' },
 								_('Last blacklist update')),
-							E('div', { 'class': 'td left' }, _('No data')),
+							E('td', { 'class': 'td left' }, _('No data')),
 						])
 					);
 				};
 
 				if(data.iptables) {
-					let table_iptables = E('div', { 'class': 'table' }, [
-						E('div', { 'class': 'tr table-titles' }, [
-							E('div', { 'class': 'th left', 'style': 'min-width:33%' },
+					let table_iptables = E('table', { 'class': 'table' }, [
+						E('tr', { 'class': 'tr table-titles' }, [
+							E('th', { 'class': 'th left', 'style': 'min-width:33%' },
 								_('Match-set')),
-							E('div', { 'class': 'th left' }, _('Bytes')),
+							E('th', { 'class': 'th left' }, _('Bytes')),
 						]),
 					]);
 
 					for(let [k, v] of Object.entries(data.iptables)) {
 						if(k === '_dummy') continue;
-
 						table_iptables.append(
-							E('div', { 'class': 'tr' }, [
-								E('div', {
+							E('tr', { 'class': 'tr' }, [
+								E('td', {
 									'class'     : 'td left',
 									'data-title': _('Match-set'),
 								}, k),
-								E('div', {
+								E('td', {
 									'class'     : 'td left',
 									'id'        : 'iptables.' + k,
 									'data-title': _('Bytes'),
@@ -176,13 +175,13 @@ return view.extend({
 				};
 
 				if(data.ipset) {
-					let table_ipset = E('div', { 'class': 'table' },
-						E('div', { 'class': 'tr table-titles' }, [
-							E('div', { 'class': 'th left', 'style': 'min-width:33%' },
+					let table_ipset = E('table', { 'class': 'table' },
+						E('tr', { 'class': 'tr table-titles' }, [
+							E('th', { 'class': 'th left', 'style': 'min-width:33%' },
 								_('Name')),
-							E('div', { 'class': 'th left' },
+							E('th', { 'class': 'th left' },
 								_('Size in memory')),
-							E('div', { 'class': 'th left' },
+							E('th', { 'class': 'th left' },
 								_('Number of entries')),
 						])
 					);
@@ -191,17 +190,17 @@ return view.extend({
 						if(k === '_dummy') continue;
 
 						table_ipset.append(
-							E('div', { 'class': 'tr' }, [
-								E('div', {
+							E('tr', { 'class': 'tr' }, [
+								E('td', {
 									'class': 'td left',
 									'data-title': _('Name'),
 								}, k),
-								E('div', {
+								E('td', {
 									'class'     : 'td left',
 									'id'        : 'ipset.' + k + '.' + '0',
 									'data-title': _('Size in memory'),
 								}, v[0]),
-								E('div', {
+								E('td', {
 									'class'     : 'td left',
 									'id'        : 'ipset.' + k + '.' + '1',
 									'data-title': _('Number of entries'),

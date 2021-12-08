@@ -96,7 +96,7 @@ msgid "Disabled"
 msgstr "Отключено"
 
 msgid "Dismiss"
-msgstr "Отмена"
+msgstr "Закрыть"
 
 msgid "Download error"
 msgstr "Ошибка загрузки"

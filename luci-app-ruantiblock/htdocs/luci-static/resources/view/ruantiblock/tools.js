@@ -129,45 +129,45 @@ return baseclass.extend({
 				break;
 			default:
 				app_status_label = this.infoLabelError;
-				return `<div class="table">
-							<div class="tr">
-								<div class="td left" style="min-width:33%%">
+				return `<table class="table">
+							<tr class="tr">
+								<td class="td left" style="min-width:33%%">
 									${_('Status')}:
-								</div>
-								<div class="td left">
+								</td>
+								<td class="td left">
 									${app_status_label}
-								</div>
-							</div>
-						</div>`
+								</td>
+							</tr>
+						</table>`
 		};
 
-		return `<div class="table">
-					<div class="tr">
-						<div class="td left" style="min-width:33%%">
+		return `<table class="table">
+					<tr class="tr">
+						<td class="td left" style="min-width:33%%">
 							${_('Status')}:
-						</div>
-						<div class="td left%s">
+						</td>
+						<td class="td left%s">
 							%s %s %s
-						</div>
-					</div>
-					<div class="tr">
-						<div class="td left">
+						</td>
+					</tr>
+					<tr class="tr">
+						<td class="td left">
 							${_('Proxy mode')}:
-						</div>
-						<div class="td left">
+						</td>
+						<td class="td left">
 							%s
-						</div>
-					</div>
-					<div class="tr">
-						<div class="td left">
+						</td>
+					</tr>
+					<tr class="tr">
+						<td class="td left">
 							${_('Blacklist update mode')}:
-						</div>
-						<div class="td left">
+						</td>
+						<td class="td left">
 							%s
-						</div>
-					</div>
+						</td>
+					</tr>
 					%s
-				</div>
+				</table>
 		`.format(
 			spinning,
 			app_status_label,
@@ -179,16 +179,16 @@ return baseclass.extend({
 			(proxy_mode == 1) ? 'Tor' : 'VPN',
 			(!bllist_module || bllist_module === '') ? _('user entries only') : bllist_mode,
 			(!bllist_module || bllist_module === '') ? '' :
-					`<div class="tr">
-						<div class="td left">
+					`<tr class="tr">
+						<td class="td left">
 							${_('Blacklist source')}:
-						</div>
-						<div class="td left">
+						</td>
+						<td class="td left">
 							<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${this.blacklistSources[bllist_source]}">
 								${bllist_source}
 							</span>
-						</div>
-					</div>`
+						</td>
+					</tr>`
 		);
 	},
 
