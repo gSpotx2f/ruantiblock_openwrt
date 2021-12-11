@@ -6,9 +6,9 @@
 
 return view.extend({
 	crontabRegexp: new RegExp(
-		`^(\\*?\\/?(\\d){0,2}\\s){5}${tools.execPath} update(\n)?`, 'gm'),
+		`^(\\*?\\/?(\\d){0,2}\\s){5}${tools.execPath} update`),
 
-	currentCrontabContent: null,
+	currentCrontabLines: [],
 
 	toDD: function(n){
 		return String(n).replace(/^(\d)$/, "0$1");
@@ -18,12 +18,9 @@ return view.extend({
 		return s || _('No Shedule');
 	},
 
-	pickCronTask: function(content) {
-		if(!content){
-			return;
-		};
-		let current_tasks = content.match(this.crontabRegexp) || [];
-		return current_tasks.join('');
+	stringifyRuabTasks: function(str_array) {
+		let current_tasks = str_array.filter(s => s.match(this.crontabRegexp));
+		return current_tasks.join('\n');
 	},
 
 	setCronStatus: function(value) {
@@ -33,18 +30,13 @@ return view.extend({
 	},
 
 	writeCronFile: function() {
-		let btn_cron_add = document.getElementById('btn_cron_add');
-		let btn_cron_del = document.getElementById('btn_cron_del');
+		let btn_cron_add   = document.getElementById('btn_cron_add');
+		let btn_cron_del   = document.getElementById('btn_cron_del');
+		let crontab_string = this.currentCrontabLines.join('\n');
 
-		if(!this.currentCrontabContent) {
-			ui.addNotification(null, E('p', _('No changes to save.')));
-			btn_cron_add.disabled = false;
-			return;
-		};
-
-		return fs.write(tools.crontabFile, this.currentCrontabContent).then(rc => {
+		return fs.write(tools.crontabFile, crontab_string).then(rc => {
 				ui.addNotification(null, E('p',_('Changes have been saved.')), 'info');
-				this.setCronStatus(this.pickCronTask(this.currentCrontabContent));
+				this.setCronStatus(this.stringifyRuabTasks(this.currentCrontabLines));
 			}).then(() => {
 				return tools.getInitStatus('cron').then(res => {
 					 if(!res) {
@@ -61,11 +53,13 @@ return view.extend({
 			});
 	},
 
+	delRuabShedules: function() {
+		this.currentCrontabLines = this.currentCrontabLines.filter(
+			s => s.match(this.crontabRegexp) ? false : true);
+	},
+
 	delCronSchedule: function(ev) {
-		if(this.currentCrontabContent) {
-			this.currentCrontabContent = this.currentCrontabContent.replace(
-				this.crontabRegexp, "");
-		};
+		this.delRuabShedules();
 		return this.writeCronFile();
 	},
 
@@ -76,14 +70,21 @@ return view.extend({
 		let min           = document.getElementById('cron_min').value;
 		let task_string   = '%s %s %s * * %s update\n'.format(
 			min,
-			(!hour_interval) ? hour : (hour_interval == "1") ? '*' : '*/' + hour_interval,
-			(hour_interval || day_interval == "1") ? '*' : '*/' + day_interval,
+			(!hour_interval) ? hour :
+				(hour_interval == "1") ?
+					'*'
+				:
+					'*/' + hour_interval,
+			(hour_interval || day_interval == "1") ?
+				'*'
+			:
+				'*/' + day_interval,
 			tools.execPath
 		);
-		if(this.currentCrontabContent) {
-			this.currentCrontabContent = this.currentCrontabContent.replace(
-				this.crontabRegexp, "") + task_string;
-		};
+
+		this.delRuabShedules();
+		this.currentCrontabLines.push(task_string);
+
 		return this.writeCronFile();
 	},
 
@@ -106,7 +107,7 @@ return view.extend({
 	},
 
 	load: function() {
-		return fs.read(tools.crontabFile).catch(e => {
+		return fs.lines(tools.crontabFile).catch(e => {
 			ui.addNotification(null, E('p', _('Unable to read the contents')
 				+ ': %s [ %s ]'.format(
 					e.message, tools.crontabFile
@@ -115,22 +116,23 @@ return view.extend({
 	},
 
 	render: function(content) {
-		this.currentCrontabContent = content;
-		let current_task = this.pickCronTask(content);
+		this.currentCrontabLines = content;
+		let current_task = this.stringifyRuabTasks(content);
 
 		let cron_status = E('textarea', {
-			'id': 'cron_status',
-			'name': 'cron_status',
-			'style': 'width:100% !important; padding:5px 10px 5px 10px !important; resize:none !important;',
-			'readonly': 'readonly',
-			'wrap': 'off',
-			'rows': 2,
+			'id'        : 'cron_status',
+			'name'      : 'cron_status',
+			'style'     : 'width:100% !important; padding:5px 10px 5px 10px !important; resize:none !important;',
+			'readonly'  : 'readonly',
+			'wrap'      : 'off',
+			'rows'      : 2,
+			'spellcheck': 'false',
 		}, this.cronStatusString(current_task));
 
 		let btn_cron_del = E('button', {
 			'class': 'cbi-button btn cbi-button-reset',
-			'id': 'btn_cron_del',
-			'name': 'btn_cron_del',
+			'id'   : 'btn_cron_del',
+			'name' : 'btn_cron_del',
 		}, _('Reset'));
 		btn_cron_del.onclick          = ui.createHandlerFn(this, this.delCronSchedule);
 		btn_cron_del.style.visibility = (current_task) ? 'visible' : 'hidden';
@@ -165,8 +167,10 @@ return view.extend({
 
 		layout_append(E('b', {}, _('Interval')));
 
-		let cron_hour_interval = E('select',
-			{ 'id': 'cron_hour_interval', 'style': 'width:60px !important; min-width:60px !important' }, [
+		let cron_hour_interval = E('select', {
+			'id'   : 'cron_hour_interval',
+			'style': 'width:60px !important; min-width:60px !important',
+		}, [
 			E('option', { 'value': '' }, ''),
 			E('option', { 'value': '1' }, '&#8727;')
 		]);
@@ -178,9 +182,11 @@ return view.extend({
 		layout_append(cron_hour_interval, _('Hour'));
 		cron_hour_interval.onchange = this.onchangeHourInterval;
 
-		let cron_day_interval = E('select',
-			{ 'id': 'cron_day_interval', 'style': 'width:60px !important; min-width:60px !important' },
-				E('option', { 'value': '1' }, '&#8727;')
+		let cron_day_interval = E('select', {
+			'id'   : 'cron_day_interval',
+			'style': 'width:60px !important; min-width:60px !important',
+		},
+			E('option', { 'value': '1' }, '&#8727;')
 		);
 		for(let i = 2; i < 8 ; i++) {
 			cron_day_interval.append(
@@ -193,8 +199,10 @@ return view.extend({
 
 		layout_append(E('b', {}, _('Time')));
 
-		let cron_hour = E('select',
-			{ 'id': 'cron_hour', 'style': 'width:60px !important; min-width:60px !important' });
+		let cron_hour = E('select', {
+			'id'   : 'cron_hour',
+			'style': 'width:60px !important; min-width:60px !important',
+		});
 		for(let i = 0; i < 24 ; i++) {
 			cron_hour.append(
 				E('option', { 'value': String(i) }, this.toDD(i))
@@ -202,8 +210,10 @@ return view.extend({
 		};
 		layout_append(cron_hour, _('Hour'));
 
-		let cron_min = E('select',
-			{ 'id': 'cron_min', 'style': 'width:60px !important; min-width:60px !important' });
+		let cron_min = E('select', {
+			'id'   : 'cron_min',
+			'style': 'width:60px !important; min-width:60px !important',
+		});
 		for(let i = 0; i < 60 ; i++) {
 			cron_min.append(
 				E('option', { 'value': String(i) }, this.toDD(i))
@@ -213,8 +223,8 @@ return view.extend({
 
 		let btn_cron_add = E('button', {
 			'class': 'btn cbi-button-save',
-			'id': 'btn_cron_add',
-			'name': 'btn_cron_add'
+			'id'   : 'btn_cron_add',
+			'name' : 'btn_cron_add',
 		}, _('Set'));
 		btn_cron_add.onclick = ui.createHandlerFn(this, this.setCronSchedule);
 		layout_append(btn_cron_add);

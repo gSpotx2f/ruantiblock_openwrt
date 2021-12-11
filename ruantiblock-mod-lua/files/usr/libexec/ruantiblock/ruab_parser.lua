@@ -3,13 +3,6 @@
 --[[
  (с) 2020 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 
- Модуль поддерживает следующие источники:
-    https://reestr.rublacklist.net/api/v2/current/csv
-    https://reestr.rublacklist.net/api/v2/ips/csv
-    https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv
-    https://antifilter.download/list/domains.lst
-    https://antifilter.download/list/allyouneed.lst
-
  lua == 5.1
 --]]
 
