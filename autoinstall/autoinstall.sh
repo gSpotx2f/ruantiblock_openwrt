@@ -9,9 +9,9 @@ LUA_MODULE=1
 LUCI_APP=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="0.9.0-3"
-RUAB_MOD_LUA_VERSION="0.9.0-3"
-RUAB_LUCI_APP_VERSION="0.9.0-9"
+RUAB_VERSION="0.9.1-1"
+RUAB_MOD_LUA_VERSION="0.9.1-1"
+RUAB_LUCI_APP_VERSION="0.9.1-1"
 BASE_URL="https://github.com/gSpotx2f/packages-openwrt/raw/master"
 PKG_DIR="/tmp"
 
@@ -245,7 +245,7 @@ InstallLuaModule() {
     DlFile "$URL_MOD_LUA_PKG" "$FILE_MOD_LUA_PKG" && $OPKG_CMD install "$FILE_MOD_LUA_PKG"
     FileExists "$FILE_LUA_IPTOOL" || DlFile "$URL_LUA_IPTOOL" "$FILE_LUA_IPTOOL"
     FileExists "$FILE_LUA_IDN" || DlFile "$URL_LUA_IDN" "$FILE_LUA_IDN"
-    $UCI_CMD set ruantiblock.config.bllist_module="/usr/bin/ruab_parser.lua"
+    $UCI_CMD set ruantiblock.config.bllist_module="/usr/libexec/ruantiblock/ruab_parser.lua"
     $UCI_CMD commit
 }
 

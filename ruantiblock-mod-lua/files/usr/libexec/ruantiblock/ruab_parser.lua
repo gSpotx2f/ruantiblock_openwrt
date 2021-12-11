@@ -3,6 +3,13 @@
 --[[
  (с) 2020 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 
+ Модуль поддерживает следующие источники:
+    https://reestr.rublacklist.net/api/v2/current/csv
+    https://reestr.rublacklist.net/api/v2/ips/csv
+    https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv
+    https://antifilter.download/list/domains.lst
+    https://antifilter.download/list/allyouneed.lst
+
  lua == 5.1
 --]]
 
@@ -35,7 +42,6 @@ end
 
 local Config = Class(nil, {
     environ_table = {
-        ["EXEC_DIR"] = true,
         ["BLLIST_SOURCE"] = true,
         ["BLLIST_MODE"] = true,
         ["ALT_NSLOOKUP"] = true,
@@ -86,7 +92,7 @@ local Config = Class(nil, {
 })
 Config.wget_user_agent = (Config.http_send_headers["User-Agent"]) and ' -U "' .. Config.http_send_headers["User-Agent"] .. '"' or ''
 
--- Load external config
+-- Loading external config
 
 function Config:load_config(t)
     local config_arrays = {
@@ -131,7 +137,7 @@ Config.IP_FILTER = remap_bool(Config.IP_FILTER)
 Config.SUMMARIZE_IP = remap_bool(Config.SUMMARIZE_IP)
 Config.SUMMARIZE_CIDR = remap_bool(Config.SUMMARIZE_CIDR)
 
--- Load filters
+-- Loading filters
 
 function Config:load_filter_files()
     function load_file(file, t)
@@ -155,7 +161,7 @@ end
 
 Config:load_filter_files()
 
--- Import packages
+-- Importing packages
 
 local function prequire(package)
     local ret_val, pkg = pcall(require, package)
@@ -187,7 +193,7 @@ if not si then
     Config.SUMMARIZE_IP = false
 end
 
--- Check iconv
+-- Iconv check
 
 if Config.ICONV_TYPE == "standalone" then
     local handler = io.popen("which " .. Config.ICONV_CMD)

@@ -40,7 +40,7 @@ return baseclass.extend({
 	appName          : 'ruantiblock',
 	execPath         : '/usr/bin/ruantiblock',
 	tokenFile        : '/var/run/ruantiblock.token',
-	parsersDir       : '/usr/bin',
+	parsersDir       : '/usr/libexec/ruantiblock',
 	torrcFile        : '/etc/tor/torrc',
 	userEntriesFile  : '/etc/ruantiblock/user_entries',
 	fqdnFilterFile   : '/etc/ruantiblock/fqdn_filter',
