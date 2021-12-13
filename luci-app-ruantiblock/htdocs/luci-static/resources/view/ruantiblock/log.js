@@ -8,7 +8,7 @@ return abc.view.extend({
 
 	title          : _('Ruantiblock') + ' - ' + _('Log'),
 
-	appRegexp      : new RegExp(`^.*${tools.appName}.*$`, 'gm'),
+	appRegexp      : new RegExp(`^.*user\.(err|warning|notice|info|debug)\\s${tools.appName}.*$`, 'gm'),
 
 	testRegexp     : new RegExp(/([0-9]{2}:){2}[0-9]{2}/),
 
