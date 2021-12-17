@@ -8,52 +8,52 @@ PKG_NAME:=ruantiblock
 PKG_VERSION:=0.9.1
 PKG_RELEASE:=1
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
 include $(INCLUDE_DIR)/package.mk
 
 define Package/$(PKG_NAME)
-	SECTION:=net
-	CATEGORY:=Network
-	TITLE:=Ruantiblock
-	URL:=https://github.com/gSpotx2f/ruantiblock_openwrt
-	PKGARCH:=all
-	DEPENDS:=+wget +ipset +kmod-ipt-ipset +dnsmasq-full
+  SECTION:=net
+  CATEGORY:=Network
+  TITLE:=Ruantiblock
+  URL:=https://github.com/gSpotx2f/ruantiblock_openwrt
+  PKGARCH:=all
+  DEPENDS:=+wget +ipset +kmod-ipt-ipset +dnsmasq-full
 endef
 
 define Package/$(PKG_NAME)/description
-
 endef
 
 define Package/$(PKG_NAME)/conffiles
-	/etc/config/ruantiblock
-	/etc/ruantiblock/ruantiblock.conf
-	/etc/ruantiblock/fqdn_filter
-	/etc/ruantiblock/ip_filter
-	/etc/ruantiblock/user_entries
+/etc/config/ruantiblock
+/etc/ruantiblock/ruantiblock.conf
+/etc/ruantiblock/fqdn_filter
+/etc/ruantiblock/ip_filter
+/etc/ruantiblock/user_entries
 endef
 
-define Build/Prepare
-	$(CP) -r ./files $(PKG_BUILD_DIR)/files
+define Build/Configure
+endef
+
+define Build/Compile
 endef
 
 define Package/$(PKG_NAME)/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/usr/bin/ruantiblock $(1)/usr/bin/ruantiblock
-	$(INSTALL_DIR) $(1)/etc/ruantiblock
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/etc/ruantiblock/ruantiblock.conf $(1)/etc/ruantiblock/ruantiblock.conf
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/etc/ruantiblock/fqdn_filter $(1)/etc/ruantiblock/fqdn_filter
-	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/hotplug.d/iface/40-ruantiblock $(1)/etc/hotplug.d/iface/40-ruantiblock
-	$(INSTALL_DIR) $(1)/etc/ruantiblock/scripts
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/etc/ruantiblock/scripts/config_script $(1)/etc/ruantiblock/scripts/config_script
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/etc/ruantiblock/scripts/info_output $(1)/etc/ruantiblock/scripts/info_output
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/etc/ruantiblock/scripts/ipt_functions $(1)/etc/ruantiblock/scripts/ipt_functions
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/ruantiblock/scripts/start_script $(1)/etc/ruantiblock/scripts/start_script
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) $(PKG_BUILD_DIR)/files/etc/config/ruantiblock $(1)/etc/config/ruantiblock
+	$(INSTALL_CONF) ./files/etc/config/ruantiblock $(1)/etc/config/ruantiblock
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/etc/init.d/ruantiblock $(1)/etc/init.d/ruantiblock
+	$(INSTALL_BIN) ./files/etc/init.d/ruantiblock $(1)/etc/init.d/ruantiblock
+	$(INSTALL_DIR) $(1)/etc/hotplug.d/iface
+	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/40-ruantiblock $(1)/etc/hotplug.d/iface/40-ruantiblock
+	$(INSTALL_DIR) $(1)/etc/ruantiblock
+	$(INSTALL_CONF) ./files/etc/ruantiblock/ruantiblock.conf $(1)/etc/ruantiblock/ruantiblock.conf
+	$(INSTALL_CONF) ./files/etc/ruantiblock/fqdn_filter $(1)/etc/ruantiblock/fqdn_filter
+	$(INSTALL_DIR) $(1)/etc/ruantiblock/scripts
+	$(INSTALL_DATA) ./files/etc/ruantiblock/scripts/config_script $(1)/etc/ruantiblock/scripts/config_script
+	$(INSTALL_DATA) ./files/etc/ruantiblock/scripts/info_output $(1)/etc/ruantiblock/scripts/info_output
+	$(INSTALL_DATA) ./files/etc/ruantiblock/scripts/ipt_functions $(1)/etc/ruantiblock/scripts/ipt_functions
+	$(INSTALL_BIN) ./files/etc/ruantiblock/scripts/start_script $(1)/etc/ruantiblock/scripts/start_script
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) ./files/usr/bin/ruantiblock $(1)/usr/bin/ruantiblock
 endef
 
 define Package/$(PKG_NAME)/preinst
