@@ -202,7 +202,7 @@ return baseclass.extend({
 		},
 
 		load: function() {
-			return fs.read(this.file);
+			return L.resolveDefault(fs.read(this.file), '');
 		},
 
 		render: function(content) {
@@ -219,7 +219,7 @@ return baseclass.extend({
 								'wrap': 'off',
 								'spellcheck': 'false',
 							},
-							content || '')
+							content)
 						)
 					),
 				]),

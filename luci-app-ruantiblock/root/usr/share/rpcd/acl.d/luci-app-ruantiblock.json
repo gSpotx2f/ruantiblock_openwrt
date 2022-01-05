@@ -4,7 +4,7 @@
 		"read": {
 			"cgi-io": [ "exec" ],
 			"file": {
-				"/usr/bin": [ "list" ],
+				"/usr/libexec/ruantiblock": [ "list" ],
 				"/etc/ruantiblock/fqdn_filter": [ "read" ],
 				"/etc/ruantiblock/ip_filter": [ "read" ],
 				"/etc/ruantiblock/user_entries": [ "read" ],
