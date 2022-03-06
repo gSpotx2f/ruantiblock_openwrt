@@ -113,8 +113,8 @@ export ALT_NSLOOKUP=0
 export ALT_DNS_ADDR="8.8.8.8"
 
 ### Источники блэклиста
-export RBL_ALL_URL="https://api.reserve-rbl.ru/api/v2/current/csv"
-export RBL_IP_URL="https://api.reserve-rbl.ru/api/v2/ips/csv"
+export RBL_ALL_URL="https://reestr.rublacklist.net/api/v2/current/csv/"
+export RBL_IP_URL="https://reestr.rublacklist.net/api/v2/ips/csv/"
 export ZI_ALL_URL="https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv"
 export AF_IP_URL="https://antifilter.download/list/allyouneed.lst"
 export AF_FQDN_URL="https://antifilter.download/list/domains.lst"
