@@ -32,7 +32,7 @@ export PROXY_LOCAL_CLIENTS=1
 ### Удаление записей из основных сетов перед началом заполнения временных сетов при обновлении (для освобождения оперативной памяти перед заполнением сетов) (0 - off, 1 - on)
 export IPSET_CLEAR_SETS=0
 ### Входящий сетевой интерфейс для правил iptables
-export IF_LAN="eth0"
+export IF_LAN=""
 ### VPN интерфейс для правил iptables
 export IF_VPN="tun0"
 ### Порт транспарентного proxy Tor (параметр TransPort в torrc)

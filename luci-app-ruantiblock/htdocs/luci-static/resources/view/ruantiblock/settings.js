@@ -62,7 +62,6 @@ return view.extend({
 		};
 		this.appStatusCode = data[0].code;
 		let p_dir_arr = data[1];
-		let lan_iface = uci.get('network', 'lan', 'ifname') || 'eth0';
 		let vpn_iface = uci.get('network', 'VPN', 'ifname') || 'tun0';
 
 		if(p_dir_arr) {
@@ -162,8 +161,7 @@ return view.extend({
 				_('LAN interface'));
 			o.multiple  = false;
 			o.noaliases = true;
-			o.rmempty   = false;
-			o.default   = lan_iface;
+			o.optional  = true;
 
 			// TOR_TRANS_PORT
 			o = s.taboption('tor_settings', form.Value, 'tor_trans_port',

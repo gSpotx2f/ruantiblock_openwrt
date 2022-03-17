@@ -9,9 +9,9 @@ LUA_MODULE=1
 LUCI_APP=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="0.9.1-1"
-RUAB_MOD_LUA_VERSION="0.9.1-1"
-RUAB_LUCI_APP_VERSION="0.9.1-1"
+RUAB_VERSION="0.9.1-2"
+RUAB_MOD_LUA_VERSION="0.9.1-2"
+RUAB_LUCI_APP_VERSION="0.9.1-2"
 BASE_URL="https://github.com/gSpotx2f/packages-openwrt/raw/master"
 PKG_DIR="/tmp"
 
@@ -211,17 +211,11 @@ TorrcSettings() {
 }
 
 InstallTorConfig() {
-    local _if_lan
     InstallPackages "tor" "tor-geoip"
     BackupFile "$FILE_TORRC"
     DlFile "$URL_TORRC" "$FILE_TORRC"
     TorrcSettings
     $UCI_CMD set ruantiblock.config.proxy_mode="1"
-    _if_lan=`$UCI_CMD get network.lan.ifname`
-    if [ -z "$_if_lan" ]; then
-        _if_lan="eth0"
-    fi
-    $UCI_CMD set ruantiblock.config.if_lan="$_if_lan"
     # dnsmasq rebind protection
     $UCI_CMD set dhcp.@dnsmasq[0].rebind_localhost='1'
     $UCI_CMD set dhcp.@dnsmasq[0].rebind_domain='.onion'
