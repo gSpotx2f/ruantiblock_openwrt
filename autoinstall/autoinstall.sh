@@ -9,8 +9,8 @@ LUA_MODULE=1
 LUCI_APP=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="0.9.1-2"
-RUAB_MOD_LUA_VERSION="0.9.1-2"
+RUAB_VERSION="0.9.1-3"
+RUAB_MOD_LUA_VERSION="0.9.1-3"
 RUAB_LUCI_APP_VERSION="0.9.1-2"
 BASE_URL="https://github.com/gSpotx2f/packages-openwrt/raw/master"
 PKG_DIR="/tmp"

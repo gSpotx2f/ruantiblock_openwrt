@@ -47,7 +47,6 @@ class Config:
         "ZI_ALL_URL",
         "AF_IP_URL",
         "AF_FQDN_URL",
-        "AZ_ENCODING",
         "RBL_ENCODING",
         "ZI_ENCODING",
         "AF_ENCODING",
@@ -149,7 +148,7 @@ class BlackListParser(Config):
         self.url = "http://127.0.0.1"
         self.records_separator = "\n"
         self.fields_separator = ";"
-        self.ips_separator = " | "
+        self.ips_separator = "|"
         self.default_site_encoding = "utf-8"
         self.site_encoding = self.default_site_encoding
 

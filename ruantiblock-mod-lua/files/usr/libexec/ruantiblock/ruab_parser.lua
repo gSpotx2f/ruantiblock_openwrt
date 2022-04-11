@@ -63,7 +63,6 @@ local Config = Class(nil, {
         ["ZI_ALL_URL"] = true,
         ["AF_IP_URL"] = true,
         ["AF_FQDN_URL"] = true,
-        ["AZ_ENCODING"] = true,
         ["RBL_ENCODING"] = true,
         ["ZI_ENCODING"] = true,
         ["AF_ENCODING"] = true,
