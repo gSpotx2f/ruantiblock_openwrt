@@ -249,7 +249,7 @@ InstallLuciApp() {
     DlFile "$URL_LUCI_APP_PKG" "$FILE_LUCI_APP_PKG" && $OPKG_CMD install "$FILE_LUCI_APP_PKG" && \
     DlFile "$URL_LUCI_APP_RU_PKG" "$FILE_LUCI_APP_RU_PKG" && $OPKG_CMD install "$FILE_LUCI_APP_RU_PKG"
     rm -f /tmp/luci-modulecache/*
-    rm -f /tmp/luci-indexcache
+    rm -f /tmp/luci-indexcache*
     /etc/init.d/rpcd restart
     /etc/init.d/uhttpd restart
 }
