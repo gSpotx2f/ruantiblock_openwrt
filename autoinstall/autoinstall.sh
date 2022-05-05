@@ -9,10 +9,10 @@ LUA_MODULE=1
 LUCI_APP=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="0.9.1-3"
-RUAB_MOD_LUA_VERSION="0.9.1-3"
-RUAB_LUCI_APP_VERSION="0.9.1-2"
-BASE_URL="https://github.com/gSpotx2f/packages-openwrt/raw/master"
+RUAB_VERSION="0.9.2-0"
+RUAB_MOD_LUA_VERSION="0.9.2-0"
+RUAB_LUCI_APP_VERSION="0.9.2-0"
+BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
 
 if [ -n "$1" ]; then
@@ -27,10 +27,10 @@ URL_MOD_LUA_PKG="${BASE_URL}/${OWRT_VERSION}/ruantiblock-mod-lua_${RUAB_MOD_LUA_
 URL_LUCI_APP_PKG="${BASE_URL}/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
 URL_LUCI_APP_RU_PKG="${BASE_URL}/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
 ### tor
-URL_TORRC="https://github.com/gSpotx2f/ruantiblock_openwrt/raw/master/tor/etc/tor/torrc"
+URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/tor/etc/tor/torrc"
 ### ruantiblock-mod-lua
-URL_LUA_IPTOOL="https://github.com/gSpotx2f/iptool-lua/raw/master/5.1/iptool.lua"
-URL_LUA_IDN="https://github.com/haste/lua-idn/raw/master/idn.lua"
+URL_LUA_IPTOOL="https://raw.githubusercontent.com/gSpotx2f/iptool-lua/master/5.1/iptool.lua"
+URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
 
 ### Local files
 
@@ -248,8 +248,7 @@ InstallLuciApp() {
     RemoveFile "$FILE_LUCI_APP_RU_PKG" > /dev/null
     DlFile "$URL_LUCI_APP_PKG" "$FILE_LUCI_APP_PKG" && $OPKG_CMD install "$FILE_LUCI_APP_PKG" && \
     DlFile "$URL_LUCI_APP_RU_PKG" "$FILE_LUCI_APP_RU_PKG" && $OPKG_CMD install "$FILE_LUCI_APP_RU_PKG"
-    rm -f /tmp/luci-modulecache/*
-    rm -f /tmp/luci-indexcache*
+    rm -f /tmp/luci-modulecache/* /tmp/luci-indexcache*
     /etc/init.d/rpcd restart
     /etc/init.d/uhttpd restart
 }

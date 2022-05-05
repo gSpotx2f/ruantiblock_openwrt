@@ -1,9 +1,9 @@
 'use strict';
 'require fs';
-'require uci';
 'require form';
-'require ui';
 'require tools.widgets as widgets';
+'require uci';
+'require ui';
 'require view';
 'require view.ruantiblock.tools as tools';
 
@@ -28,20 +28,6 @@ return view.extend({
 		return (/^$|^([0-9]{1,3}\.){3}[0-9]{1,3}(#[\d]{2,5})?$/.test(value)) ? true : _('Expecting:')
 			+ ` ${_('One of the following:')}\n - ${_('valid IP address')}\n - ${_('valid address#port')}\n`;
 	},
-
-	CBIBlockTitle: form.DummyValue.extend({
-		string: null,
-
-		renderWidget: function(section_id, option_index, cfgvalue) {
-			this.title = this.description = null;
-			return E([
-				E('label', { 'class': 'cbi-value-title' }),
-				E('div', { 'class': 'cbi-value-field' },
-					E('b', {}, this.string)
-				),
-			]);
-		},
-	}),
 
 	load: function() {
 		return Promise.all([
@@ -132,17 +118,10 @@ return view.extend({
 			_("Apply proxy rules to router application traffic"));
 		proxy_local_clients.rmempty = false;
 
-		// USE_LOGGER
-		o = s.taboption('main_settings', form.Flag, 'use_logger',
+		// ENABLE_LOGGING
+		o = s.taboption('main_settings', form.Flag, 'enable_logging',
 			_('Logging events'));
 		o.rmempty = false;
-
-		// DEF_TOTAL_PROXY
-		o = s.taboption('main_settings', form.Flag, 'def_total_proxy',
-			_("Enable the 'total-proxy' option at startup"));
-		o.rmempty = false;
-		o.default = 0;
-		o.depends('proxy_local_clients', '0');
 
 		// IPSET_CLEAR_SETS
 		o = s.taboption('main_settings', form.Flag, 'ipset_clear_sets',
@@ -150,24 +129,35 @@ return view.extend({
 		o.description = _('Reduces RAM consumption during update');
 		o.rmempty = false;
 
+		// ALOWED_HOSTS_MODE
+		o = s.taboption('main_settings', form.ListValue, 'alowed_hosts_mode',
+			_('Host filter'));
+		o.value('0', _('Disabled'));
+		o.value('1', _('Only listed hosts'));
+		o.value('2', _('All hosts except listed'));
+		o.description = _('Restriction of hosts that are allowed to bypass blocking');
+
+		// ALOWED_HOSTS_LIST
+		o = s.taboption('main_settings', form.DynamicList, 'alowed_hosts_list',
+			_('IP addresses of hosts'));
+		o.datatype = "ip4addr";
+
 
 		if(this.appStatusCode == 1 || this.appStatusCode == 2) {
 			/* Tor tab */
 
 			s.tab('tor_settings', _('Tor mode'));
 
-			// IF_LAN
-			o = s.taboption('tor_settings', widgets.DeviceSelect, 'if_lan',
-				_('LAN interface'));
-			o.multiple  = false;
-			o.noaliases = true;
-			o.optional  = true;
-
 			// TOR_TRANS_PORT
 			o = s.taboption('tor_settings', form.Value, 'tor_trans_port',
 				_('Transparent proxy port for iptables rules'));
 			o.rmempty  = false;
 			o.datatype = "port";
+
+			//TOR_ALLOW_UDP
+			o = s.taboption('tor_settings', form.Flag, 'tor_allow_udp',
+				_("Send UDP traffic to Tor"));
+			o.rmempty = false;
 
 			// ONION_DNS_ADDR
 			o = s.taboption('tor_settings', form.Value, 'onion_dns_addr',
@@ -208,32 +198,27 @@ return view.extend({
 		Object.entries(this.availableParsers).forEach(
 			e => bllist_module.value(e[1], e[0]));
 
-		// BLLIST_MODE
-		let bllist_mode = s.taboption('parser_settings', form.ListValue,
-			'bllist_mode', _('Module operation mode'));
-		bllist_mode.value('ip');
-		bllist_mode.value('fqdn');
+		// BLLIST_PRESET
+		let bllist_preset = s.taboption('parser_settings', form.ListValue,
+			'bllist_preset', _('Blacklist update mode'));
+		bllist_preset.description = _("Blacklist sources") + ':';
+		Object.entries(tools.blacklistPresets).forEach(e => {
+			bllist_preset.value(e[0], `${e[1][0]} - ${e[1][1]}`);
+		});
+		let bllist_sources = {};
+		Object.values(tools.blacklistPresets).forEach(v => {bllist_sources[v[0]] = v[2]});
+		Object.entries(bllist_sources).forEach(e => {
+			bllist_preset.description += `<br />${e[0]} - <a href="${e[1]}" target="_blank">${e[1]}</a>`;
+		});
 
-		// BLLIST_SOURCE
-		let bllist_source = s.taboption('parser_settings', form.ListValue,
-			'bllist_source', _('Blacklist source'));
-		bllist_source.description = _("Options") + ':';
-		for(let [k, v] of Object.entries(tools.blacklistSources)) {
-			bllist_source.value(k);
-			bllist_source.description += `<br />${k} - <a href="${v}" target="_blank">${v}</a>`;
-		};
-
-		o = s.taboption('parser_settings', this.CBIBlockTitle, '_dummy_ip');
-		o.string = _('IP configuration') + ':';
-
-		// IP_LIMIT
-		o = s.taboption('parser_settings', form.Value, 'ip_limit', _("IP limit"));
+		// BLLIST_IP_LIMIT
+		o = s.taboption('parser_settings', form.Value, 'bllist_ip_limit', _("IP limit"));
 		o.description = _("The number of IP addresses in the subnet, upon reaching which the entire '/24' subnet is added to the list");
 		o.rmempty     = false;
 		o.datatype    = 'uinteger';
 
-		// OPT_EXCLUDE_NETS
-		o = s.taboption('parser_settings', form.DynamicList, 'opt_exclude_nets');
+		// BLLIST_GR_EXCLUDED_NETS
+		o = s.taboption('parser_settings', form.DynamicList, 'bllist_gr_excluded_nets');
 		o.title       = _('IP subnet patterns (/24) that are excluded from optimization');
 		o.description = _('e.g:') + ' <code>192.168.1.</code>';
 		o.placeholder = _('e.g:') + ' 192.168.1.';
@@ -242,45 +227,42 @@ return view.extend({
 					+ ' ' + _('net pattern') + ' (' + _('e.g:') + ' 192.168.3.)\n';
 		};
 
-		// SUMMARIZE_IP
-		o = s.taboption('parser_settings', form.Flag, 'summarize_ip',
+		// BLLIST_SUMMARIZE_IP
+		o = s.taboption('parser_settings', form.Flag, 'bllist_summarize_ip',
 			_("Summarize IP ranges"));
 		o.rmempty = false;
 
-		// SUMMARIZE_CIDR
-		o = s.taboption('parser_settings', form.Flag, 'summarize_cidr',
+		// BLLIST_SUMMARIZE_CIDR
+		o = s.taboption('parser_settings', form.Flag, 'bllist_summarize_cidr',
 			_("Summarize '/24' networks"));
 		o.rmempty = false;
 
-		o = s.taboption('parser_settings', this.CBIBlockTitle, '_dummy_fqdn');
-		o.string = _('FQDN configuration') + ':';
-
-		// SD_LIMIT
-		o = s.taboption('parser_settings', form.Value, 'sd_limit',
+		// BLLIST_SD_LIMIT
+		o = s.taboption('parser_settings', form.Value, 'bllist_sd_limit',
 			_("Subdomains limit"));
 		o.description = _('The number of subdomains in the domain, upon reaching which the entire 2nd level domain is added to the list');
 		o.rmempty     = false;
 		o.datatype    = 'uinteger';
 
-		// OPT_EXCLUDE_SLD
-		o = s.taboption('parser_settings', form.DynamicList, 'opt_exclude_sld',
+		// BLLIST_GR_EXCLUDED_SLD
+		o = s.taboption('parser_settings', form.DynamicList, 'bllist_gr_excluded_sld',
 			_('2nd level domains that are excluded from optimization'));
 		o.description = _('e.g:') + ' <code>livejournal.com</code>';
 		o.placeholder = _('e.g:') + ' livejournal.com';
 		o.datatype = "hostname";
 
-		// USE_IDN
-		o = s.taboption('parser_settings', form.Flag, 'use_idn',
+		// BLLIST_ENABLE_IDN
+		o = s.taboption('parser_settings', form.Flag, 'bllist_enable_idn',
 			_("Convert cyrillic domains to punycode"));
 		o.rmempty = false;
 
-		// ALT_NSLOOKUP
-		o = s.taboption('parser_settings', form.Flag, 'alt_nslookup',
+		// BLLIST_ALT_NSLOOKUP
+		o = s.taboption('parser_settings', form.Flag, 'bllist_alt_nslookup',
 			_('Use optional DNS resolver'));
 		o.rmempty = false;
 
-		// ALT_DNS_ADDR
-		o = s.taboption('parser_settings', form.Value, 'alt_dns_addr',
+		// BLLIST_ALT_DNS_ADDR
+		o = s.taboption('parser_settings', form.Value, 'bllist_alt_dns_addr',
 			_("Optional DNS resolver"), '<code>ipaddress[#port]</code>');
 		o.rmempty  = false;
 		o.validate = this.validateIpPort;
@@ -290,26 +272,26 @@ return view.extend({
 
 		s.tab('entries_filter_tab', _('Blacklist entry filters'));
 
-		// IP_FILTER
-		o = s.taboption('entries_filter_tab', form.Flag, 'ip_filter',
+		// BLLIST_IP_FILTER
+		o = s.taboption('entries_filter_tab', form.Flag, 'bllist_ip_filter',
 			_("Enable IP filter"));
 		o.description = _('Exclude IP addresses from blacklist by IP filter patterns');
 		o.rmempty     = false;
 
-		// IP_FILTER edit dialog
+		// BLLIST_IP_FILTER_FILE edit dialog
 		o = s.taboption('entries_filter_tab', form.Button, '_ip_filter_btn',
 			_("IP filter"));
 		o.onclick    = () => ip_filter_edit.show();
 		o.inputtitle = _('Edit');
 		o.inputstyle = 'edit btn';
 
-		// FQDN_FILTER
-		o = s.taboption('entries_filter_tab', form.Flag, 'fqdn_filter',
+		// BLLIST_FQDN_FILTER
+		o = s.taboption('entries_filter_tab', form.Flag, 'bllist_fqdn_filter',
 			_("Enable FQDN filter"));
 		o.description = _('Exclude domains from blacklist by FQDN filter patterns');
 		o.rmempty     = false;
 
-		// FQDN_FILTER edit dialog
+		// BLLIST_FQDN_FILTER_FILE edit dialog
 		o = s.taboption('entries_filter_tab', form.Button, '_fqdn_filter_btn',
 			_("FQDN filter"));
 		o.onclick    = () => fqdn_filter_edit.show();

@@ -17,10 +17,9 @@ return view.extend({
 
 	disableButtons: function(bool, btn, elems=[]) {
 		let btn_start   = elems[1] || document.getElementById("btn_start");
-		let btn_destroy = elems[5] || document.getElementById("btn_destroy");
+		let btn_destroy = elems[4] || document.getElementById("btn_destroy");
 		let btn_enable  = elems[2] || document.getElementById("btn_enable");
-		let btn_update  = elems[4] || document.getElementById("btn_update");
-		let btn_tp      = elems[3] || document.getElementById("btn_tp");
+		let btn_update  = elems[3] || document.getElementById("btn_update");
 
 		btn_start.disabled   = bool;
 		btn_update.disabled  = bool;
@@ -30,15 +29,11 @@ return view.extend({
 		} else {
 			btn_enable.disabled = bool;
 		};
-		if(btn_tp) {
-			btn_tp.disabled = bool;
-		};
 	},
 
 	getAppStatus: function() {
 		return Promise.all([
 			fs.exec(tools.execPath, [ 'raw-status' ]),
-			fs.exec(tools.execPath, [ 'total-proxy-status' ]),
 			fs.exec(tools.execPath, [ 'vpn-route-status' ]),
 			tools.getInitStatus(tools.appName),
 			L.resolveDefault(fs.read(tools.tokenFile), 0),
@@ -62,14 +57,12 @@ return view.extend({
 		};
 
 		let app_status_code       = (force_app_code) ? force_app_code : status_array[0].code;
-		let tp_status_code        = status_array[1].code;
-		let vpn_route_status_code = status_array[2].code;
-		let enabled_flag          = status_array[3];
+		let vpn_route_status_code = status_array[1].code;
+		let enabled_flag          = status_array[2];
 		let proxy_local_clients   = section.proxy_local_clients;
 		let proxy_mode            = section.proxy_mode;
-		let bllist_mode           = section.bllist_mode;
+		let bllist_preset         = section.bllist_preset;
 		let bllist_module         = section.bllist_module;
-		let bllist_source         = section.bllist_source;
 
 		let btn_enable = elems[2] || document.getElementById('btn_enable');
 		if(enabled_flag == true) {
@@ -84,24 +77,9 @@ return view.extend({
 			btn_enable.className   = btn_style_negative;
 		};
 
-		let btn_tp = elems[3] || document.getElementById('btn_tp');
-		if(btn_tp) {
-			if(tp_status_code == 0) {
-				btn_tp.onclick     = ui.createHandlerFn(
-					this, this.appAction, 'total-proxy-off', 'btn_tp');
-				btn_tp.textContent = _('Enabled');
-				btn_tp.className   = btn_style_positive;
-			} else {
-				btn_tp.onclick     = ui.createHandlerFn(
-					this, this.appAction, 'total-proxy-on', 'btn_tp');
-				btn_tp.textContent = _('Disabled');
-				btn_tp.className   = btn_style_negative;
-			};
-		};
-
 		let btn_start   = elems[1] || document.getElementById('btn_start');
-		let btn_update  = elems[4] || document.getElementById('btn_update');
-		let btn_destroy = elems[5] || document.getElementById('btn_destroy');
+		let btn_update  = elems[3] || document.getElementById('btn_update');
+		let btn_destroy = elems[4] || document.getElementById('btn_destroy');
 
 		let btnStartStateOn = () => {
 			btn_start.onclick     = ui.createHandlerFn(
@@ -122,17 +100,11 @@ return view.extend({
 			btnStartStateOn();
 			btn_destroy.disabled = false;
 			btn_update.disabled  = false;
-			if(btn_tp) {
-				btn_tp.disabled = false;
-			};
 		}
 		else if(app_status_code == 2) {
 			this.disableButtons(false, null, elems);
 			btnStartStateOff();
 			btn_update.disabled = true;
-			if(btn_tp) {
-				btn_tp.disabled = true;
-			};
 		}
 		else if(app_status_code == 3) {
 			btnStartStateOff();
@@ -151,10 +123,8 @@ return view.extend({
 		(elems[0] || document.getElementById("status")).innerHTML = tools.makeStatusString(
 								app_status_code,
 								proxy_mode,
-								bllist_mode,
+								bllist_preset,
 								bllist_module,
-								bllist_source,
-								tp_status_code,
 								vpn_route_status_code);
 
 		if(!poll.active()) {
@@ -291,16 +261,6 @@ return view.extend({
 		}, _('Enable'));
 		layout_append(btn_enable, _('Run at startup'));
 
-		let btn_tp = E('button', {
-			'id'   : 'btn_tp',
-			'name' : 'btn_tp',
-			'class': btn_style_positive,
-		}, _('Enable'));
-		if(proxy_local_clients == '0') {
-			layout_append(btn_tp, _('Total-proxy'),
-				_('All traffic goes through the proxy without applying rules'));
-		};
-
 		let btn_update = E('button', {
 			'id'   : 'btn_update',
 			'name' : 'btn_update',
@@ -323,7 +283,6 @@ return view.extend({
 			status_string,
 			btn_start,
 			btn_enable,
-			btn_tp,
 			btn_update,
 			btn_destroy,
 		]);

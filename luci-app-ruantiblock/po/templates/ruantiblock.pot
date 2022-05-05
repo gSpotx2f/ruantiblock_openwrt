@@ -13,7 +13,7 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-msgid "All traffic goes through the proxy without applying rules"
+msgid "All hosts except listed"
 msgstr ""
 
 msgid "Apply"
@@ -31,7 +31,7 @@ msgstr ""
 msgid "Blacklist settings"
 msgstr ""
 
-msgid "Blacklist source"
+msgid "Blacklist sources"
 msgstr ""
 
 msgid "Blacklist update mode"
@@ -79,6 +79,7 @@ msgstr ""
 
 msgid "Debug"
 msgstr ""
+
 msgid "Disabled"
 msgstr ""
 
@@ -104,13 +105,12 @@ msgstr ""
 msgid "Enable IP filter"
 msgstr ""
 
-msgid "Enable the 'total-proxy' option at startup"
-msgstr ""
 msgid "Enabled"
 msgstr ""
 
 msgid "Entries"
 msgstr ""
+
 msgid "Error"
 msgstr ""
 
@@ -121,9 +121,6 @@ msgid "Exclude domains from blacklist by FQDN filter patterns"
 msgstr ""
 
 msgid "Expecting:"
-msgstr ""
-
-msgid "FQDN configuration"
 msgstr ""
 
 msgid "FQDN filter"
@@ -141,13 +138,13 @@ msgstr ""
 msgid "Host"
 msgstr ""
 
-msgid "Hosts"
+msgid "Host filter"
 msgstr ""
 
 msgid "Hour"
 msgstr ""
 
-msgid "IP configuration"
+msgid "IP addresses of hosts"
 msgstr ""
 
 msgid "IP filter"
@@ -172,9 +169,6 @@ msgid "Ipset"
 msgstr ""
 
 msgid "Iptables rules"
-msgstr ""
-
-msgid "LAN interface"
 msgstr ""
 
 msgid "Last blacklist update"
@@ -247,13 +241,13 @@ msgstr ""
 msgid "One of the following:"
 msgstr ""
 
+msgid "Only listed hosts"
+msgstr ""
+
 msgid "Optional DNS resolver"
 msgstr ""
 
 msgid "Optional DNS resolver for '.onion' zone"
-msgstr ""
-
-msgid "Options"
 msgstr ""
 
 msgid ""
@@ -280,6 +274,9 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
+msgid "Restriction of hosts that are allowed to bypass blocking"
+msgstr ""
+
 msgid "Ruantiblock"
 msgstr ""
 
@@ -287,6 +284,9 @@ msgid "Run at startup"
 msgstr ""
 
 msgid "Save"
+msgstr ""
+
+msgid "Send UDP traffic to Tor"
 msgstr ""
 
 msgid "Service"
@@ -351,12 +351,6 @@ msgid "Tor configuration file"
 msgstr ""
 
 msgid "Tor mode"
-msgstr ""
-
-msgid "Total-proxy"
-msgstr ""
-
-msgid "Total-proxy is on"
 msgstr ""
 
 msgid "Transparent proxy port for iptables rules"

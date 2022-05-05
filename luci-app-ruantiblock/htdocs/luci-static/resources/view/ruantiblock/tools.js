@@ -31,9 +31,6 @@ document.head.append(E('style', {'type': 'text/css'},
 .error {
 	background-color: #ff4e54 !important;
 }
-.total-proxy {
-	background-color: #ffb937 !important;
-}
 `));
 
 return baseclass.extend({
@@ -52,10 +49,14 @@ return baseclass.extend({
 	infoLabelStopped : '<span class="label-status stopped">' + _('Disabled') + '</span>',
 	infoLabelError   : '<span class="label-status error">' + _('Error') + '</span>',
 
-	blacklistSources: {
-		'rublacklist': 'https://rublacklist.net',
-		'zapret-info': 'https://github.com/zapret-info/z-i',
-		'antifilter' : 'https://antifilter.download',
+	blacklistPresets: {
+		'zapret-info-fqdn': [ 'zapret-info', 'fqdn', 'https://github.com/zapret-info/z-i' ],
+		'zapret-info-ip'  : [ 'zapret-info', 'ip', 'https://github.com/zapret-info/z-i' ],
+		'rublacklist-fqdn': [ 'rublacklist', 'fqdn', 'https://rublacklist.net' ],
+		'rublacklist-ip'  : [ 'rublacklist', 'ip', 'https://rublacklist.net' ],
+		'antifilter-ip'   : [ 'antifilter', 'ip', 'https://antifilter.download' ],
+		'ruantiblock-fqdn': [ 'ruantiblock', 'fqdn', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
+		'ruantiblock-ip'  : [ 'ruantiblock', 'ip', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
 	},
 
 	callInitStatus: rpc.declare({
@@ -104,10 +105,8 @@ return baseclass.extend({
 	makeStatusString: function(
 								app_status_code,
 								proxy_mode,
-								bllist_mode,
+								bllist_preset,
 								bllist_module,
-								bllist_source,
-								tp_status_code,
 								vpn_route_status_code) {
 		let app_status_label;
 		let spinning = '';
@@ -147,7 +146,7 @@ return baseclass.extend({
 							${_('Status')}:
 						</td>
 						<td class="td left%s">
-							%s %s %s
+							%s %s
 						</td>
 					</tr>
 					<tr class="tr">
@@ -166,29 +165,19 @@ return baseclass.extend({
 							%s
 						</td>
 					</tr>
-					%s
 				</table>
 		`.format(
 			spinning,
 			app_status_label,
-			(tp_status_code == 0) ? '<span class="label-status total-proxy">'
-				+ _('Total-proxy is on') + '</span>' : '',
 			(app_status_code != 2 && proxy_mode == 2 && vpn_route_status_code != 0)
 				? '<span class="label-status error">'
 					+ _('VPN routing error! Need restart') + '</span>' : '',
 			(proxy_mode == 1) ? 'Tor' : 'VPN',
-			(!bllist_module || bllist_module === '') ? _('user entries only') : bllist_mode,
-			(!bllist_module || bllist_module === '') ? '' :
-					`<tr class="tr">
-						<td class="td left">
-							${_('Blacklist source')}:
-						</td>
-						<td class="td left">
-							<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${this.blacklistSources[bllist_source]}">
-								${bllist_source}
-							</span>
-						</td>
-					</tr>`
+			(!bllist_module || bllist_module === '') ? _('user entries only') :
+				(this.blacklistPresets[bllist_preset]) ?
+					`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${this.blacklistPresets[bllist_preset][2]}">
+						${this.blacklistPresets[bllist_preset][0]}</span> - ${this.blacklistPresets[bllist_preset][1]}`
+				: _('Error') + '!'
 		);
 	},
 

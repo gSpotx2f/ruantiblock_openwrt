@@ -13,7 +13,7 @@ Info() {
             printf "\"status\":false"
         fi
         printf "},"
-        IptListChain | $AWK_CMD '
+        IptListBllistChain | $AWK_CMD '
         BEGIN {
             printf "\"iptables\":{"
         }
@@ -25,7 +25,7 @@ Info() {
             printf "\"_dummy\":false},";
         }'
         printf "\"ipset\":{";
-        for _set in "$IPSET_TOTAL_PROXY" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        for _set in "$IPSET_ALOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
         do
             $IPSET_CMD list "$_set" -terse | $AWK_CMD -F ": " '
                 {

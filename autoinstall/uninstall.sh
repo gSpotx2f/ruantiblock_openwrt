@@ -98,8 +98,7 @@ RemoveAppFiles() {
     $OPKG_CMD remove ruantiblock-mod-py ruantiblock-mod-lua luci-i18n-ruantiblock-ru luci-app-ruantiblock ruantiblock
     rmdir "${RUAB_CFG_DIR}/scripts" 2> /dev/null
     rmdir "$HTDOCS_RUAB" 2> /dev/null
-    rm -f /tmp/luci-modulecache/*
-    rm -f /tmp/luci-indexcache
+    rm -f /tmp/luci-modulecache/* /tmp/luci-indexcache*
     /etc/init.d/rpcd restart
     /etc/init.d/uhttpd restart
 }

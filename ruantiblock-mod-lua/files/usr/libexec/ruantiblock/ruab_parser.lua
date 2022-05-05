@@ -37,20 +37,20 @@ local Config = Class(nil, {
     environ_table = {
         ["BLLIST_SOURCE"] = true,
         ["BLLIST_MODE"] = true,
-        ["ALT_NSLOOKUP"] = true,
-        ["ALT_DNS_ADDR"] = true,
-        ["USE_IDN"] = true,
-        ["OPT_EXCLUDE_SLD"] = true,
-        ["OPT_EXCLUDE_MASKS"] = true,
-        ["FQDN_FILTER"] = true,
-        ["FQDN_FILTER_FILE"] = true,
-        ["IP_FILTER"] = true,
-        ["IP_FILTER_FILE"] = true,
-        ["SD_LIMIT"] = true,
-        ["IP_LIMIT"] = true,
-        ["OPT_EXCLUDE_NETS"] = true,
-        ["BLLIST_MIN_ENTRS"] = true,
-        ["STRIP_WWW"] = true,
+        ["BLLIST_ALT_NSLOOKUP"] = true,
+        ["BLLIST_ALT_DNS_ADDR"] = true,
+        ["BLLIST_ENABLE_IDN"] = true,
+        ["BLLIST_GR_EXCLUDED_SLD"] = true,
+        ["BLLIST_GR_EXCLUDED_MASKS"] = true,
+        ["BLLIST_FQDN_FILTER"] = true,
+        ["BLLIST_FQDN_FILTER_FILE"] = true,
+        ["BLLIST_IP_FILTER"] = true,
+        ["BLLIST_IP_FILTER_FILE"] = true,
+        ["BLLIST_SD_LIMIT"] = true,
+        ["BLLIST_IP_LIMIT"] = true,
+        ["BLLIST_GR_EXCLUDED_NETS"] = true,
+        ["BLLIST_MIN_ENTRIES"] = true,
+        ["BLLIST_STRIP_WWW"] = true,
         ["DATA_DIR"] = true,
         ["IPSET_DNSMASQ"] = true,
         ["IPSET_IP_TMP"] = true,
@@ -63,14 +63,21 @@ local Config = Class(nil, {
         ["ZI_ALL_URL"] = true,
         ["AF_IP_URL"] = true,
         ["AF_FQDN_URL"] = true,
+        ["RA_IP_IPSET_URL"] = true,
+        ["RA_IP_DMASK_URL"] = true,
+        ["RA_IP_STAT_URL"] = true,
+        ["RA_FQDN_IPSET_URL"] = true,
+        ["RA_FQDN_DMASK_URL"] = true,
+        ["RA_FQDN_STAT_URL"] = true,
         ["RBL_ENCODING"] = true,
         ["ZI_ENCODING"] = true,
         ["AF_ENCODING"] = true,
-        ["SUMMARIZE_IP"] = true,
-        ["SUMMARIZE_CIDR"] = true,
+        ["RA_ENCODING"] = true,
+        ["BLLIST_SUMMARIZE_IP"] = true,
+        ["BLLIST_SUMMARIZE_CIDR"] = true,
     },
-    FQDN_FILTER_PATTERNS = {},
-    IP_FILTER_PATTERNS = {},
+    BLLIST_FQDN_FILTER_PATTERNS = {},
+    BLLIST_IP_FILTER_PATTERNS = {},
     -- iconv type: standalone iconv or lua-iconv (standalone, lua)
     ICONV_TYPE = "standalone",
     -- standalone iconv
@@ -88,8 +95,8 @@ Config.wget_user_agent = (Config.http_send_headers["User-Agent"]) and ' -U "' ..
 
 function Config:load_config(t)
     local config_arrays = {
-        ["OPT_EXCLUDE_SLD"] = true,
-        ["OPT_EXCLUDE_NETS"] = true,
+        ["BLLIST_GR_EXCLUDED_SLD"] = true,
+        ["BLLIST_GR_EXCLUDED_NETS"] = true,
     }
     for k, v in pairs(t) do
         if config_arrays[k] then
@@ -121,13 +128,13 @@ local function remap_bool(val)
     return (val ~= 0 and val ~= false and val ~= nil) and true or false
 end
 
-Config.ALT_NSLOOKUP = remap_bool(Config.ALT_NSLOOKUP)
-Config.USE_IDN = remap_bool(Config.USE_IDN)
-Config.STRIP_WWW = remap_bool(Config.STRIP_WWW)
-Config.FQDN_FILTER = remap_bool(Config.FQDN_FILTER)
-Config.IP_FILTER = remap_bool(Config.IP_FILTER)
-Config.SUMMARIZE_IP = remap_bool(Config.SUMMARIZE_IP)
-Config.SUMMARIZE_CIDR = remap_bool(Config.SUMMARIZE_CIDR)
+Config.BLLIST_ALT_NSLOOKUP = remap_bool(Config.BLLIST_ALT_NSLOOKUP)
+Config.BLLIST_ENABLE_IDN = remap_bool(Config.BLLIST_ENABLE_IDN)
+Config.BLLIST_STRIP_WWW = remap_bool(Config.BLLIST_STRIP_WWW)
+Config.BLLIST_FQDN_FILTER = remap_bool(Config.BLLIST_FQDN_FILTER)
+Config.BLLIST_IP_FILTER = remap_bool(Config.BLLIST_IP_FILTER)
+Config.BLLIST_SUMMARIZE_IP = remap_bool(Config.BLLIST_SUMMARIZE_IP)
+Config.BLLIST_SUMMARIZE_CIDR = remap_bool(Config.BLLIST_SUMMARIZE_CIDR)
 
 -- Loading filters
 
@@ -143,11 +150,11 @@ function Config:load_filter_files()
             file_handler:close()
         end
     end
-    if self.FQDN_FILTER then
-        load_file(self.FQDN_FILTER_FILE, self.FQDN_FILTER_PATTERNS)
+    if self.BLLIST_FQDN_FILTER then
+        load_file(self.BLLIST_FQDN_FILTER_FILE, self.BLLIST_FQDN_FILTER_PATTERNS)
     end
-    if self.IP_FILTER then
-        load_file(self.IP_FILTER_FILE, self.IP_FILTER_PATTERNS)
+    if self.BLLIST_IP_FILTER then
+        load_file(self.BLLIST_IP_FILTER_FILE, self.BLLIST_IP_FILTER_PATTERNS)
     end
 end
 
@@ -168,8 +175,8 @@ if not ltn12 then
 end
 
 local idn = prequire("idn")
-if Config.USE_IDN and not idn then
-    error("You need to install idn.lua (github.com/haste/lua-idn) or 'USE_IDN' must be set to '0'")
+if Config.BLLIST_ENABLE_IDN and not idn then
+    error("You need to install idn.lua (github.com/haste/lua-idn) or 'BLLIST_ENABLE_IDN' must be set to '0'")
 end
 local iconv = prequire("iconv")
 
@@ -181,8 +188,8 @@ if prequire("bit") then
     end
 end
 if not si then
-    Config.SUMMARIZE_CIDR = false
-    Config.SUMMARIZE_IP = false
+    Config.BLLIST_SUMMARIZE_CIDR = false
+    Config.BLLIST_SUMMARIZE_IP = false
 end
 
 -- Iconv check
@@ -268,10 +275,10 @@ end
 function BlackListParser:fill_ip_tables(val)
     if val and val ~= "" then
         for ip_entry in val:gmatch(self.ip_pattern .. "/?%d?%d?") do
-            if not self.IP_FILTER or (self.IP_FILTER and not self:check_filter(ip_entry, self.IP_FILTER_PATTERNS)) then
+            if not self.BLLIST_IP_FILTER or (self.BLLIST_IP_FILTER and not self:check_filter(ip_entry, self.BLLIST_IP_FILTER_PATTERNS)) then
                 if ip_entry:match("^" .. self.ip_pattern .. "$") and not self.ip_table[ip_entry] then
                     local subnet = self:get_subnet(ip_entry)
-                    if subnet and (self.OPT_EXCLUDE_NETS[subnet] or ((not self.IP_LIMIT or self.IP_LIMIT == 0) or (not self.ip_subnet_table[subnet] or self.ip_subnet_table[subnet] < self.IP_LIMIT))) then
+                    if subnet and (self.BLLIST_GR_EXCLUDED_NETS[subnet] or ((not self.BLLIST_IP_LIMIT or self.BLLIST_IP_LIMIT == 0) or (not self.ip_subnet_table[subnet] or self.ip_subnet_table[subnet] < self.BLLIST_IP_LIMIT))) then
                         self.ip_table[ip_entry] = subnet
                         self.ip_subnet_table[subnet] = (self.ip_subnet_table[subnet] or 0) + 1
                         self.ip_count = self.ip_count + 1
@@ -291,12 +298,12 @@ end
 
 function BlackListParser:fill_domain_tables(val)
     val = val:gsub("%*%.", ""):gsub("%.$", ""):lower()
-    if self.STRIP_WWW then
+    if self.BLLIST_STRIP_WWW then
         val = val:gsub("^www[0-9]?%.", "")
     end
-    if not self.FQDN_FILTER or (self.FQDN_FILTER and not self:check_filter(val, self.FQDN_FILTER_PATTERNS)) then
+    if not self.BLLIST_FQDN_FILTER or (self.BLLIST_FQDN_FILTER and not self:check_filter(val, self.BLLIST_FQDN_FILTER_PATTERNS)) then
         if val:match("^" .. self.fqdn_pattern .. "+$") then
-        elseif self.USE_IDN and val:match("^[^\\/&%?]-[^\\/&%?%.]+%.[^\\/&%?%.]+%.?$") then
+        elseif self.BLLIST_ENABLE_IDN and val:match("^[^\\/&%?]-[^\\/&%?%.]+%.[^\\/&%?%.]+%.?$") then
             val = self:convert_to_punycode(val)
             if not val then
                 return false
@@ -305,7 +312,7 @@ function BlackListParser:fill_domain_tables(val)
             return false
         end
         local sld = self:get_sld(val)
-        if sld and (self.OPT_EXCLUDE_SLD[sld] or ((not self.SD_LIMIT or self.SD_LIMIT == 0) or (not self.sld_table[sld] or self.sld_table[sld] < self.SD_LIMIT))) then
+        if sld and (self.BLLIST_GR_EXCLUDED_SLD[sld] or ((not self.BLLIST_SD_LIMIT or self.BLLIST_SD_LIMIT == 0) or (not self.sld_table[sld] or self.sld_table[sld] < self.BLLIST_SD_LIMIT))) then
             self.fqdn_table[val] = sld
             self.sld_table[sld] = (self.sld_table[sld] or 0) + 1
             self.fqdn_count = self.fqdn_count + 1
@@ -323,7 +330,7 @@ function BlackListParser:optimize_ip_table()
     local optimized_table = {}
     for ipaddr, subnet in pairs(self.ip_table) do
         if self.ip_subnet_table[subnet] then
-            if (self.IP_LIMIT and self.IP_LIMIT > 0 and not self.OPT_EXCLUDE_NETS[subnet]) and self.ip_subnet_table[subnet] >= self.IP_LIMIT then
+            if (self.BLLIST_IP_LIMIT and self.BLLIST_IP_LIMIT > 0 and not self.BLLIST_GR_EXCLUDED_NETS[subnet]) and self.ip_subnet_table[subnet] >= self.BLLIST_IP_LIMIT then
                 self.cidr_table[string.format("%s0/24", subnet)] = true
                 self.ip_subnet_table[subnet] = nil
                 self.cidr_count = self.cidr_count + 1
@@ -339,9 +346,9 @@ end
 
 function BlackListParser:optimize_fqdn_table()
     local optimized_table = {}
-    if self.OPT_EXCLUDE_MASKS and #self.OPT_EXCLUDE_MASKS > 0 then
+    if self.BLLIST_GR_EXCLUDED_MASKS and #self.BLLIST_GR_EXCLUDED_MASKS > 0 then
         for sld in pairs(self.sld_table) do
-            for _, pattern in ipairs(self.OPT_EXCLUDE_MASKS) do
+            for _, pattern in ipairs(self.BLLIST_GR_EXCLUDED_MASKS) do
                 if sld:find(pattern) then
                     self.sld_table[sld] = 0
                     break
@@ -352,7 +359,7 @@ function BlackListParser:optimize_fqdn_table()
     for fqdn, sld in pairs(self.fqdn_table) do
         local key_value = fqdn
         if (not self.fqdn_table[sld] or fqdn == sld) and self.sld_table[sld] then
-            if (self.SD_LIMIT and self.SD_LIMIT > 0 and not self.OPT_EXCLUDE_SLD[sld]) and self.sld_table[sld] >= self.SD_LIMIT then
+            if (self.BLLIST_SD_LIMIT and self.BLLIST_SD_LIMIT > 0 and not self.BLLIST_GR_EXCLUDED_SLD[sld]) and self.sld_table[sld] >= self.BLLIST_SD_LIMIT then
                 key_value = sld
                 self.sld_table[sld] = nil
             end
@@ -395,8 +402,8 @@ end
 function BlackListParser:write_dnsmasq_config()
     local file_handler = assert(io.open(self.DNSMASQ_DATA_FILE, "w"), "Could not open dnsmasq config")
     for fqdn in pairs(self.fqdn_table) do
-        if self.ALT_NSLOOKUP then
-            file_handler:write(string.format("server=/%s/%s\n", fqdn, self.ALT_DNS_ADDR))
+        if self.BLLIST_ALT_NSLOOKUP then
+            file_handler:write(string.format("server=/%s/%s\n", fqdn, self.BLLIST_ALT_DNS_ADDR))
         end
         file_handler:write(string.format("ipset=/%s/%s\n", fqdn, self.IPSET_DNSMASQ))
     end
@@ -455,13 +462,13 @@ end
 function BlackListParser:run()
     local return_code = 0
     if self:get_http_data(self.url) then
-        if (self.fqdn_count + self.ip_count + self.cidr_count) > self.BLLIST_MIN_ENTRS then
+        if (self.fqdn_count + self.ip_count + self.cidr_count) > self.BLLIST_MIN_ENTRIES then
             self:optimize_fqdn_table()
             self:optimize_ip_table()
-            if self.SUMMARIZE_IP then
+            if self.BLLIST_SUMMARIZE_IP then
                 self:group_ip_ranges()
             end
-            if self.SUMMARIZE_CIDR then
+            if self.BLLIST_SUMMARIZE_CIDR then
                 self:group_cidr_ranges()
             end
             self:write_ipset_config()
@@ -568,14 +575,65 @@ end
 local AfIp = Class(Af, {
     url = Config.AF_IP_URL,
     sink = ip_sink,
-    BLLIST_MIN_ENTRS = 100,
+    BLLIST_MIN_ENTRIES = 100,
+})
+
+    -- ruantiblock
+
+local Ra = Class(BlackListParser, {
+    url_ipset = Config.RA_FQDN_IPSET_URL,
+    url_dnsmasq = Config.RA_FQDN_DMASK_URL,
+    url_stat = Config.RA_FQDN_STAT_URL,
+})
+
+function Ra:download_config(url, file)
+    local ret_val = false
+    self.current_file_handler = assert(io.open(file, "w"), "Could not open file")
+    if self:get_http_data(url) then
+        ret_val = true
+    end
+    self.current_file_handler:close()
+    return ret_val
+end
+
+function Ra:chunk_buffer()
+    return function(chunk)
+        return chunk
+    end
+end
+
+function Ra:sink()
+    return function(chunk)
+        if chunk and chunk ~= "" then
+            self.current_file_handler:write(chunk)
+        end
+        return true
+    end
+end
+
+function Ra:run()
+    local return_code = 1
+    if self:download_config(self.url_ipset, self.IP_DATA_FILE) then
+        if self:download_config(self.url_dnsmasq, self.DNSMASQ_DATA_FILE) then
+            if self:download_config(self.url_stat, self.UPDATE_STATUS_FILE) then
+                return_code = 0
+            end
+        end
+    end
+    return return_code
+end
+
+local RaIp = Class(Ra, {
+    url_ipset = Config.RA_IP_IPSET_URL,
+    url_dnsmasq = Config.RA_IP_DMASK_URL,
+    url_stat = Config.RA_IP_STAT_URL,
 })
 
 ----------------------------- Main section ------------------------------
 
 local ctx_table = {
-    ["ip"] = {["rublacklist"] = RblIp, ["zapret-info"] = ZiIp, ["antifilter"] = AfIp},
-    ["fqdn"] = {["rublacklist"] = Rbl, ["zapret-info"] = Zi, ["antifilter"] = Af},
+    ["ip"] = {["rublacklist"] = RblIp, ["zapret-info"] = ZiIp, ["antifilter"] = AfIp, ["ruantiblock"] = RaIp},
+    ["fqdn"] = {["rublacklist"] = Rbl, ["zapret-info"] = Zi, ["antifilter"] = Af, ["ruantiblock"] = Ra},
 }
 
 local return_code = 1

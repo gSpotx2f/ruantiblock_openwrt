@@ -25,8 +25,11 @@ msgstr "Тревога"
 msgid "All"
 msgstr "Все"
 
-msgid "All traffic goes through the proxy without applying rules"
-msgstr "Весь трафик отправляется в прокси, без применения правил"
+msgid "All hosts except listed"
+msgstr "Все хосты, кроме перечисленных"
+
+msgid "Allows you to limit the hosts that are allowed to bypass blocking"
+msgstr "Позволяет ограничить хосты, которым разрешено обходить блокировки"
 
 msgid "Apply"
 msgstr "Применить"
@@ -43,8 +46,8 @@ msgstr "Модуль блэклиста"
 msgid "Blacklist settings"
 msgstr "Настройки блэклиста"
 
-msgid "Blacklist source"
-msgstr "Источник блэклиста"
+msgid "Blacklist sources"
+msgstr "Источники блэклиста"
 
 msgid "Blacklist update mode"
 msgstr "Режим обновления блэклиста"
@@ -119,9 +122,6 @@ msgstr "Включить фильтр FQDN"
 msgid "Enable IP filter"
 msgstr "Включить фильтр IP"
 
-msgid "Enable the 'total-proxy' option at startup"
-msgstr "Включать 'total-proxy' при старте"
-
 msgid "Enabled"
 msgstr "Включено"
 
@@ -140,9 +140,6 @@ msgstr "Исключение доменов из блэклиста по шаб�
 msgid "Expecting:"
 msgstr "Ожидается:"
 
-msgid "FQDN configuration"
-msgstr "Конфигурация FQDN"
-
 msgid "FQDN filter"
 msgstr "Фильтр FQDN"
 
@@ -158,20 +155,23 @@ msgstr "Ошибка HTML/XML"
 msgid "Host"
 msgstr "Хост"
 
-msgid "Hosts"
-msgstr "Хосты"
+msgid "Host filter"
+msgstr "Фильтр хостов"
 
 msgid "Hour"
 msgstr "Час"
 
-msgid "IP configuration"
-msgstr "Конфигурация IP"
+msgid "IP addresses of hosts"
+msgstr "IP адреса хостов"
 
 msgid "IP filter"
 msgstr "Фильтр IP"
 
 msgid "IP limit"
 msgstr "Лимит IP адресов"
+
+msgid "IP restriction mode"
+msgstr "Режим ограничения IP адресов"
 
 msgid "IP subnet patterns (/24) that are excluded from optimization"
 msgstr "Шаблоны IP подсетей (/24) не подлежащих оптимизации"
@@ -190,9 +190,6 @@ msgstr "Ipset"
 
 msgid "Iptables rules"
 msgstr "Правила iptables"
-
-msgid "LAN interface"
-msgstr "LAN интерфейс"
 
 msgid "Last blacklist update"
 msgstr "Последнее обновление блэклиста"
@@ -267,14 +264,14 @@ msgstr ""
 msgid "One of the following:"
 msgstr "Одно из следующих значений:"
 
+msgid "Only listed hosts"
+msgstr "Только перечисленные хосты"
+
 msgid "Optional DNS resolver"
 msgstr "Альтернативный DNS резолвер"
 
 msgid "Optional DNS resolver for '.onion' zone"
 msgstr "Дополнительный DNS резолвер для '.onion' зоны"
-
-msgid "Options"
-msgstr "Опции"
 
 msgid ""
 "Patterns can be strings or regular expressions. Each pattern in a separate "
@@ -306,6 +303,9 @@ msgstr "Обновить лог"
 msgid "Reset"
 msgstr "Сбросить"
 
+msgid "Restriction of hosts that are allowed to bypass blocking"
+msgstr "Ограничение хостов, которым разрешено обходить блокировки"
+
 msgid "Ruantiblock"
 msgstr "Ruantiblock"
 
@@ -314,6 +314,9 @@ msgstr "Запуск при старте системы"
 
 msgid "Save"
 msgstr "Сохранить"
+
+msgid "Send UDP traffic to Tor"
+msgstr "Отправлять в Tor UDP-трафик"
 
 msgid "Service"
 msgstr "Служба"
@@ -385,12 +388,6 @@ msgstr "Конфигурационный файл Tor"
 
 msgid "Tor mode"
 msgstr "Режим Tor"
-
-msgid "Total-proxy"
-msgstr "Total-proxy"
-
-msgid "Total-proxy is on"
-msgstr "Total-proxy включен"
 
 msgid "Transparent proxy port for iptables rules"
 msgstr "Порт прозрачного прокси для правил iptables"
