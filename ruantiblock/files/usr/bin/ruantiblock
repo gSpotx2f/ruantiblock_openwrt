@@ -299,11 +299,14 @@ SetNetConfig() {
     do
         IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:net maxelem $IPSET_MAXELEM
     done
-    for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_ONION"
+    for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_IP_TMP" "$IPSET_IP"
     do
         IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:ip maxelem $IPSET_MAXELEM
     done
-    IsIpsetExists "$IPSET_DNSMASQ" || $IPSET_CMD create "$IPSET_DNSMASQ" hash:ip maxelem $IPSET_MAXELEM timeout $IPSET_DNSMASQ_TIMEOUT
+    for _set in "$IPSET_DNSMASQ" "$IPSET_ONION"
+    do
+         IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:ip maxelem $IPSET_MAXELEM timeout $IPSET_DNSMASQ_TIMEOUT
+    done
     AddIptRules
 }
 
