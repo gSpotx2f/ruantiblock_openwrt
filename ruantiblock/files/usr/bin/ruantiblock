@@ -32,9 +32,9 @@ export PROXY_LOCAL_CLIENTS=1
 ### Удаление записей из основных сетов перед началом заполнения временных сетов при обновлении (для освобождения оперативной памяти перед заполнением сетов) (0 - off, 1 - on)
 export IPSET_CLEAR_SETS=0
 ### Режим фильтра хостов которым разрешено обходить блокировки (0 - выкл., 1 - только адреса из списка, 2 - любые адреса кроме присутствующих в списке)
-export ALOWED_HOSTS_MODE=0
+export ALLOWED_HOSTS_MODE=0
 ### Список IP адресов хостов для фильтра, через пробел (прим.: 192.168.0.10 192.168.0.15)
-export ALOWED_HOSTS_LIST=""
+export ALLOWED_HOSTS_LIST=""
 ### VPN интерфейс для правил iptables
 export IF_VPN="tun0"
 ### Порт транспарентного proxy Tor (параметр TransPort в torrc)
@@ -185,7 +185,7 @@ fi
 LOGGER_PARAMS="-t `basename $0` -p user.notice"
 export DNSMASQ_DATA_FILE="${DATA_DIR}/${NAME}.dnsmasq"
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
-export IPSET_ALOWED_HOSTS="${NAME}_alowed_ip"
+export IPSET_ALLOWED_HOSTS="${NAME}_allowed_ip"
 export IPSET_IP="${NAME}_ip"
 export IPSET_IP_TMP="${IPSET_IP}_tmp"
 export IPSET_CIDR="${NAME}_cidr"
@@ -274,9 +274,9 @@ DestroyIpsets() {
 
 FillAllowedHostsSet() {
     local _entry
-    for _entry in $ALOWED_HOSTS_LIST
+    for _entry in $ALLOWED_HOSTS_LIST
     do
-        $IPSET_CMD add "$IPSET_ALOWED_HOSTS" "$_entry"
+        $IPSET_CMD add "$IPSET_ALLOWED_HOSTS" "$_entry"
     done
 }
 
@@ -288,7 +288,7 @@ AddIptRules() {
 }
 
 DelIptRules() {
-	IptLocalClientsDel
+    IptLocalClientsDel
     IptMainDel
 }
 
@@ -299,7 +299,7 @@ SetNetConfig() {
     do
         IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:net maxelem $IPSET_MAXELEM
     done
-    for _set in "$IPSET_ALOWED_HOSTS" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_ONION"
+    for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_ONION"
     do
         IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:ip maxelem $IPSET_MAXELEM
     done
@@ -309,7 +309,7 @@ SetNetConfig() {
 
 DropNetConfig() {
     DelIptRules
-    FlushIpSets "$IPSET_ALOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+    FlushIpSets "$IPSET_ALLOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
 }
 
 FillIpsets() {
@@ -341,7 +341,7 @@ ClearDataFiles() {
 CheckStatus() {
     local _set _ipset_return=0 _return_code=1
     if [ "$1" = "ipsets" ]; then
-        for _set in "$IPSET_ALOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
         do
             IsIpsetExists "$_set"
             _ipset_return=$?
@@ -578,7 +578,7 @@ Status() {
                 };
             }'
         printf "  \033[4mIp sets\033[m:\n\n"
-        for _set in "$IPSET_ALOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
         do
             $IPSET_CMD list "$_set" -terse | $AWK_CMD -F ":" '
                 {
@@ -628,7 +628,7 @@ case "$1" in
     ;;
     destroy)
         Stop "$1" &> /dev/null
-        DestroyIpsets "$IPSET_ALOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        DestroyIpsets "$IPSET_ALLOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
         ClearDataFiles
         return_code=$?
         rm -f "$UPDATE_PID_FILE" "$START_PID_FILE"

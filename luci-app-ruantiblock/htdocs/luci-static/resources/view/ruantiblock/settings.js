@@ -129,8 +129,8 @@ return view.extend({
 		o.description = _('Reduces RAM consumption during update');
 		o.rmempty = false;
 
-		// ALOWED_HOSTS_MODE
-		o = s.taboption('main_settings', form.ListValue, 'alowed_hosts_mode',
+		// ALLOWED_HOSTS_MODE
+		o = s.taboption('main_settings', form.ListValue, 'allowed_hosts_mode',
 			_('Host filter'));
 		o.value('0', _('Disabled'));
 		o.value('1', _('Only listed hosts'));
@@ -138,7 +138,7 @@ return view.extend({
 		o.description = _('Restriction of hosts that are allowed to bypass blocking');
 
 		// ALOWED_HOSTS_LIST
-		o = s.taboption('main_settings', form.DynamicList, 'alowed_hosts_list',
+		o = s.taboption('main_settings', form.DynamicList, 'allowed_hosts_list',
 			_('IP addresses of hosts'));
 		o.datatype = "ip4addr";
 

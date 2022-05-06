@@ -7,12 +7,12 @@ IPT_ACTION_CHAIN="${NAME}_action"
 IPT_FIRST_CHAIN="PREROUTING"
 VPN_ROUTE_TABLE_ID=99
 
-case "$ALOWED_HOSTS_MODE" in
+case "$ALLOWED_HOSTS_MODE" in
     "1")
-        IPT_ALLOWED_HOSTS_RULE="-m set --match-set ${IPSET_ALOWED_HOSTS} src -j ${IPT_BLLIST_CHAIN}"
+        IPT_ALLOWED_HOSTS_RULE="-m set --match-set ${IPSET_ALLOWED_HOSTS} src -j ${IPT_BLLIST_CHAIN}"
     ;;
     "2")
-        IPT_ALLOWED_HOSTS_RULE="-m set ! --match-set ${IPSET_ALOWED_HOSTS} src -j ${IPT_BLLIST_CHAIN}"
+        IPT_ALLOWED_HOSTS_RULE="-m set ! --match-set ${IPSET_ALLOWED_HOSTS} src -j ${IPT_BLLIST_CHAIN}"
     ;;
     *)
         IPT_ALLOWED_HOSTS_RULE="-j ${IPT_BLLIST_CHAIN}"
