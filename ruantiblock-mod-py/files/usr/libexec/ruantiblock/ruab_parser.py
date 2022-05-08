@@ -253,7 +253,7 @@ class BlackListParser(Config):
                 subnet = self._get_subnet(i)
                 if subnet in self.BLLIST_GR_EXCLUDED_NETS or (
                     not self.BLLIST_IP_LIMIT or (
-                        subnet not in self.ip_subnet_dict or self.ip_subnet_dict[subnet] < self.BLLIST_IP_LIMIT
+                        subnet not in self.ip_subnet_dict or self.ip_subnet_dict[subnet] <= self.BLLIST_IP_LIMIT
                     )
                 ):
                     self.ip_set[i] = subnet
