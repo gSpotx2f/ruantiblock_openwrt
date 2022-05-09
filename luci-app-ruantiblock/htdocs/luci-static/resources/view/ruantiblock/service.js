@@ -83,14 +83,14 @@ return view.extend({
 
 		let btnStartStateOn = () => {
 			btn_start.onclick     = ui.createHandlerFn(
-				this, this.serviceAction, 'stop', 'btn_start');
+				this, this.appAction, 'stop', 'btn_start');
 			btn_start.textContent = _('Enabled');
 			btn_start.className   = btn_style_positive;
 		}
 
 		let btnStartStateOff = () => {
 			btn_start.onclick     = ui.createHandlerFn(
-				this, this.serviceAction,'start', 'btn_start');
+				this, this.appAction,'start', 'btn_start');
 			btn_start.textContent = _('Disabled');
 			btn_start.className   = btn_style_negative;
 		}

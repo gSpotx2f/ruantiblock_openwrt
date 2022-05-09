@@ -4,14 +4,13 @@ PREFIX=""
 TOR_USER="tor"
 
 PROXY_MODE=1
-RAM_CONFIG=0
 LUA_MODULE=1
 LUCI_APP=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="0.9.2-0"
-RUAB_MOD_LUA_VERSION="0.9.2-0"
-RUAB_LUCI_APP_VERSION="0.9.2-0"
+RUAB_VERSION="0.9.3-0"
+RUAB_MOD_LUA_VERSION="0.9.3-0"
+RUAB_LUCI_APP_VERSION="0.9.3-0"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
 
@@ -37,9 +36,6 @@ URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
 RUAB_CFG_DIR="${PREFIX}/etc/ruantiblock"
 EXEC_DIR="${PREFIX}/usr/bin"
 BACKUP_DIR="${RUAB_CFG_DIR}/autoinstall.bak.`date +%s`"
-DATA_DIR="${RUAB_CFG_DIR}/var"
-DATA_DIR_RAM="/var/ruantiblock"
-RC_LOCAL="/etc/rc.local"
 ### packages
 FILE_RUAB_PKG="${PKG_DIR}/ruantiblock_${RUAB_VERSION}_all.ipk"
 FILE_MOD_LUA_PKG="${PKG_DIR}/ruantiblock-mod-lua_${RUAB_MOD_LUA_VERSION}_all.ipk"
@@ -171,8 +167,6 @@ InstallPackages() {
                 echo "Error during installation of the package (${_pkg})" >&2
                 exit 1
             fi
-        else
-            :
         fi
     done
 }
@@ -183,6 +177,7 @@ InstallBaseConfig() {
     RemoveFile "$FILE_RUAB_PKG" > /dev/null
     DlFile "$URL_RUAB_PKG" "$FILE_RUAB_PKG" && $OPKG_CMD install "$FILE_RUAB_PKG" > /dev/null
     _return_code=$?
+    # костыль для остановки сервиса, который запускается автоматически после установки пакета!
     AppStop
     return $_return_code
 }
@@ -220,17 +215,6 @@ InstallTorConfig() {
     $UCI_CMD set dhcp.@dnsmasq[0].rebind_localhost='1'
     $UCI_CMD set dhcp.@dnsmasq[0].rebind_domain='.onion'
     $UCI_CMD commit
-}
-
-RamConfigPrepare() {
-    $AWK_CMD -v DATA_DIR_RAM="$DATA_DIR_RAM" '{
-        sub(/^DATA_DIR=.*$/, "DATA_DIR=\"" DATA_DIR_RAM "\"");
-        print $0;
-    }' "$FILE_CONFIG" > "${FILE_CONFIG}.tmp" && mv -f "${FILE_CONFIG}.tmp" "$FILE_CONFIG"
-    $AWK_CMD -v FILE_MAIN_SCRIPT="$FILE_MAIN_SCRIPT" '{
-        if($0 ~ /^exit 0/) next;
-        print $0;
-    } END { print FILE_MAIN_SCRIPT " update\nexit 0" }' "$RC_LOCAL" > "${RC_LOCAL}.tmp" && mv -f "${RC_LOCAL}.tmp" "$RC_LOCAL"
 }
 
 InstallLuaModule() {
@@ -279,28 +263,6 @@ ConfirmProxyMode() {
         ;;
         *)
             InputError ConfirmProxyMode
-        ;;
-    esac
-}
-
-ConfirmRamConfig() {
-    local _reply
-    printf " Would you like to set the RAM-configuration? [y|n] (default: n, quit: q) > "
-    read _reply
-    case $_reply in
-        y|Y)
-            RAM_CONFIG=1
-            break
-        ;;
-        n|N|"")
-            RAM_CONFIG=0
-            break
-        ;;
-        q|Q)
-            printf "Bye...\n"; exit 0
-        ;;
-        *)
-            InputError ConfirmRamConfig
         ;;
     esac
 }
@@ -367,14 +329,12 @@ ConfirmProcessing() {
 }
 
 ConfirmProxyMode
-ConfirmRamConfig
 ConfirmLuciApp
 ConfirmProcessing
 AppStop
 PrintBold "Updating packages list..."
 UpdatePackagesList
 PrintBold "Saving current configuration..."
-#BackupCurrentConfig
 PrintBold "Installing basic configuration..."
 InstallBaseConfig
 if [ $? -eq 0 ]; then
@@ -388,11 +348,6 @@ if [ $? -eq 0 ]; then
         if `/etc/init.d/tor enabled`; then
             /etc/init.d/tor restart
         fi
-    fi
-
-    if [ $RAM_CONFIG = 1 ]; then
-        PrintBold "Setting the RAM-configuration..."
-        RamConfigPrepare
     fi
 
     if [ $LUA_MODULE = 1 ]; then

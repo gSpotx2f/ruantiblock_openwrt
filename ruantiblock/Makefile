@@ -5,7 +5,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock
-PKG_VERSION:=0.9.2
+PKG_VERSION:=0.9.3
 PKG_RELEASE:=0
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
@@ -24,11 +24,6 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Package/$(PKG_NAME)/conffiles
-/etc/config/ruantiblock
-/etc/ruantiblock/ruantiblock.conf
-/etc/ruantiblock/fqdn_filter
-/etc/ruantiblock/ip_filter
-/etc/ruantiblock/user_entries
 endef
 
 define Build/Configure
@@ -51,7 +46,6 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/etc/ruantiblock/scripts/config_script $(1)/etc/ruantiblock/scripts/config_script
 	$(INSTALL_DATA) ./files/etc/ruantiblock/scripts/info_output $(1)/etc/ruantiblock/scripts/info_output
 	$(INSTALL_DATA) ./files/etc/ruantiblock/scripts/ipt_functions $(1)/etc/ruantiblock/scripts/ipt_functions
-	$(INSTALL_BIN) ./files/etc/ruantiblock/scripts/start_script $(1)/etc/ruantiblock/scripts/start_script
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/ruantiblock $(1)/usr/bin/ruantiblock
 endef
@@ -60,15 +54,13 @@ define Package/$(PKG_NAME)/preinst
 #!/bin/sh
 
 RUAB_CFG_DIR="/etc/ruantiblock"
-EXEC_DIR="/usr/bin"
 BACKUP_DIR="$${RUAB_CFG_DIR}/autoinstall.bak.`date +%s`"
 FILE_CONFIG="$${RUAB_CFG_DIR}/ruantiblock.conf"
 FILE_FQDN_FILTER="$${RUAB_CFG_DIR}/ruab_fqdn_filter"
 FILE_IP_FILTER="$${RUAB_CFG_DIR}/ruab_ip_filter"
 FILE_USER_ENTRIES="$${RUAB_CFG_DIR}/ruab_user_entries"
 FILE_UCI_CONFIG="/etc/config/ruantiblock"
-FILE_MAIN_SCRIPT="$${EXEC_DIR}/ruantiblock"
-
+FILE_MAIN_SCRIPT="/usr/bin/ruantiblock"
 
 test -e "$$FILE_MAIN_SCRIPT" && $$FILE_MAIN_SCRIPT destroy
 
@@ -84,15 +76,12 @@ endef
 define Package/$(PKG_NAME)/prerm
 #!/bin/sh
 
-EXEC_DIR="/usr/bin"
 FILE_INIT_SCRIPT="/etc/init.d/ruantiblock"
-FILE_MAIN_SCRIPT="$${EXEC_DIR}/ruantiblock"
+FILE_MAIN_SCRIPT="/usr/bin/ruantiblock"
 CRONTAB_FILE="/etc/crontabs/root"
-RC_LOCAL="/etc/rc.local"
-DNSMASQ_CONF_LINK="/tmp/dnsmasq.d/ruantiblock.conf"
+DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/ruantiblock.conf"
 
-
-rm -f $$DNSMASQ_CONF_LINK
+rm -f $$DNSMASQ_DATA_FILE
 test -e "$$FILE_MAIN_SCRIPT" && $$FILE_MAIN_SCRIPT destroy
 
 test -e "$$FILE_INIT_SCRIPT" && $$FILE_INIT_SCRIPT disable
@@ -101,10 +90,6 @@ awk -v FILE_MAIN_SCRIPT="$$FILE_MAIN_SCRIPT" '$$0 !~ FILE_MAIN_SCRIPT {
 	print $$0;
 }' "$$CRONTAB_FILE" > "$${CRONTAB_FILE}.tmp" && mv -f "$${CRONTAB_FILE}.tmp" "$$CRONTAB_FILE"
 /etc/init.d/cron restart
-
-awk -v FILE_MAIN_SCRIPT="$$FILE_MAIN_SCRIPT" '$$0 !~ FILE_MAIN_SCRIPT {
-	print $$0;
-}' "$$RC_LOCAL" > "$${RC_LOCAL}.tmp" && mv -f "$${RC_LOCAL}.tmp" "$$RC_LOCAL"
 
 exit 0
 

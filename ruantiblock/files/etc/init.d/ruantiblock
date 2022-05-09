@@ -1,22 +1,32 @@
 #!/bin/sh /etc/rc.common
 
-START=92
+START=96
 STOP=01
 
-RUAB="/usr/bin/ruantiblock"
+APP_NAME="ruantiblock"
+APP_EXEC="/usr/bin/${APP_NAME}"
+
+config_load $APP_NAME
 
 start() {
-	$RUAB start
+	local update_at_startup
+	config_get update_at_startup config update_at_startup
+	$APP_EXEC start
+	if [ $? -eq 0 -a "$update_at_startup" = "1" ]; then
+		$APP_EXEC update
+	else
+		/etc/init.d/dnsmasq restart
+	fi
 }
 
 stop() {
-	$RUAB stop
+	$APP_EXEC stop
 }
 
 restart() {
-    $RUAB restart
+	$APP_EXEC restart
 }
 
 reload() {
-    $RUAB reload
+	$APP_EXEC reload
 }

@@ -413,8 +413,14 @@ msgstr "Невозможно сохранить содержимое"
 msgid "Update"
 msgstr "Обновить"
 
+msgid "Update at startup"
+msgstr "Обновление при запуске"
+
 msgid "Update blacklist"
 msgstr "Обновить блэклист"
+
+msgid "Update blacklist after system startup"
+msgstr "Обновлять блэклист после запуска системы"
 
 msgid "Updating"
 msgstr "Обновление"

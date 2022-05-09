@@ -375,7 +375,13 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
+msgid "Update at startup"
+msgstr ""
+
 msgid "Update blacklist"
+msgstr ""
+
+msgid "Update blacklist after system startup"
 msgstr ""
 
 msgid "Updating"

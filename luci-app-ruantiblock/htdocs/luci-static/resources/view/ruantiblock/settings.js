@@ -123,6 +123,12 @@ return view.extend({
 			_('Logging events'));
 		o.rmempty = false;
 
+		// update_at_startup
+		o = s.taboption('main_settings', form.Flag, 'update_at_startup',
+			_('Update at startup'));
+		o.description = _('Update blacklist after system startup');
+		o.rmempty = false;
+
 		// IPSET_CLEAR_SETS
 		o = s.taboption('main_settings', form.Flag, 'ipset_clear_sets',
 			_('Clean up ipsets before updating blacklist'));
@@ -330,10 +336,8 @@ return view.extend({
 	handleSaveApply: function(ev, mode) {
 		return this.handleSave(ev).then(() => {
 			ui.changes.apply(mode == '0');
-
 			if(this.appStatusCode != 1 && this.appStatusCode != 2) {
-				window.setTimeout(() => tools.handleServiceAction(
-					tools.appName, 'restart'), 3000);
+				window.setTimeout(() => fs.exec(tools.execPath, [ 'restart' ]), 3000);
 			};
 		});
 	},

@@ -1,5 +1,0 @@
-#!/bin/sh
-
-_link="/tmp/dnsmasq.d/ruantiblock.conf"
-ln -fs $DNSMASQ_DATA_FILE $_link
-eval `echo "$DNSMASQ_RESTART_CMD"`

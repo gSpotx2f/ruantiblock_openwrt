@@ -11,7 +11,7 @@
 				"/var/run/ruantiblock.token": [ "read" ],
 				"/etc/tor/torrc": [ "read" ],
 				"/etc/crontabs/root": [ "read" ],
-				"/usr/bin/ruantiblock": [ "exec" ],
+				"/usr/bin/ruantiblock*": [ "exec" ],
 				"/sbin/logread -e ruantiblock": [ "exec" ],
 				"/usr/sbin/logread -e ruantiblock": [ "exec" ]
 			},

@@ -15,9 +15,10 @@ export LANGUAGE="en"
 
 CONFIG_DIR="/etc/${NAME}"
 CONFIG_FILE="${CONFIG_DIR}/${NAME}.conf"
-export DATA_DIR="${CONFIG_DIR}/var"
+export DATA_DIR="/var/${NAME}"
 export MODULES_DIR="/usr/libexec/${NAME}"
-
+### Дополнительный конфиг dnsmasq с FQDN записями блэклиста
+export DNSMASQ_DATA_FILE="/var/dnsmasq.d/${NAME}.conf"
 ### Команда для перезапуска dnsmasq
 export DNSMASQ_RESTART_CMD="/etc/init.d/dnsmasq restart"
 ### Директория для html-страницы статуса (не используется в OpenWrt)
@@ -35,7 +36,7 @@ export IPSET_CLEAR_SETS=0
 export ALLOWED_HOSTS_MODE=0
 ### Список IP адресов хостов для фильтра, через пробел (прим.: 192.168.0.10 192.168.0.15)
 export ALLOWED_HOSTS_LIST=""
-### VPN интерфейс для правил iptables
+### VPN интерфейс для правил маршрутизации
 export IF_VPN="tun0"
 ### Порт транспарентного proxy Tor (параметр TransPort в torrc)
 export TOR_TRANS_PORT=9040
@@ -183,7 +184,6 @@ if [ $ENABLE_LOGGING = "1" -a $? -ne 0 ]; then
     ENABLE_LOGGING=0
 fi
 LOGGER_PARAMS="-t `basename $0` -p user.notice"
-export DNSMASQ_DATA_FILE="${DATA_DIR}/${NAME}.dnsmasq"
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
 export IPSET_ALLOWED_HOSTS="${NAME}_allowed_ip"
 export IPSET_IP="${NAME}_ip"
@@ -213,9 +213,9 @@ fi
 
 Help() {
 cat << EOF
- Usage: `basename $0` start|force-start|stop|destroy|restart|update|force-update|data-files|renew-ipt|status|status-html|--help
+ Usage: `basename $0` start|force-start|stop|destroy|restart|update|force-update|data-files|status|status-html|help
         start : Start
-        force-start :
+        force-start : Removing the pid-file before running
         stop : Stop
         destroy : Stop + destroy ipsets and clear all data files
         restart : Restart
@@ -226,7 +226,7 @@ cat << EOF
         status : Status & some info
         raw-status : Return code: 0 - enabled, 1 - error, 2 - disabled, 3 - starting, 4 - updating
         html-info : Return the html-info output
-        -h|--help : This message
+        -h|--help|help : This message
  Examples:
         `basename $0` start
         `basename $0` force-start
@@ -288,7 +288,7 @@ AddIptRules() {
 }
 
 DelIptRules() {
-    IptLocalClientsDel
+	IptLocalClientsDel
     IptMainDel
 }
 
