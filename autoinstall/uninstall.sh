@@ -11,7 +11,7 @@ HTDOCS_VIEW="${PREFIX}/www/luci-static/resources/view"
 HTDOCS_RUAB="${HTDOCS_VIEW}/ruantiblock"
 CRONTAB_FILE="/etc/crontabs/root"
 DATA_DIR="/tmp/ruantiblock"
-DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/ruantiblock.fqdn"
+DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/ruantiblock.dnsmasq"
 ### ruantiblock
 FILE_CONFIG="${RUAB_CFG_DIR}/ruantiblock.conf"
 FILE_FQDN_FILTER="${RUAB_CFG_DIR}/fqdn_filter"

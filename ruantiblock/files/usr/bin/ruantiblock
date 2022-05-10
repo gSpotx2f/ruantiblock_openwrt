@@ -18,7 +18,7 @@ CONFIG_FILE="${CONFIG_DIR}/${NAME}.conf"
 export DATA_DIR="/var/${NAME}"
 export MODULES_DIR="/usr/libexec/${NAME}"
 ### Дополнительный конфиг dnsmasq с FQDN записями блэклиста
-export DNSMASQ_DATA_FILE="/var/dnsmasq.d/${NAME}.fqdn"
+export DNSMASQ_DATA_FILE="/var/dnsmasq.d/${NAME}.dnsmasq"
 ### Команда для перезапуска dnsmasq
 export DNSMASQ_RESTART_CMD="/etc/init.d/dnsmasq restart"
 ### Директория для html-страницы статуса (не используется в OpenWrt)
