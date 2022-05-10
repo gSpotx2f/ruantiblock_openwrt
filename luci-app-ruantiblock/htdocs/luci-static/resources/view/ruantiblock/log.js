@@ -1,6 +1,6 @@
 'require fs';
 'require ui';
-'require view.log.abstract-log as abc';
+'require view.ruantiblock.abstract-log as abc';
 'require view.ruantiblock.tools as tools';
 
 return abc.view.extend({
