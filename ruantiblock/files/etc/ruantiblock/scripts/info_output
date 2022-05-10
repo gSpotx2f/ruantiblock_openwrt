@@ -7,7 +7,7 @@ Info() {
                 if(NF < 4)
                     print "\"status\":false";
                 else
-                    print "\"status\":true,\"date\":\""$4"\",\"ip\":\""$1"\",\"cidr\":\""$2"\",\"fqdn\":\""$3"\"";
+                    print "\"status\":true,\"date\":\""$4"\",\"cidr\":\""$1"\",\"ip\":\""$2"\",\"fqdn\":\""$3"\"";
             }' "$UPDATE_STATUS_FILE"
         else
             printf "\"status\":false"
@@ -25,7 +25,7 @@ Info() {
             printf "\"_dummy\":false},";
         }'
         printf "\"ipset\":{";
-        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_ONION" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ"
         do
             $IPSET_CMD list "$_set" -terse | $AWK_CMD -F ": " '
                 {

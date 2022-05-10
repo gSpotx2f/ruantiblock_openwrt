@@ -503,7 +503,7 @@ class WriteConfigFiles(Config):
     def write_update_status_file(self, ip_count, cidr_count, output_fqdn_count):
         with open(self.UPDATE_STATUS_FILE, "wt") as file_handler:
             file_handler.write(
-                f"{ip_count} {cidr_count} {output_fqdn_count}")
+                f"{cidr_count} {ip_count} {output_fqdn_count}")
 
 
 if __name__ == "__main__":

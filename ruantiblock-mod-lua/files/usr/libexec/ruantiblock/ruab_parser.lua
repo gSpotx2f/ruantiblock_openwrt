@@ -412,7 +412,7 @@ end
 
 function BlackListParser:write_update_status()
     local file_handler = assert(io.open(self.UPDATE_STATUS_FILE, "w"), "Could not open 'update_status' file")
-    file_handler:write(string.format("%d %d %d", self.ip_records_count, self.cidr_count, self.fqdn_records_count))
+    file_handler:write(string.format("%d %d %d", self.cidr_count, self.ip_records_count, self.fqdn_records_count))
     file_handler:close()
 end
 

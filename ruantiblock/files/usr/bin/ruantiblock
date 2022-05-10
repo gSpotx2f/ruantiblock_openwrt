@@ -185,13 +185,13 @@ if [ $ENABLE_LOGGING = "1" -a $? -ne 0 ]; then
 fi
 LOGGER_PARAMS="-t `basename $0` -p user.notice"
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
-export IPSET_ALLOWED_HOSTS="${NAME}_allowed_ip"
-export IPSET_IP="${NAME}_ip"
-export IPSET_IP_TMP="${IPSET_IP}_tmp"
-export IPSET_CIDR="${NAME}_cidr"
-export IPSET_CIDR_TMP="${IPSET_CIDR}_tmp"
-export IPSET_DNSMASQ="${NAME}_dnsmasq"
-export IPSET_ONION="${NAME}_onion"
+export IPSET_ALLOWED_HOSTS="r_allowed_ip"
+export IPSET_ONION="r_onion"
+export IPSET_CIDR="rc"
+export IPSET_CIDR_TMP="${IPSET_CIDR}t"
+export IPSET_IP="ri"
+export IPSET_IP_TMP="${IPSET_IP}t"
+export IPSET_DNSMASQ="rd"
 export UPDATE_STATUS_FILE="${DATA_DIR}/update_status"
 UPDATE_PID_FILE="/var/run/${NAME}_update.pid"
 START_PID_FILE="/var/run/${NAME}_start.pid"
@@ -422,7 +422,7 @@ GetDataFiles() {
         AddUserEntries
         if [ $_return_code -eq 0 ]; then
             _update_string=`$AWK_CMD '{
-                printf "Received entries: %s\n", (NF < 3) ? "No data" : "IP: "$1", CIDR: "$2", FQDN: "$3;
+                printf "Received entries: %s\n", (NF < 3) ? "No data" : "CIDR: "$1", IP: "$2", FQDN: "$3;
                 exit;
             }' "$UPDATE_STATUS_FILE"`
             ### STDOUT
@@ -564,7 +564,7 @@ Status() {
         printf "\n \033[1m${NAME} status\033[m: \033[1;32mEnabled\033[m\n\n  PROXY_MODE: ${PROXY_MODE}\n  PROXY_LOCAL_CLIENTS: ${PROXY_LOCAL_CLIENTS}\n  BLLIST_MODULE: ${BLLIST_MODULE}\n"
         if [ -f "$UPDATE_STATUS_FILE" ]; then
             $AWK_CMD '{
-                update_string=(NF < 4) ? "No data" : $4" (IP: "$1" | CIDR: "$2" | FQDN: "$3")";
+                update_string=(NF < 4) ? "No data" : $4" (CIDR: "$1" | IP: "$2" | FQDN: "$3")";
                 printf "\n  Last blacklist update:  %s\n", update_string;
             }' "$UPDATE_STATUS_FILE"
         else
@@ -581,7 +581,7 @@ Status() {
                 };
             }'
         printf "  \033[4mIp sets\033[m:\n\n"
-        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_ONION" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ"
         do
             $IPSET_CMD list "$_set" -terse | $AWK_CMD -F ":" '
                 {

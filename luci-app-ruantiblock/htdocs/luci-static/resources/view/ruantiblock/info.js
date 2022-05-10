@@ -114,16 +114,16 @@ return view.extend({
 								data.last_blacklist_update.date),
 						]),
 						E('tr', { 'class': 'tr' }, [
-							E('td', { 'class': 'td left' }, 'IP:'),
-							E('td', { 'class': 'td left',
-										'id': 'last_blacklist_update.ip' },
-								data.last_blacklist_update.ip),
-						]),
-						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td left' }, 'CIDR:'),
 							E('td', { 'class': 'td left',
 										'id': 'last_blacklist_update.cidr' },
 								data.last_blacklist_update.cidr),
+						]),
+						E('tr', { 'class': 'tr' }, [
+							E('td', { 'class': 'td left' }, 'IP:'),
+							E('td', { 'class': 'td left',
+										'id': 'last_blacklist_update.ip' },
+								data.last_blacklist_update.ip),
 						]),
 						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td left' }, 'FQDN:'),
