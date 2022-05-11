@@ -144,6 +144,9 @@ msgstr ""
 msgid "Hour"
 msgstr ""
 
+msgid "IP address"
+msgstr ""
+
 msgid "IP addresses of hosts"
 msgstr ""
 
@@ -342,6 +345,9 @@ msgid ""
 msgstr ""
 
 msgid "Time"
+msgstr ""
+
+msgid "Timeout"
 msgstr ""
 
 msgid "Timestamp"

@@ -6,6 +6,69 @@
 'require view.ruantiblock.tools as tools';
 
 return view.extend({
+	secToTimeString: function(value) {
+		let string = '';
+		if(/^\d+$/.test(value)) {
+			value = Number(value);
+			let hours = 0, mins = 0, sec = 0, rest = value;
+			if(value >= 3600) {
+				hours = Math.floor(value / 3600);
+				rest  = value % 3600;
+			};
+			if(rest >= 60) {
+				mins = Math.floor(rest / 60);
+				rest = rest % 60;
+			};
+			sec = rest;
+			if(hours > 0) {
+				string = string + hours + _('h');
+			};
+			if(mins > 0) {
+				string = string + ' ' + mins + _('m');
+			};
+			string = string + ' ' + sec + _('s');
+		};
+		return string;
+	},
+
+	makeDnsmasqTable: function(ipDataArray) {
+		let lines   = `<tr class="tr"><td class="td center">${_('No entries available...')}</td></tr>`;
+		let ipTable = E('table', { 'id': 'ipTable', 'class': 'table' });
+
+		if(ipDataArray.length > 1) {
+			lines = [];
+			ipDataArray.forEach((e, i) => {
+				if(e) {
+					lines.push(
+						`<tr class="tr"><td class="td left" data-title="${_('IP address')}">${e[0]}</td>` +
+						((e[1]) ? `<td class="td left" data-title="${_('Timeout')}">${this.secToTimeString(e[1])}</td>` : '') +
+						`</tr>`
+					);
+				};
+			});
+			lines = lines.join('');
+
+			ipTable.append(
+				E('tr', { 'class': 'tr table-titles' }, [
+					E('th', { 'class': 'th left', 'style': 'min-width:33%' }, _('IP address')),
+					(ipDataArray[0][1]) ? E('th', { 'class': 'th left' }, _('Timeout')) : ''
+				])
+			);
+		};
+
+		try {
+			ipTable.insertAdjacentHTML('beforeend', lines);
+		} catch(err) {
+			if(err.name === 'SyntaxError') {
+				ui.addNotification(null,
+					E('p', {}, _('HTML/XML error') + ': ' + err.message), 'error');
+			};
+			throw err;
+		};
+
+		return ipTable;
+	},
+
 	infoPoll: function() {
 		return fs.exec_direct(tools.execPath, [ 'html-info' ], 'json').catch(e => {
 			ui.addNotification(null, E('p', _('Unable to execute or read contents')
@@ -72,6 +135,12 @@ return view.extend({
 						};
 					};
 				};
+
+				if(data.dnsmasq) {
+					let rdTableWrapper = document.getElementById('rdTableWrapper');
+					rdTableWrapper.innerHTML = '';
+					rdTableWrapper.append(this.makeDnsmasqTable(data.dnsmasq));
+				};
 			} else {
 				if(poll.active()) {
 					poll.stop();
@@ -99,7 +168,8 @@ return view.extend({
 
 		let update_status = null,
 			iptables = null,
-			ipset = null;
+			ipset    = null,
+			dnsmasq  = null;
 		if(data) {
 			if(data.status === 'enabled') {
 				update_status = E('table', { 'class': 'table' });
@@ -110,25 +180,25 @@ return view.extend({
 							E('td', { 'class': 'td left', 'style': 'min-width:33%' },
 								_('Last blacklist update') + ':'),
 							E('td', { 'class': 'td left',
-										'id': 'last_blacklist_update.date' },
+										'id' : 'last_blacklist_update.date' },
 								data.last_blacklist_update.date),
 						]),
 						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td left' }, 'CIDR:'),
 							E('td', { 'class': 'td left',
-										'id': 'last_blacklist_update.cidr' },
+										'id' : 'last_blacklist_update.cidr' },
 								data.last_blacklist_update.cidr),
 						]),
 						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td left' }, 'IP:'),
 							E('td', { 'class': 'td left',
-										'id': 'last_blacklist_update.ip' },
+										'id' : 'last_blacklist_update.ip' },
 								data.last_blacklist_update.ip),
 						]),
 						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td left' }, 'FQDN:'),
 							E('td', { 'class': 'td left',
-										'id': 'last_blacklist_update.fqdn' },
+										'id' : 'last_blacklist_update.fqdn' },
 								data.last_blacklist_update.fqdn),
 						])
 					);
@@ -153,6 +223,7 @@ return view.extend({
 
 					for(let [k, v] of Object.entries(data.iptables)) {
 						if(k === '_dummy') continue;
+
 						table_iptables.append(
 							E('tr', { 'class': 'tr' }, [
 								E('td', {
@@ -215,7 +286,19 @@ return view.extend({
 					]);
 				};
 
-				poll.add(this.infoPoll);
+				if(data.dnsmasq) {
+					let rdTableWrapper = E('div', {
+						'id'   : 'rdTableWrapper',
+						'style': 'width:100%'
+					}, this.makeDnsmasqTable(data.dnsmasq));
+
+					dnsmasq = E([
+						E('h3', {}, _('Dnsmasq')),
+						rdTableWrapper,
+					]);
+				};
+
+				poll.add(L.bind(this.infoPoll, this));
 			} else {
 				update_status = E('em', {}, _('Status') + ' : ' + _('disabled'));
 			};
@@ -234,6 +317,10 @@ return view.extend({
 			E('div', { 'class': 'cbi-section fade-in' },
 				E('div', { 'class': 'cbi-section-node' }, ipset)
 			),
+			E('div', { 'class': 'cbi-section fade-in' },
+				E('div', { 'class': 'cbi-section-node' }, dnsmasq)
+			),
+
 		]);
 	},
 

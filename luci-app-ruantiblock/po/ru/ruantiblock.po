@@ -161,8 +161,11 @@ msgstr "Фильтр хостов"
 msgid "Hour"
 msgstr "Час"
 
+msgid "IP address"
+msgstr "IP-адрес"
+
 msgid "IP addresses of hosts"
-msgstr "IP адреса хостов"
+msgstr "IP-адреса хостов"
 
 msgid "IP filter"
 msgstr "Фильтр IP"
@@ -379,6 +382,9 @@ msgstr ""
 
 msgid "Time"
 msgstr "Время"
+
+msgid "Timeout"
+msgstr "Таймаут"
 
 msgid "Timestamp"
 msgstr "Время"

@@ -25,19 +25,41 @@ Info() {
             printf "\"_dummy\":false},";
         }'
         printf "\"ipset\":{";
-        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_ONION" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ"
+        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_ONION" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP"
         do
             $IPSET_CMD list "$_set" -terse | $AWK_CMD -F ": " '
                 {
-                    if($1 ~ /^Name/)
+                    if($1 ~ /^Name/) {
                         printf "\""$2"\":[";
-                    else if($1 ~ /^Size in memory/)
+                    }
+                    else if($1 ~ /^Size in memory/) {
                         printf "\""$2"\",";
-                    else if($1 ~ /^Number of entries/)
+                    }
+                    else if($1 ~ /^Number of entries/) {
                         printf "\""$2"\"],";
+                    };
                 }'
         done
-        printf "\"_dummy\":false}}"
+        $IPSET_CMD list "$IPSET_DNSMASQ" | $AWK_CMD -F ": " '
+            {
+                if($1 ~ /^Name/) {
+                    printf "\""$2"\":[";
+                }
+                else if($1 ~ /^Size in memory/) {
+                    printf "\""$2"\",";
+                }
+                else if($1 ~ /^Number of entries/) {
+                    printf "\""$2"\"]},\"dnsmasq\":[";
+                }
+                else if($0 ~ /^[0-9]/) {
+                    split($0, a, " ");
+                    printf "[\"" a[1] "\",\"" a[3] "\"],";
+                };
+            }
+            END {
+                printf "false],";
+            }'
+        printf "\"_dummy\":false}"
     else
         printf "{\"status\": \"disabled\"}"
     fi
