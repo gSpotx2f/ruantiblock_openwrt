@@ -56,9 +56,9 @@ define Package/$(PKG_NAME)/preinst
 RUAB_CFG_DIR="/etc/ruantiblock"
 BACKUP_DIR="$${RUAB_CFG_DIR}/autoinstall.bak.`date +%s`"
 FILE_CONFIG="$${RUAB_CFG_DIR}/ruantiblock.conf"
-FILE_FQDN_FILTER="$${RUAB_CFG_DIR}/ruab_fqdn_filter"
-FILE_IP_FILTER="$${RUAB_CFG_DIR}/ruab_ip_filter"
-FILE_USER_ENTRIES="$${RUAB_CFG_DIR}/ruab_user_entries"
+FILE_FQDN_FILTER="$${RUAB_CFG_DIR}/fqdn_filter"
+FILE_IP_FILTER="$${RUAB_CFG_DIR}/ip_filter"
+FILE_USER_ENTRIES="$${RUAB_CFG_DIR}/user_entries"
 FILE_UCI_CONFIG="/etc/config/ruantiblock"
 FILE_MAIN_SCRIPT="/usr/bin/ruantiblock"
 
@@ -79,7 +79,7 @@ define Package/$(PKG_NAME)/prerm
 FILE_INIT_SCRIPT="/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="/usr/bin/ruantiblock"
 CRONTAB_FILE="/etc/crontabs/root"
-DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/ruantiblock.conf"
+DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/ruantiblock.dnsmasq"
 
 rm -f $$DNSMASQ_DATA_FILE
 test -e "$$FILE_MAIN_SCRIPT" && $$FILE_MAIN_SCRIPT destroy
