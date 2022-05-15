@@ -1,6 +1,14 @@
 
 IP_CMD="ip"
-IPT_CMD="iptables"
+IPT_CMD=`which iptables-legacy`
+if [ $? -ne 0 ]; then
+    IPT_CMD=`which iptables`
+    if [ $? -ne 0 ]; then
+        echo " Error! Iptables doesn't exists" >&2
+        exit 1
+    fi
+fi
+
 IPT_ALLOWED_HOSTS_CHAIN="${NAME}_allowed_hosts"
 IPT_BLLIST_CHAIN="${NAME}_blacklist"
 IPT_ACTION_CHAIN="${NAME}_action"
@@ -98,8 +106,6 @@ IptMainDel() {
         IptVpnRouteDel 2> /dev/null
     fi
 }
-
-### Local clients
 
 IPT_OUTPUT_FIRST_RULE="-j ${IPT_BLLIST_CHAIN}"
 
