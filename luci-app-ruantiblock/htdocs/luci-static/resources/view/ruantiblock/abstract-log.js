@@ -325,8 +325,8 @@ return baseclass.extend({
 		},
 
 		makeLogArea: function(logdataArray) {
-			let lines    = `<div class="tr"><div class="td center log-entry-empty">${_('No entries available...')}</div></div>`;
-			let logTable = E('div', { 'id': 'logTable', 'class': 'table' });
+			let lines    = `<tr class="tr"><td class="td center log-entry-empty">${_('No entries available...')}</td></tr>`;
+			let logTable = E('table', { 'id': 'logTable', 'class': 'table' });
 
 			for(let level of Object.keys(this.logLevels)) {
 				this.logLevelsStat[level] = 0;
@@ -340,25 +340,25 @@ return baseclass.extend({
 					};
 
 					lines.push(
-						`<div class="tr log-${e[3] || 'empty'}"><div class="td left" data-title="#">${e[0]}</div>` +
-						((e[1]) ? `<div class="td left" data-title="${_('Timestamp')}">${e[1]}</div>` : '') +
-						((e[2]) ? `<div class="td left log-entry-host-cell" data-title="${_('Host')}">${e[2]}</div>` : '') +
-						((e[3]) ? `<div class="td left" data-title="${_('Level')}">${e[3]}</div>` : '') +
-						((e[4]) ? `<div class="td left" data-title="${_('Facility')}">${e[4]}</div>` : '') +
-						((e[5]) ? `<div class="td left log-entry-message-cell" data-title="${_('Message')}">${e[5]}</div>` : '') +
-						`</div>`
+						`<tr class="tr log-${e[3] || 'empty'}"><td class="td left" data-title="#">${e[0]}</td>` +
+						((e[1]) ? `<td class="td left" data-title="${_('Timestamp')}">${e[1]}</td>` : '') +
+						((e[2]) ? `<td class="td left log-entry-host-cell" data-title="${_('Host')}">${e[2]}</td>` : '') +
+						((e[3]) ? `<td class="td left" data-title="${_('Level')}">${e[3]}</td>` : '') +
+						((e[4]) ? `<td class="td left" data-title="${_('Facility')}">${e[4]}</td>` : '') +
+						((e[5]) ? `<td class="td left log-entry-message-cell" data-title="${_('Message')}">${e[5]}</td>` : '') +
+						`</tr>`
 					);
 				});
 				lines = lines.join('');
 
 				logTable.append(
-					E('div', { 'class': 'tr table-titles' }, [
-						E('div', { 'class': 'th left log-entry-number' }, '#'),
-						(logdataArray[0][1]) ? E('div', { 'class': 'th left log-entry-time' }, _('Timestamp')) : '',
-						(logdataArray[0][2]) ? E('div', { 'class': 'th left log-entry-host' }, _('Host')) : '',
-						(logdataArray[0][3]) ? E('div', { 'class': 'th left log-entry-log-level' }, _('Level')) : '',
-						(logdataArray[0][4]) ? E('div', { 'class': 'th left log-entry-facility' }, _('Facility')) : '',
-						(logdataArray[0][5]) ? E('div', { 'class': 'th left log-entry-message' }, _('Message')) : '',
+					E('tr', { 'class': 'tr table-titles' }, [
+						E('th', { 'class': 'th left log-entry-number' }, '#'),
+						(logdataArray[0][1]) ? E('th', { 'class': 'th left log-entry-time' }, _('Timestamp')) : '',
+						(logdataArray[0][2]) ? E('th', { 'class': 'th left log-entry-host' }, _('Host')) : '',
+						(logdataArray[0][3]) ? E('th', { 'class': 'th left log-entry-log-level' }, _('Level')) : '',
+						(logdataArray[0][4]) ? E('th', { 'class': 'th left log-entry-facility' }, _('Facility')) : '',
+						(logdataArray[0][5]) ? E('th', { 'class': 'th left log-entry-message' }, _('Message')) : '',
 					])
 				);
 			};
