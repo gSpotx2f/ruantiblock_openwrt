@@ -183,7 +183,7 @@ if [ $ENABLE_LOGGING = "1" -a $? -ne 0 ]; then
     echo " Logger doesn't exists" >&2
     ENABLE_LOGGING=0
 fi
-LOGGER_PARAMS="-t `basename $0` -p user.notice"
+LOGGER_PARAMS="-t `basename $0`"
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
 export IPSET_ALLOWED_HOSTS="r_allowed_ip"
 export IPSET_ONION="r_onion"
