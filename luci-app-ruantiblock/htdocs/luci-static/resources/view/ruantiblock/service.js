@@ -241,8 +241,15 @@ return view.extend({
 			descr = (descr) ? E('div', { 'class': 'cbi-value-description' }, descr) : '';
 			layout.append(
 				E('div', { 'class': 'cbi-value' }, [
-					E('label', { 'class': 'cbi-value-title' }, title),
-					E('div', { 'class': 'cbi-value-field' }, [ elem, descr ]),
+					E('label', { 'class': 'cbi-value-title', 'for': elem.id + '_hidden' || null }, title),
+					E('div', { 'class': 'cbi-value-field' }, [
+						E('div', {}, elem),
+						E('input', {
+							'id'  : elem.id + '_hidden',
+							'type': 'hidden',
+						}),
+						descr,
+					]),
 				])
 			)
 		};

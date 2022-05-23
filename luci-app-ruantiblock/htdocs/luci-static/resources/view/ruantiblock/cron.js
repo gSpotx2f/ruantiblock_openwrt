@@ -145,9 +145,14 @@ return view.extend({
 					cron_status),
 			]),
 			E('div', { 'class': 'cbi-value' }, [
-				E('label', { 'class': 'cbi-value-title', 'for': 'btn_cron_del' }),
-				E('div', { 'class': 'cbi-value-field' },
-					btn_cron_del),
+				E('label', { 'class': 'cbi-value-title', 'for': 'btn_cron_del_hidden' }),
+				E('div', { 'class': 'cbi-value-field' }, [
+					E('div', {}, btn_cron_del),
+					E('input', {
+						'id'  : 'btn_cron_del_hidden',
+						'type': 'hidden',
+					}),
+				]),
 			])
 		]);
 
@@ -221,13 +226,24 @@ return view.extend({
 		};
 		layout_append(cron_min, _('Minute'));
 
-		let btn_cron_add = E('button', {
-			'class': 'btn cbi-button-save',
-			'id'   : 'btn_cron_add',
-			'name' : 'btn_cron_add',
-		}, _('Set'));
-		btn_cron_add.onclick = ui.createHandlerFn(this, this.setCronSchedule);
-		layout_append(btn_cron_add);
+		let btn_cron_add = E('div', { 'class': 'cbi-value' }, [
+			E('label', { 'class': 'cbi-value-title', 'for': 'btn_cron_add_hidden' }),
+			E('div', { 'class': 'cbi-value-field' }, [
+				E('div', {},
+					E('button', {
+						'class': 'btn cbi-button-save',
+						'id'   : 'btn_cron_add',
+						'name' : 'btn_cron_add',
+						'click': ui.createHandlerFn(this, this.setCronSchedule),
+					}, _('Set'))
+				),
+				E('input', {
+					'id'  : 'btn_cron_add_hidden',
+					'type': 'hidden',
+				}),
+			]),
+		]);
+		layout.append(btn_cron_add);
 
 		return E([
 			E('h2',
