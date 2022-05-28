@@ -143,7 +143,7 @@ return view.extend({
 		o.value('2', _('All hosts except listed'));
 		o.description = _('Restriction of hosts that are allowed to bypass blocking');
 
-		// ALOWED_HOSTS_LIST
+		// ALLOWED_HOSTS_LIST
 		o = s.taboption('main_settings', form.DynamicList, 'allowed_hosts_list',
 			_('IP addresses of hosts'));
 		o.datatype = "ip4addr";

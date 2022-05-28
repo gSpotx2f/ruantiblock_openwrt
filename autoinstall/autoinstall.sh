@@ -185,12 +185,8 @@ InstallBaseConfig() {
 InstallVPNConfig() {
     local _if_vpn
     $UCI_CMD set ruantiblock.config.proxy_mode="2"
-    _if_vpn=`$UCI_CMD get network.VPN.ifname`
-    if [ -z "$_if_vpn" ]; then
-        _if_vpn="tun0"
-    fi
-    $UCI_CMD set ruantiblock.config.if_vpn="$_if_vpn"
-    $UCI_CMD commit
+    $UCI_CMD set ruantiblock.config.if_vpn="tun0"
+    $UCI_CMD commit ruantiblock
 }
 
 TorrcSettings() {
@@ -211,10 +207,11 @@ InstallTorConfig() {
     DlFile "$URL_TORRC" "$FILE_TORRC"
     TorrcSettings
     $UCI_CMD set ruantiblock.config.proxy_mode="1"
+    $UCI_CMD commit ruantiblock
     # dnsmasq rebind protection
     $UCI_CMD set dhcp.@dnsmasq[0].rebind_localhost='1'
     $UCI_CMD set dhcp.@dnsmasq[0].rebind_domain='.onion'
-    $UCI_CMD commit
+    $UCI_CMD commit dhcp
 }
 
 InstallLuaModule() {
@@ -224,7 +221,7 @@ InstallLuaModule() {
     FileExists "$FILE_LUA_IPTOOL" || DlFile "$URL_LUA_IPTOOL" "$FILE_LUA_IPTOOL"
     FileExists "$FILE_LUA_IDN" || DlFile "$URL_LUA_IDN" "$FILE_LUA_IDN"
     $UCI_CMD set ruantiblock.config.bllist_module="/usr/libexec/ruantiblock/ruab_parser.lua"
-    $UCI_CMD commit
+    $UCI_CMD commit ruantiblock
 }
 
 InstallLuciApp() {
