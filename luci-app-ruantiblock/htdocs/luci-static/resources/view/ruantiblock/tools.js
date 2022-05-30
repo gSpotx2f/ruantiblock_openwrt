@@ -8,8 +8,8 @@ document.head.append(E('style', {'type': 'text/css'},
 `
 .label-status {
 	display: inline;
-	margin: 0px 2px 0px 0 !important;
-	padding: 1px 4px 2px 4px;
+	margin: 0 2px 0 0 !important;
+	padding: 2px 4px;
 	-webkit-border-radius: 3px;
 	-moz-border-radius: 3px;
 	border-radius: 3px;
