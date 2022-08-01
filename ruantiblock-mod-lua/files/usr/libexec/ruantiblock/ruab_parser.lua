@@ -451,8 +451,7 @@ function BlackListParser:get_http_data(url)
             ret_val = nil
             print(string.format("Connection error! (%s) URL: %s", ret_code, url))
         end
-    end
-    if not ret_val then
+    else
         local wget_sink = ltn12.sink.chain(self:chunk_buffer(), self:sink())
         ret_val = ltn12.pump.all(ltn12.source.file(io.popen(self.WGET_CMD .. self.wget_user_agent .. ' "' .. url .. '"', 'r')), wget_sink)
     end
