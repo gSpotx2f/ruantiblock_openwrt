@@ -17,7 +17,7 @@ document.head.append(E('style', {'type': 'text/css'},
 	color: #fff !important;
 }
 .starting {
-	background-color: #a7b668 !important;
+	background-color: #9c994c !important;
 }
 .running {
 	background-color: #2ea256 !important;
@@ -26,7 +26,7 @@ document.head.append(E('style', {'type': 'text/css'},
 	background-color: #1e82ff !important;
 }
 .stopped {
-	background-color: #acacac !important;
+	background-color: #8a8a8a !important;
 }
 .error {
 	background-color: #ff4e54 !important;

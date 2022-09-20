@@ -9,6 +9,27 @@ document.head.append(E('style', {'type': 'text/css'},
 	--app-log-dark-font-color: #2e2e2e;
 	--app-log-light-font-color: #fff;
 	--app-log-debug-font-color: #737373;
+	--app-log-emerg-color: #a93734;
+	--app-log-alert: #ff7968;
+	--app-log-crit: #fcc3bf;
+	--app-log-err: #ffe9e8;
+	--app-log-warn: #fff7e2;
+	--app-log-notice: #e3ffec;
+	--app-log-info: rgba(0,0,0,0);
+	--app-log-debug: #ebf6ff;
+}
+:root[data-darkmode="true"] {
+	--app-log-dark-font-color: #fff;
+	--app-log-light-font-color: #fff;
+	--app-log-debug-font-color: #e7e7e7;
+	--app-log-emerg-color: #a93734;
+	--app-log-alert: #eb5050;
+	--app-log-crit: #dc7f79;
+	--app-log-err: #c89593;
+	--app-log-warn: #8d7000;
+	--app-log-notice: #007627;
+	--app-log-info: rgba(0,0,0,0);
+	--app-log-debug: #5986b1;
 }
 .log-entry-empty {
 }
@@ -41,7 +62,7 @@ document.head.append(E('style', {'type': 'text/css'},
 .log-empty {
 }
 .log-emerg {
-	background-color: #a93734 !important;
+	background-color: var(--app-log-emerg-color) !important;
 	color: var(--app-log-light-font-color);
 }
 log-emerg .td {
@@ -51,7 +72,7 @@ log-emerg td {
 	color: var(--app-log-light-font-color) !important;
 }
 .log-alert {
-	background-color: #ff7968 !important;
+	background-color: var(--app-log-alert) !important;
 	color: var(--app-log-light-font-color);
 }
 .log-alert .td {
@@ -61,7 +82,7 @@ log-emerg td {
 	color: var(--app-log-light-font-color) !important;
 }
 .log-crit {
-	background-color: #fcc3bf !important;
+	background-color: var(--app-log-crit) !important;
 	color: var(--app-log-dark-font-color) !important;
 }
 .log-crit .td {
@@ -71,7 +92,7 @@ log-emerg td {
 	color: var(--app-log-dark-font-color) !important;
 }
 .log-err {
-	background-color: #ffe9e8 !important;
+	background-color: var(--app-log-err) !important;
 	color: var(--app-log-dark-font-color) !important;
 }
 .log-err .td {
@@ -81,7 +102,7 @@ log-emerg td {
 	color: var(--app-log-dark-font-color) !important;
 }
 .log-warn {
-	background-color: #fff7e2 !important;
+	background-color: var(--app-log-warn) !important;
 	color: var(--app-log-dark-font-color) !important;
 }
 .log-warn .td {
@@ -91,7 +112,7 @@ log-emerg td {
 	color: var(--app-log-dark-font-color) !important;
 }
 .log-notice {
-	background-color: #e3ffec !important;
+	background-color: var(--app-log-notice) !important;
 	color: var(--app-log-dark-font-color) !important;
 }
 .log-notice .td {
@@ -101,9 +122,11 @@ log-emerg td {
 	color: var(--app-log-dark-font-color) !important;
 }
 .log-info {
+	background-color: var(--app-log-info) !important;
+	/*color: var(--app-log-dark-font-color) !important;*/
 }
 .log-debug {
-	background-color: #ebf6ff !important;
+	background-color: var(--app-log-debug) !important;
 	color: var(--app-log-debug-font-color) !important;
 }
 .log-debug .td {
@@ -114,6 +137,7 @@ log-emerg td {
 }
 .log-highlight-item {
 	background-color: #ffef00;
+	color: #2e2e2e;
 }
 .log-entries-count {
 	margin: 0 0 5px 5px;
