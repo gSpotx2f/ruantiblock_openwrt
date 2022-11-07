@@ -2,17 +2,18 @@
 # (с) 2020 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 
 from ipaddress import IPv4Address, IPv4Network, summarize_address_range
+from typing import List, Tuple, Set, Union
 
-HOSTS_LIMIT = 0
-NETS_LIMIT = 0
+HOSTS_LIMIT: int = 0
+NETS_LIMIT: int = 0
 
 
 def _sort_ip_func(e: str) -> IPv4Address:
     return IPv4Address(e)
 
 
-def _group_ip_ranges(ip_list: list, raw_list=None) -> tuple:
-    def remove_items(start, end):
+def _group_ip_ranges(ip_list: List, raw_list: Union[List, Set] = None) -> Tuple:
+    def remove_items(start: IPv4Address, end: IPv4Address) -> None:
         for ip in range(int(start), int(end) + 1):
             raw_list.remove(str(IPv4Address(ip)))
 
@@ -37,7 +38,7 @@ def _group_ip_ranges(ip_list: list, raw_list=None) -> tuple:
             yield start, end
 
 
-def summarize_ip_ranges(ip_list: (list, set), modify_raw_list=False) -> IPv4Network:
+def summarize_ip_ranges(ip_list: Union[List, Set], modify_raw_list: bool = False) -> IPv4Network:
     for s, e in _group_ip_ranges(sorted(ip_list, key=_sort_ip_func),
                                  modify_raw_list and ip_list):
         for i in summarize_address_range(s, e):
@@ -55,9 +56,8 @@ def _sort_net_func(e: str) -> IPv4Network:
     return IPv4Network(e)
 
 
-def _group_nets(cidr_list: list, raw_list=None) -> IPv4Network:
-
-    def remove_items(start, end):
+def _group_nets(cidr_list: List, raw_list: Union[List, Set] = None) -> IPv4Network:
+    def remove_items(start: IPv4Address, end: IPv4Address) -> None:
         for ip in range(int(start), int(end) + 1, 256):
             raw_list.remove(str(IPv4Address(ip)) + "/24")
 
@@ -87,7 +87,7 @@ def _group_nets(cidr_list: list, raw_list=None) -> IPv4Network:
             yield summarize_address_range(IPv4Address(start), IPv4Address(end + 255))
 
 
-def summarize_nets(cidr_list: (list, set)) -> IPv4Network:
+def summarize_nets(cidr_list: Union[List, Set]) -> IPv4Network:
     for i in _group_nets(sorted(cidr_list, key=_sort_net_func), cidr_list):
         for j in i:
             yield j
