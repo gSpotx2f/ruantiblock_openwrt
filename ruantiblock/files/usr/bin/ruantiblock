@@ -385,7 +385,7 @@ AddUserEntries() {
                     };
                     function writeDNSData(val, dns) {
                         if(length(dns) == 0 && length(ENVIRON["USER_ENTRIES_DNS"]) > 0)
-                            dns = ENVIRON["USER_ENTRIES_DNS"];
+                            dns=ENVIRON["USER_ENTRIES_DNS"];
                         if(length(dns) > 0)
                             printf "server=/%s/%s\n", val, dns >> ENVIRON["DNSMASQ_DATA_FILE"];
                         printf "ipset=/%s/%s\n", val, ENVIRON["IPSET_DNSMASQ"] >> ENVIRON["DNSMASQ_DATA_FILE"];
