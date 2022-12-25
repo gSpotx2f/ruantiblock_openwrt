@@ -372,14 +372,16 @@ class RblFQDN(BlackListParser):
     def __init__(self):
         super().__init__()
         self.url = self.RBL_ALL_URL
-        self.fields_separator = "],"
-        self.ips_separator = ","
+        self.records_separator = '{"authority": '
+        self.ips_separator = ", "
 
     def parser_func(self):
         for entry in self._split_entries():
-            entry_list = entry.partition(self.fields_separator)
-            ip_string = re.sub(r"[' \]\[]", "", entry_list[0])
-            fqdn_string = re.sub(",.*$", "", entry_list[2])
+            res = re.search(r'"domains": \["?(.*?)"?\].*?"ips": \[([a-f0-9/.:", ]*)\]', entry)
+            if not res:
+                continue
+            ip_string = res.group(2).replace('"', "")
+            fqdn_string = res.group(1)
             if fqdn_string:
                 try:
                     self.fqdn_field_processing(fqdn_string)
@@ -393,10 +395,11 @@ class RblIp(BlackListParser):
     def __init__(self):
         super().__init__()
         self.url = self.RBL_IP_URL
+        self.records_separator = ","
 
     def parser_func(self):
         for entry in self._split_entries():
-            self.ip_field_processing(entry.rstrip(","))
+            self.ip_field_processing(re.sub(r'[\[\]" ]', "", entry))
 
 
 class ZiFQDN(BlackListParser):
@@ -450,6 +453,7 @@ class AfIp(BlackListParser):
         for entry in self._split_entries():
             self.ip_field_processing(entry)
 
+
 class RaFQDN(BlackListParser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -474,12 +478,14 @@ class RaFQDN(BlackListParser):
         self.download_config(self.url_stat, self.UPDATE_STATUS_FILE)
         return 0
 
+
 class RaIp(RaFQDN):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.url_ipset = self.RA_IP_IPSET_URL
         self.url_dnsmasq = self.RA_IP_DMASK_URL
         self.url_stat = self.RA_IP_STAT_URL
+
 
 class WriteConfigFiles(Config):
     def __init__(self):

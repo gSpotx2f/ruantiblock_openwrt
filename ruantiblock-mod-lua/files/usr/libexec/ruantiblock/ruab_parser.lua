@@ -182,9 +182,9 @@ local iconv = prequire("iconv")
 
 local si, it
 if prequire("bit") then
-    it = prequire("iptool")
+    it = require("iptool")
     if it then
-        si = prequire("ruab_sum_ip")
+        si = require("ruab_sum_ip")
     end
 end
 if not si then
@@ -509,14 +509,14 @@ end
 
 local Rbl = Class(BlackListParser, {
     url = Config.RBL_ALL_URL,
+    records_separator = '%{"authority": ',
     ips_separator = ", ",
-    ip_string_pattern = "([a-f0-9/.:]+),?\n?",
 })
 
 function Rbl:sink()
     return function(chunk)
         if chunk and chunk ~= "" then
-            for ip_str, fqdn_str in chunk:gmatch("%[([a-f0-9/.:', ]+)%],([^,]-),.-" .. self.records_separator .. "?") do
+            for fqdn_str, ip_str in chunk:gmatch('"domains": %["?(.-)"?%].-"ips": %[([a-f0-9/.:", ]*)%].-' .. self.records_separator .. "?") do
                 fqdn_sink_func(self, ip_str, fqdn_str)
             end
         end
@@ -526,6 +526,8 @@ end
 
 local RblIp = Class(Rbl, {
     url = Config.RBL_IP_URL,
+    records_separator = ",",
+    ip_string_pattern = "([a-f0-9/.:]+)",
     sink = ip_sink,
 })
 
@@ -533,7 +535,6 @@ local RblIp = Class(Rbl, {
 
 local Zi = Class(BlackListParser, {
     url = Config.ZI_ALL_URL,
-    ip_string_pattern = "([a-f0-9%.:/ |]+);.-\n",
     site_encoding = Config.ZI_ENCODING,
 })
 
@@ -549,6 +550,7 @@ function Zi:sink()
 end
 
 local ZiIp = Class(Zi, {
+    ip_string_pattern = "([a-f0-9%.:/ |]+);.-\n",
     sink = ip_sink,
 })
 
@@ -556,7 +558,6 @@ local ZiIp = Class(Zi, {
 
 local Af = Class(BlackListParser, {
     url = Config.AF_FQDN_URL,
-    ip_string_pattern = "(.-)\n",
 })
 
 function Af:sink()
@@ -573,6 +574,7 @@ end
 
 local AfIp = Class(Af, {
     url = Config.AF_IP_URL,
+    ip_string_pattern = "(.-)\n",
     sink = ip_sink,
     BLLIST_MIN_ENTRIES = 100,
 })
