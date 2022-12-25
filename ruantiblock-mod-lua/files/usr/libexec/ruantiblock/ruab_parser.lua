@@ -182,9 +182,9 @@ local iconv = prequire("iconv")
 
 local si, it
 if prequire("bit") then
-    it = require("iptool")
+    it = prequire("iptool")
     if it then
-        si = require("ruab_sum_ip")
+        si = prequire("ruab_sum_ip")
     end
 end
 if not si then
