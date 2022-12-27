@@ -8,8 +8,6 @@ return abc.view.extend({
 
 	title          : _('Ruantiblock') + ' - ' + _('Log'),
 
-	appRegexp      : new RegExp(`^.*user\.(err|warning|notice|info|debug)\\s${tools.appName}.*$`, 'gm'),
-
 	testRegexp     : new RegExp(/([0-9]{2}:){2}[0-9]{2}/),
 
 	isLoggerChecked: false,
@@ -53,7 +51,7 @@ return abc.view.extend({
 			let logger = (stat[0]) ? stat[0].path : (stat[1]) ? stat[1].path : null;
 
 			if(logger) {
-				return fs.exec_direct(logger, [ '-e', tools.appName ]).catch(err => {
+				return fs.exec_direct(logger, [ '-e', tools.appName + ':' ]).catch(err => {
 					ui.addNotification(
 						null, E('p', {}, _('Unable to load log data:') + ' ' + err.message));
 					return '';
@@ -67,7 +65,7 @@ return abc.view.extend({
 			return [];
 		};
 
-		let strings = logdata.trim().match(this.appRegexp) || [];
+		let strings = logdata.trim().split(/\n/);
 
 		if(tail && tail > 0 && strings) {
 			strings = strings.slice(-tail);
