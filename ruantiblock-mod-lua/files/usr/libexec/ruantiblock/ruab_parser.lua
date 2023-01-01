@@ -214,7 +214,7 @@ local BlackListParser = Class(Config, {
     fqdn_pattern = "[a-z0-9_%.%-]-[a-z0-9_%-]+%.[a-z0-9%.%-]",
     url = "http://127.0.0.1",
     records_separator = "\n",
-    ips_separator = " | ",
+    ips_separator = "|",
 })
 
 function BlackListParser:new(t)
