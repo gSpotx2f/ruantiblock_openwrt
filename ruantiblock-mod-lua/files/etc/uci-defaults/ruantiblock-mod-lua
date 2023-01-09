@@ -1,0 +1,1 @@
+uci set ruantiblock.config.bllist_module='/usr/libexec/ruantiblock/ruab_parser.lua'; uci commit ruantiblock

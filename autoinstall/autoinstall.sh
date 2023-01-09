@@ -4,13 +4,14 @@ PREFIX=""
 TOR_USER="tor"
 
 PROXY_MODE=1
-LUA_MODULE=1
+BLACKLIST=0
+LUA_MODULE=0
 LUCI_APP=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="0.9.5-0"
-RUAB_MOD_LUA_VERSION="0.9.5-0"
-RUAB_LUCI_APP_VERSION="0.9.5-0"
+RUAB_VERSION="0.9.6-0"
+RUAB_MOD_LUA_VERSION="0.9.6-0"
+RUAB_LUCI_APP_VERSION="0.9.6-0"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
 
@@ -177,15 +178,25 @@ InstallBaseConfig() {
     RemoveFile "$FILE_RUAB_PKG" > /dev/null
     DlFile "$URL_RUAB_PKG" "$FILE_RUAB_PKG" && $OPKG_CMD install "$FILE_RUAB_PKG" > /dev/null
     _return_code=$?
-    # костыль для остановки сервиса, который запускается автоматически после установки пакета!
     AppStop
     return $_return_code
+}
+
+EnableBlacklist() {
+    $UCI_CMD set ruantiblock.config.bllist_preset="ruantiblock-fqdn"
+    $UCI_CMD commit ruantiblock
 }
 
 InstallVPNConfig() {
     local _if_vpn
     $UCI_CMD set ruantiblock.config.proxy_mode="2"
     $UCI_CMD set ruantiblock.config.if_vpn="tun0"
+    $UCI_CMD commit ruantiblock
+}
+
+InstallTPConfig() {
+    local _if_vpn
+    $UCI_CMD set ruantiblock.config.proxy_mode="3"
     $UCI_CMD commit ruantiblock
 }
 
@@ -208,7 +219,6 @@ InstallTorConfig() {
     TorrcSettings
     $UCI_CMD set ruantiblock.config.proxy_mode="1"
     $UCI_CMD commit ruantiblock
-    # dnsmasq rebind protection
     $UCI_CMD set dhcp.@dnsmasq[0].rebind_domain='.onion'
     $UCI_CMD commit dhcp
 }
@@ -243,7 +253,7 @@ InputError () {
 
 ConfirmProxyMode() {
     local _reply
-    printf " Select configuration [1: Tor | 2: VPN] (default: 1, quit: q) > "
+    printf " Select configuration [ 1: Tor | 2: VPN | 3: Transparent proxy ] (default: 1, quit: q) > "
     read _reply
     case $_reply in
         1|"")
@@ -252,6 +262,10 @@ ConfirmProxyMode() {
         ;;
         2)
             PROXY_MODE=2
+            break
+        ;;
+        3)
+            PROXY_MODE=3
             break
         ;;
         q|Q)
@@ -263,9 +277,31 @@ ConfirmProxyMode() {
     esac
 }
 
+ConfirmBlacklist() {
+    local _reply
+    printf " Select blacklist [ 1: User entries only | 2: RKN blacklist ] (default: 1, quit: q) > "
+    read _reply
+    case $_reply in
+        1|"")
+            BLACKLIST=1
+            break
+        ;;
+        2)
+            BLACKLIST=2
+            break
+        ;;
+        q|Q)
+            printf "Bye...\n"; exit 0
+        ;;
+        *)
+            InputError ConfirmBlacklist
+        ;;
+    esac
+}
+
 ConfirmLuaModule() {
     local _reply
-    printf " Would you like to install the lua module? [y|n] (default: y, quit: q) > "
+    printf " Would you like to install the lua module? [ y | n ] (default: y, quit: q) > "
     read _reply
     case $_reply in
         y|Y|"")
@@ -287,7 +323,7 @@ ConfirmLuaModule() {
 
 ConfirmLuciApp() {
     local _reply
-    printf " Would you like to install the LuCI application? [y|n] (default: y, quit: q) > "
+    printf " Would you like to install the LuCI application? [ y | n ] (default: y, quit: q) > "
     read _reply
     case $_reply in
         y|Y|"")
@@ -309,7 +345,7 @@ ConfirmLuciApp() {
 
 ConfirmProcessing() {
     local _reply
-    printf " Next, the installation will begin... Continue? [y|n] (default: y, quit: q) > "
+    printf " Next, the installation will begin... Continue? [ y | n ] (default: y, quit: q) > "
     read _reply
     case $_reply in
         y|Y|"")
@@ -325,6 +361,8 @@ ConfirmProcessing() {
 }
 
 ConfirmProxyMode
+ConfirmBlacklist
+#ConfirmLuaModule
 ConfirmLuciApp
 ConfirmProcessing
 AppStop
@@ -338,12 +376,20 @@ if [ $? -eq 0 ]; then
     if [ $PROXY_MODE = 2 ]; then
         PrintBold "Installing VPN configuration..."
         InstallVPNConfig
+    elif [ $PROXY_MODE = 3 ]; then
+        PrintBold "Installing transparent proxy configuration..."
+        InstallTPConfig
     else
         PrintBold "Installing Tor configuration..."
         InstallTorConfig
         if `/etc/init.d/tor enabled`; then
             /etc/init.d/tor restart
         fi
+    fi
+
+    if [ $BLACKLIST = 2 ]; then
+        PrintBold "Set RKN blacklist..."
+        EnableBlacklist
     fi
 
     if [ $LUA_MODULE = 1 ]; then

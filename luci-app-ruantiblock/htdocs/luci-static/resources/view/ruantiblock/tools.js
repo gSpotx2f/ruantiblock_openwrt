@@ -50,13 +50,13 @@ return baseclass.extend({
 	infoLabelError   : '<span class="label-status error">' + _('Error') + '</span>',
 
 	blacklistPresets: {
-		'zapret-info-fqdn': [ 'zapret-info', 'fqdn', 'https://github.com/zapret-info/z-i' ],
-		'zapret-info-ip'  : [ 'zapret-info', 'ip', 'https://github.com/zapret-info/z-i' ],
-		'rublacklist-fqdn': [ 'rublacklist', 'fqdn', 'https://rublacklist.net' ],
-		'rublacklist-ip'  : [ 'rublacklist', 'ip', 'https://rublacklist.net' ],
-		'antifilter-ip'   : [ 'antifilter', 'ip', 'https://antifilter.download' ],
 		'ruantiblock-fqdn': [ 'ruantiblock', 'fqdn', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
 		'ruantiblock-ip'  : [ 'ruantiblock', 'ip', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
+		'zapret-info-fqdn': [ '*zapret-info', 'fqdn', 'https://github.com/zapret-info/z-i' ],
+		'zapret-info-ip'  : [ '*zapret-info', 'ip', 'https://github.com/zapret-info/z-i' ],
+		'rublacklist-fqdn': [ '*rublacklist', 'fqdn', 'https://rublacklist.net' ],
+		'rublacklist-ip'  : [ '*rublacklist', 'ip', 'https://rublacklist.net' ],
+		'antifilter-ip'   : [ '*antifilter', 'ip', 'https://antifilter.download' ],
 	},
 
 	callInitStatus: rpc.declare({
@@ -172,8 +172,8 @@ return baseclass.extend({
 			(app_status_code != 2 && proxy_mode == 2 && vpn_route_status_code != 0)
 				? '<span class="label-status error">'
 					+ _('VPN routing error! Need restart') + '</span>' : '',
-			(proxy_mode == 1) ? 'Tor' : 'VPN',
-			(!bllist_module || bllist_module === '') ? _('user entries only') :
+			(proxy_mode == 3) ? _('Transparent proxy') : (proxy_mode == 2) ? 'VPN' : 'Tor',
+			(!bllist_preset || bllist_preset === '') ? _('user entries only') :
 				(this.blacklistPresets[bllist_preset]) ?
 					`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${this.blacklistPresets[bllist_preset][2]}">
 						${this.blacklistPresets[bllist_preset][0]}</span> - ${this.blacklistPresets[bllist_preset][1]}`

@@ -22,9 +22,6 @@ msgstr ""
 msgid "Apply proxy rules to router application traffic"
 msgstr ""
 
-msgid "Blacklist entry filters"
-msgstr ""
-
 msgid "Blacklist module"
 msgstr ""
 
@@ -210,7 +207,7 @@ msgstr ""
 msgid "Minute"
 msgstr ""
 
-msgid "Module operation mode"
+msgid "Module settings"
 msgstr ""
 
 msgid "Name"
@@ -292,6 +289,9 @@ msgstr ""
 msgid "Send UDP traffic to Tor"
 msgstr ""
 
+msgid "Send UDP traffic to transparent proxy"
+msgstr ""
+
 msgid "Service"
 msgstr ""
 
@@ -359,7 +359,19 @@ msgstr ""
 msgid "Tor mode"
 msgstr ""
 
-msgid "Transparent proxy port for iptables rules"
+msgid "Transparent proxy"
+msgstr ""
+
+msgid "Transparent proxy mode"
+msgstr ""
+
+msgid "Transparent proxy port"
+msgstr ""
+
+msgid "Transparent proxy TCP port"
+msgstr ""
+
+msgid "Transparent proxy UDP port"
 msgstr ""
 
 msgid "Type an expression..."
@@ -426,6 +438,9 @@ msgid "net pattern"
 msgstr ""
 
 msgid "none (user entries only)"
+msgstr ""
+
+msgid "requires installed blacklist module"
 msgstr ""
 
 msgid "user entries only"

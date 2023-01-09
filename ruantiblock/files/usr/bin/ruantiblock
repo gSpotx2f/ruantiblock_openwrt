@@ -26,7 +26,7 @@ export HTML_DIR="/www"
 
 ########################## Default Settings ############################
 
-### Режим обработки пакетов в правилах iptables (1 - Tor, 2 - VPN)
+### Режим обработки пакетов в правилах iptables (1 - Tor, 2 - VPN, 3 - Прозрачный прокси)
 export PROXY_MODE=1
 ### Применять правила проксификации для трафика локальных сервисов роутера (0 - off, 1 - on)
 export PROXY_LOCAL_CLIENTS=1
@@ -38,12 +38,20 @@ export ALLOWED_HOSTS_MODE=0
 export ALLOWED_HOSTS_LIST=""
 ### VPN интерфейс для правил маршрутизации
 export IF_VPN="tun0"
-### Порт транспарентного proxy Tor (параметр TransPort в torrc)
+### Порт прозрачного прокси Tor (параметр TransPort в torrc)
 export TOR_TRANS_PORT=9040
-### Отправлять в Tor UDP-трафик
-export TOR_ALLOW_UDP=1
+### Отправлять в Tor UDP-трафик (0 - off, 1 - on)
+export TOR_ALLOW_UDP=0
 ### DNS-сервер для резолвинга в домене .onion (Tor)
 export ONION_DNS_ADDR="127.0.0.1#9053"
+### --set-mark для отбора пакетов в VPN туннель
+export VPN_PKTS_MARK=8
+### TCP порт прокси в режиме прозрачного прокси
+export T_PROXY_PORT_TCP=1100
+### UDP порт прокси в режиме прозрачного прокси
+export T_PROXY_PORT_UDP=1100
+### Отправлять в прозрачный прокси UDP-трафик (0 - off, 1 - on)
+export T_PROXY_ALLOW_UDP=0
 ### Добавление в список блокировок пользовательских записей из файла $USER_ENTRIES_FILE (0 - off, 1 - on)
 ###  В $DATA_DIR можно создать текстовый файл user_entries с записями IP, CIDR или FQDN (одна на строку). Эти записи будут добавлены в список блокировок
 ###  В записях FQDN можно задать DNS-сервер для разрешения данного домена, через пробел (прим.: domain.com 8.8.8.8)
@@ -57,8 +65,6 @@ export USER_ENTRIES_FILE="${CONFIG_DIR}/user_entries"
 export ENABLE_LOGGING=1
 ### Html-страница с инфо о текущем статусе (0 - off, 1 - on) (не используется в OpenWrt)
 export ENABLE_HTML_INFO=0
-### --set-mark для отбора пакетов в VPN туннель
-export VPN_PKTS_MARK=8
 ### Максимальное кол-во элементов списка ipset
 export IPSET_MAXELEM=2000000
 ### Таймаут для записей в сете $IPSET_DNSMASQ
@@ -74,8 +80,8 @@ export BLLIST_MODULE=""
 
 ##############################
 
-### Режим обхода блокировок: zapret-info-fqdn, zapret-info-ip, rublacklist-fqdn, rublacklist-ip, antifilter-ip, ruantiblock-fqdn, ruantiblock-ip
-export BLLIST_PRESET="zapret-info-fqdn"
+### Режим обхода блокировок: ruantiblock-fqdn, ruantiblock-ip, zapret-info-fqdn, zapret-info-ip, rublacklist-fqdn, rublacklist-ip, antifilter-ip
+export BLLIST_PRESET=""
 ### В случае если из источника получено менее указанного кол-ва записей, то обновления списков не происходит
 export BLLIST_MIN_ENTRIES=30000
 ### Лимит IP адресов. При достижении, в конфиг ipset будет добавлена вся подсеть /24 вместо множества IP адресов пренадлежащих этой сети (0 - off)
@@ -138,40 +144,7 @@ STOP_SCRIPT="${CONFIG_DIR}/scripts/stop_script"
 ### Config script
 [ -f "$CONFIG_SCRIPT" ] && . "$CONFIG_SCRIPT"
 
-### Blacklist source and mode
-case "$BLLIST_PRESET" in
-    zapret-info-ip)
-        ### Источник для обновления списка блокировок (zapret-info, rublacklist, antifilter, ruantiblock)
-        export BLLIST_SOURCE="zapret-info"
-        ### Режим обхода блокировок: ip, fqdn
-        export BLLIST_MODE="ip"
-    ;;
-    rublacklist-ip)
-        export BLLIST_SOURCE="rublacklist"
-        export BLLIST_MODE="ip"
-    ;;
-    rublacklist-fqdn)
-        export BLLIST_SOURCE="rublacklist"
-        export BLLIST_MODE="fqdn"
-    ;;
-    antifilter-ip)
-        export BLLIST_SOURCE="antifilter"
-        export BLLIST_MODE="ip"
-    ;;
-    ruantiblock-ip)
-        export BLLIST_SOURCE="ruantiblock"
-        export BLLIST_MODE="ip"
-    ;;
-    ruantiblock-fqdn)
-        export BLLIST_SOURCE="ruantiblock"
-        export BLLIST_MODE="fqdn"
-    ;;
-	*)
-        export BLLIST_SOURCE="zapret-info"
-        export BLLIST_MODE="fqdn"
-    ;;
-esac
-
+### Utilities
 AWK_CMD="awk"
 IPSET_CMD=`which ipset`
 if [ $? -ne 0 ]; then
@@ -184,7 +157,15 @@ if [ $ENABLE_LOGGING = "1" -a $? -ne 0 ]; then
     ENABLE_LOGGING=0
 fi
 LOGGER_PARAMS="-t `basename $0`"
+WGET_CMD=`which wget`
+if [ $? -ne 0 ]; then
+    echo " Error! Wget doesn't exists" >&2
+    exit 1
+fi
+WGET_PARAMS="--no-check-certificate -q -O"
+
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
+
 export IPSET_ALLOWED_HOSTS="r_allowed_ip"
 export IPSET_ONION="r_onion"
 export IPSET_CIDR="rc"
@@ -192,6 +173,7 @@ export IPSET_CIDR_TMP="${IPSET_CIDR}t"
 export IPSET_IP="ri"
 export IPSET_IP_TMP="${IPSET_IP}t"
 export IPSET_DNSMASQ="rd"
+
 export UPDATE_STATUS_FILE="${DATA_DIR}/update_status"
 UPDATE_PID_FILE="/var/run/${NAME}_update.pid"
 START_PID_FILE="/var/run/${NAME}_start.pid"
@@ -213,7 +195,7 @@ fi
 
 Help() {
 cat << EOF
- Usage: `basename $0` start|force-start|stop|destroy|restart|update|force-update|data-files|status|status-html|help
+ Usage: `basename $0` start|force-start|stop|destroy|restart|update|force-update|data-files|status|raw-status|html-info|help
         start : Start
         force-start : Removing the pid-file before running
         stop : Stop
@@ -239,6 +221,29 @@ cat << EOF
         `basename $0` status
         `basename $0` html-info
 EOF
+}
+
+Download() {
+    $WGET_CMD $WGET_PARAMS "$1" "$2"
+    if [ $? -ne 0 ]; then
+        echo "Connection error (${2})" >&2
+        return 1
+    fi
+}
+
+DownloadRuabBlacklist() {
+    case "$1" in
+        "ip")
+            Download "$IP_DATA_FILE" "$RA_IP_IPSET_URL" && Download "$DNSMASQ_DATA_FILE" "$RA_IP_DMASK_URL" && Download "$UPDATE_STATUS_FILE" "$RA_IP_STAT_URL"
+        ;;
+        "fqdn")
+            Download "$DNSMASQ_DATA_FILE" "$RA_FQDN_DMASK_URL" && Download "$IP_DATA_FILE" "$RA_FQDN_IPSET_URL" && Download "$UPDATE_STATUS_FILE" "$RA_FQDN_STAT_URL"
+        ;;
+        *)
+            echo "Blacklist configuration error (${1})" >&2
+            exit 1
+        ;;
+    esac
 }
 
 MakeLogRecord() {
@@ -406,14 +411,14 @@ GetDataFiles() {
     local _return_code=1 _attempt=1 _update_string
     PreStartCheck
     echo "$$" > "$UPDATE_PID_FILE"
-    if [ -n "$BLLIST_MODULE" ]; then
+    if [ -n "$BLLIST_PRESET" -a -n "$BLLIST_MODULE" ]; then
         while :
         do
             $BLLIST_MODULE
             _return_code=$?
             [ $_return_code -eq 0 ] && break
             ### STDOUT
-            echo " Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]"
+            echo " Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]" >&2
             MakeLogRecord "err" "Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]"
             _attempt=`expr $_attempt + 1`
             [ $_attempt -gt $MODULE_RUN_ATTEMPTS ] && break
@@ -430,13 +435,17 @@ GetDataFiles() {
             MakeLogRecord "notice" "${_update_string}"
             printf " `date +%d.%m.%Y-%H:%M`\n" >> "$UPDATE_STATUS_FILE"
         fi
-    else
+    elif [ -z "$BLLIST_PRESET" -a -z "$BLLIST_MODULE" ]; then
         ClearDataFiles
         ADD_USER_ENTRIES=1
         AddUserEntries
         _return_code=0
+    else
+        _return_code=2
+        rm -f "$UPDATE_PID_FILE"
+        return $_return_code
     fi
-    if [ "$PROXY_MODE" = "2" ]; then
+    if [ "$PROXY_MODE" = "2" -o "$PROXY_MODE" = "3" ]; then
         printf "\n" >> "$DNSMASQ_DATA_FILE"
     else
         ### Запись для .onion в $DNSMASQ_DATA_FILE
@@ -476,8 +485,8 @@ Update() {
                 MakeLogRecord "notice" "Blacklist updated"
             ;;
             2)
-                echo " Error! Blacklist update error" >&2
-                MakeLogRecord "err" "Error! Blacklist update error"
+                echo " Blacklist update error!" >&2
+                MakeLogRecord "err" "Blacklist update error!"
                 _return_code=1
             ;;
             *)
@@ -561,7 +570,7 @@ Reload() {
 Status() {
     local _set
     if CheckStatus; then
-        printf "\n \033[1m${NAME} status\033[m: \033[1;32mEnabled\033[m\n\n  PROXY_MODE: ${PROXY_MODE}\n  PROXY_LOCAL_CLIENTS: ${PROXY_LOCAL_CLIENTS}\n  BLLIST_MODULE: ${BLLIST_MODULE}\n"
+        printf "\n \033[1m${NAME} status\033[m: \033[1;32mEnabled\033[m\n\n  PROXY_MODE: ${PROXY_MODE}\n  PROXY_LOCAL_CLIENTS: ${PROXY_LOCAL_CLIENTS}\n  BLLIST_PRESET: ${BLLIST_PRESET}\n  BLLIST_MODULE: ${BLLIST_MODULE}\n"
         if [ -f "$UPDATE_STATUS_FILE" ]; then
             $AWK_CMD '{
                 update_string=(NF < 4) ? "No data" : $4" (CIDR: "$1" | IP: "$2" | FQDN: "$3")";
@@ -604,6 +613,46 @@ StatusOutput() {
 }
 
 ############################ Main section ##############################
+
+### Blacklist source and mode
+case "$BLLIST_PRESET" in
+    zapret-info-ip)
+        ### Источник для обновления списка блокировок (zapret-info, rublacklist, antifilter, ruantiblock)
+        export BLLIST_SOURCE="zapret-info"
+        ### Режим обхода блокировок: ip, fqdn
+        export BLLIST_MODE="ip"
+    ;;
+    zapret-info-fqdn)
+        export BLLIST_SOURCE="zapret-info"
+        export BLLIST_MODE="fqdn"
+    ;;
+    rublacklist-ip)
+        export BLLIST_SOURCE="rublacklist"
+        export BLLIST_MODE="ip"
+    ;;
+    rublacklist-fqdn)
+        export BLLIST_SOURCE="rublacklist"
+        export BLLIST_MODE="fqdn"
+    ;;
+    antifilter-ip)
+        export BLLIST_SOURCE="antifilter"
+        export BLLIST_MODE="ip"
+    ;;
+    ruantiblock-ip)
+        export BLLIST_SOURCE="ruantiblock"
+        export BLLIST_MODE="ip"
+        BLLIST_MODULE="DownloadRuabBlacklist $BLLIST_MODE"
+    ;;
+    ruantiblock-fqdn)
+        export BLLIST_SOURCE="ruantiblock"
+        export BLLIST_MODE="fqdn"
+        BLLIST_MODULE="DownloadRuabBlacklist $BLLIST_MODE"
+    ;;
+	*)
+        export BLLIST_SOURCE=""
+        export BLLIST_MODE=""
+    ;;
+esac
 
 return_code=1
 case "$1" in

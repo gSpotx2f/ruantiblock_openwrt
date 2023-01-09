@@ -8,7 +8,7 @@
 'require view.ruantiblock.tools as tools';
 
 return view.extend({
-	availableParsers: {},
+	parsers: {},
 
 	appStatusCode   : null,
 
@@ -20,10 +20,6 @@ return view.extend({
 		};
 	},
 
-	dependsBllistModule: function(elem) {
-		this.depends(elem, 'bllist_module', Object.values(this.availableParsers));
-	},
-
 	validateIpPort: function(section, value) {
 		return (/^$|^([0-9]{1,3}\.){3}[0-9]{1,3}(#[\d]{2,5})?$/.test(value)) ? true : _('Expecting:')
 			+ ` ${_('One of the following:')}\n - ${_('valid IP address')}\n - ${_('valid address#port')}\n`;
@@ -32,8 +28,8 @@ return view.extend({
 	load: function() {
 		return Promise.all([
 			L.resolveDefault(fs.exec(tools.execPath, [ 'raw-status' ]), 1),
-			fs.list(tools.parsersDir),
-			uci.load('network'),
+			L.resolveDefault(fs.list(tools.parsersDir), null),
+			uci.load(tools.appName),
 		]).catch(e => {
 			ui.addNotification(null, E('p', _('Unable to read the contents')
 				+ ': %s [ %s ]'.format(
@@ -47,16 +43,30 @@ return view.extend({
 			return;
 		};
 		this.appStatusCode = data[0].code;
-		let p_dir_arr = data[1];
-		let vpn_iface = uci.get('network', 'VPN', 'ifname') || 'tun0';
+		let p_dir_arr      = data[1];
+		let curent_module  = uci.get(tools.appName, 'config', 'bllist_module');
+		let curent_preset  = uci.get(tools.appName, 'config', 'bllist_preset');
 
 		if(p_dir_arr) {
 			p_dir_arr.forEach(e => {
 				let fname = e.name;
 				if(fname.startsWith('ruab_parser')) {
-					this.availableParsers[fname] = tools.parsersDir + '/' + fname;
+					this.parsers[fname] = tools.parsersDir + '/' + fname;
 				};
 			});
+		};
+
+		let availableParsers = Object.keys(this.parsers).length > 0;
+		if(!availableParsers) {
+			for(let i of Object.keys(tools.blacklistPresets)) {
+				if(!new RegExp('^($|' + tools.appName + ')').test(i) && i !== curent_preset) {
+					delete tools.blacklistPresets[i];
+				};
+			};
+		};
+
+		if(curent_module) {
+			this.parsers[curent_module.match(/([^/]*)$/)[0]] = curent_module;
 		};
 
 		let ip_filter_edit = new tools.fileEditDialog(
@@ -111,6 +121,7 @@ return view.extend({
 				_('Proxy mode'));
 			o.value('1', 'Tor');
 			o.value('2', 'VPN');
+			o.value('3', _('Transparent proxy'));
 		};
 
 		// PROXY_LOCAL_CLIENTS
@@ -156,7 +167,7 @@ return view.extend({
 
 			// TOR_TRANS_PORT
 			o = s.taboption('tor_settings', form.Value, 'tor_trans_port',
-				_('Transparent proxy port for iptables rules'));
+				_('Transparent proxy port'));
 			o.rmempty  = false;
 			o.datatype = "port";
 
@@ -189,120 +200,152 @@ return view.extend({
 			o.multiple  = false;
 			o.noaliases = true;
 			o.rmempty   = false;
-			o.default   = vpn_iface;
+			o.default   = 'tun0';
+
+
+			/* Proxy tab */
+
+			s.tab('proxy_settings', _('Transparent proxy mode'));
+
+			// T_PROXY_PORT_TCP
+			o = s.taboption('proxy_settings', form.Value, 't_proxy_port_tcp',
+				_('Transparent proxy TCP port'));
+			o.rmempty  = false;
+			o.datatype = "port";
+
+			//T_PROXY_ALLOW_UDP
+			o = s.taboption('proxy_settings', form.Flag, 't_proxy_allow_udp',
+				_("Send UDP traffic to transparent proxy"));
+			o.rmempty = false;
+
+			// T_PROXY_PORT_UDP
+			o = s.taboption('proxy_settings', form.Value, 't_proxy_port_udp',
+				_('Transparent proxy UDP port'));
+			o.rmempty  = false;
+			o.datatype = "port";
 		};
 
 
-		/* Parser settings tab */
+		/* Blacklist module tab */
 
-		s.tab('parser_settings', _('Blacklist settings'));
-
-		// BLLIST_MODULE
-		let bllist_module = s.taboption('parser_settings', form.ListValue,
-			'bllist_module', _('Blacklist module'));
-		bllist_module.value('', _('none (user entries only)'));
-		Object.entries(this.availableParsers).forEach(
-			e => bllist_module.value(e[1], e[0]));
+		s.tab('blacklist_tab', _('Blacklist settings'));
 
 		// BLLIST_PRESET
-		let bllist_preset = s.taboption('parser_settings', form.ListValue,
+		let bllist_preset = s.taboption('blacklist_tab', form.ListValue,
 			'bllist_preset', _('Blacklist update mode'));
 		bllist_preset.description = _("Blacklist sources") + ':';
+		bllist_preset.value('', _('user entries only'));
 		Object.entries(tools.blacklistPresets).forEach(e => {
-			bllist_preset.value(e[0], `${e[1][0]} - ${e[1][1]}`);
+			bllist_preset.value(e[0], ((e[1][1]) ? `${e[1][0]} - ${e[1][1]}` : e[1][0]));
 		});
 		let bllist_sources = {};
-		Object.values(tools.blacklistPresets).forEach(v => {bllist_sources[v[0]] = v[2]});
+		Object.values(tools.blacklistPresets).forEach(v => { bllist_sources[v[0]] = v[2] });
 		Object.entries(bllist_sources).forEach(e => {
-			bllist_preset.description += `<br />${e[0]} - <a href="${e[1]}" target="_blank">${e[1]}</a>`;
+			if(e[1]) {
+				bllist_preset.description += `<br />${e[0]} - <a href="${e[1]}" target="_blank">${e[1]}</a>`;
+			};
 		});
 
-		// BLLIST_IP_LIMIT
-		o = s.taboption('parser_settings', form.Value, 'bllist_ip_limit', _("IP limit"));
-		o.description = _("The number of IP addresses in the subnet, upon reaching which the entire '/24' subnet is added to the list");
-		o.rmempty     = false;
-		o.datatype    = 'uinteger';
+		// BLLIST_MODULE
+		let bllist_module = s.taboption('blacklist_tab', form.ListValue,
+			'bllist_module', _('Blacklist module') + '*');
+		bllist_module.value('', _('disabled'));
+		bllist_module.depends({ bllist_preset: new RegExp('^($|' + tools.appName + ')'), '!reverse': true });
 
-		// BLLIST_GR_EXCLUDED_NETS
-		o = s.taboption('parser_settings', form.DynamicList, 'bllist_gr_excluded_nets');
-		o.title       = _('IP subnet patterns (/24) that are excluded from optimization');
-		o.description = _('e.g:') + ' <code>192.168.1.</code>';
-		o.placeholder = _('e.g:') + ' 192.168.1.';
-		o.validate = (section, value) => {
-			return (/^$|^([0-9]{1,3}[.]){3}$/.test(value)) ? true : _('Expecting:')
-					+ ' ' + _('net pattern') + ' (' + _('e.g:') + ' 192.168.3.)\n';
+		Object.entries(this.parsers).forEach(
+			e => bllist_module.value(e[1], e[0]));
+
+		if(availableParsers) {
+			bllist_preset.description += '<br /> ( * - ' + _('requires installed blacklist module') + ' )';
+
+
+			/* Parser settings tab */
+
+			s.tab('parser_settings_tab', _('Module settings'));
+
+			// BLLIST_FQDN_FILTER
+			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_fqdn_filter',
+				_("Enable FQDN filter"));
+			o.description = _('Exclude domains from blacklist by FQDN filter patterns');
+			o.rmempty     = false;
+
+			// BLLIST_FQDN_FILTER_FILE edit dialog
+			o = s.taboption('parser_settings_tab', form.Button, '_fqdn_filter_btn',
+				_("FQDN filter"));
+			o.onclick    = () => fqdn_filter_edit.show();
+			o.inputtitle = _('Edit');
+			o.inputstyle = 'edit btn';
+
+			// BLLIST_SD_LIMIT
+			o = s.taboption('parser_settings_tab', form.Value, 'bllist_sd_limit',
+				_("Subdomains limit"));
+			o.description = _('The number of subdomains in the domain, upon reaching which the entire 2nd level domain is added to the list');
+			o.rmempty     = false;
+			o.datatype    = 'uinteger';
+
+			// BLLIST_GR_EXCLUDED_SLD
+			o = s.taboption('parser_settings_tab', form.DynamicList, 'bllist_gr_excluded_sld',
+				_('2nd level domains that are excluded from optimization'));
+			o.description = _('e.g:') + ' <code>livejournal.com</code>';
+			o.placeholder = _('e.g:') + ' livejournal.com';
+			o.datatype = "hostname";
+
+			// BLLIST_ENABLE_IDN
+			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_enable_idn',
+				_("Convert cyrillic domains to punycode"));
+			o.rmempty = false;
+
+			// BLLIST_ALT_NSLOOKUP
+			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_alt_nslookup',
+				_('Use optional DNS resolver'));
+			o.rmempty = false;
+
+			// BLLIST_ALT_DNS_ADDR
+			o = s.taboption('parser_settings_tab', form.Value, 'bllist_alt_dns_addr',
+				_("Optional DNS resolver"), '<code>ipaddress[#port]</code>');
+			o.rmempty  = false;
+			o.validate = this.validateIpPort;
+
+			// BLLIST_IP_FILTER
+			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_ip_filter',
+				_("Enable IP filter"));
+			o.description = _('Exclude IP addresses from blacklist by IP filter patterns');
+			o.rmempty     = false;
+
+			// BLLIST_IP_FILTER_FILE edit dialog
+			o = s.taboption('parser_settings_tab', form.Button, '_ip_filter_btn',
+				_("IP filter"));
+			o.onclick    = () => ip_filter_edit.show();
+			o.inputtitle = _('Edit');
+			o.inputstyle = 'edit btn';
+
+			// BLLIST_IP_LIMIT
+			o = s.taboption('parser_settings_tab', form.Value, 'bllist_ip_limit', _("IP limit"));
+			o.description = _("The number of IP addresses in the subnet, upon reaching which the entire '/24' subnet is added to the list");
+			o.rmempty     = false;
+			o.datatype    = 'uinteger';
+
+			// BLLIST_GR_EXCLUDED_NETS
+			o = s.taboption('parser_settings_tab', form.DynamicList, 'bllist_gr_excluded_nets');
+			o.title       = _('IP subnet patterns (/24) that are excluded from optimization');
+			o.description = _('e.g:') + ' <code>192.168.1.</code>';
+			o.placeholder = _('e.g:') + ' 192.168.1.';
+			o.validate = (section, value) => {
+				return (/^$|^([0-9]{1,3}[.]){3}$/.test(value)) ? true : _('Expecting:')
+						+ ' ' + _('net pattern') + ' (' + _('e.g:') + ' 192.168.3.)\n';
+			};
+
+			// BLLIST_SUMMARIZE_IP
+			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_summarize_ip',
+				_("Summarize IP ranges"));
+			o.rmempty = false;
+
+			// BLLIST_SUMMARIZE_CIDR
+			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_summarize_cidr',
+				_("Summarize '/24' networks"));
+			o.rmempty = false;
+
 		};
-
-		// BLLIST_SUMMARIZE_IP
-		o = s.taboption('parser_settings', form.Flag, 'bllist_summarize_ip',
-			_("Summarize IP ranges"));
-		o.rmempty = false;
-
-		// BLLIST_SUMMARIZE_CIDR
-		o = s.taboption('parser_settings', form.Flag, 'bllist_summarize_cidr',
-			_("Summarize '/24' networks"));
-		o.rmempty = false;
-
-		// BLLIST_SD_LIMIT
-		o = s.taboption('parser_settings', form.Value, 'bllist_sd_limit',
-			_("Subdomains limit"));
-		o.description = _('The number of subdomains in the domain, upon reaching which the entire 2nd level domain is added to the list');
-		o.rmempty     = false;
-		o.datatype    = 'uinteger';
-
-		// BLLIST_GR_EXCLUDED_SLD
-		o = s.taboption('parser_settings', form.DynamicList, 'bllist_gr_excluded_sld',
-			_('2nd level domains that are excluded from optimization'));
-		o.description = _('e.g:') + ' <code>livejournal.com</code>';
-		o.placeholder = _('e.g:') + ' livejournal.com';
-		o.datatype = "hostname";
-
-		// BLLIST_ENABLE_IDN
-		o = s.taboption('parser_settings', form.Flag, 'bllist_enable_idn',
-			_("Convert cyrillic domains to punycode"));
-		o.rmempty = false;
-
-		// BLLIST_ALT_NSLOOKUP
-		o = s.taboption('parser_settings', form.Flag, 'bllist_alt_nslookup',
-			_('Use optional DNS resolver'));
-		o.rmempty = false;
-
-		// BLLIST_ALT_DNS_ADDR
-		o = s.taboption('parser_settings', form.Value, 'bllist_alt_dns_addr',
-			_("Optional DNS resolver"), '<code>ipaddress[#port]</code>');
-		o.rmempty  = false;
-		o.validate = this.validateIpPort;
-
-
-		/* Blacklist entry filters tab */
-
-		s.tab('entries_filter_tab', _('Blacklist entry filters'));
-
-		// BLLIST_IP_FILTER
-		o = s.taboption('entries_filter_tab', form.Flag, 'bllist_ip_filter',
-			_("Enable IP filter"));
-		o.description = _('Exclude IP addresses from blacklist by IP filter patterns');
-		o.rmempty     = false;
-
-		// BLLIST_IP_FILTER_FILE edit dialog
-		o = s.taboption('entries_filter_tab', form.Button, '_ip_filter_btn',
-			_("IP filter"));
-		o.onclick    = () => ip_filter_edit.show();
-		o.inputtitle = _('Edit');
-		o.inputstyle = 'edit btn';
-
-		// BLLIST_FQDN_FILTER
-		o = s.taboption('entries_filter_tab', form.Flag, 'bllist_fqdn_filter',
-			_("Enable FQDN filter"));
-		o.description = _('Exclude domains from blacklist by FQDN filter patterns');
-		o.rmempty     = false;
-
-		// BLLIST_FQDN_FILTER_FILE edit dialog
-		o = s.taboption('entries_filter_tab', form.Button, '_fqdn_filter_btn',
-			_("FQDN filter"));
-		o.onclick    = () => fqdn_filter_edit.show();
-		o.inputtitle = _('Edit');
-		o.inputstyle = 'edit btn';
 
 
 		/* User entries tab */
@@ -314,7 +357,7 @@ return view.extend({
 			_('Enable'), _("Add user entries to the blacklist when updating"));
 		o.rmempty = false;
 		o.default = 0;
-		this.dependsBllistModule(o);
+		o.depends({ bllist_preset: '', '!reverse': true });
 
 		// USER_ENTRIES_DNS
 		o = s.taboption('user_entries_tab', form.Value, 'user_entries_dns',

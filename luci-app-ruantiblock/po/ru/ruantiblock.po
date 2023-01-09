@@ -37,9 +37,6 @@ msgstr "Применить"
 msgid "Apply proxy rules to router application traffic"
 msgstr "Применять правила прокси к трафику приложений роутера"
 
-msgid "Blacklist entry filters"
-msgstr "Фильтры записей блэклиста"
-
 msgid "Blacklist module"
 msgstr "Модуль блэклиста"
 
@@ -230,8 +227,8 @@ msgstr "Фильтр сообщений"
 msgid "Minute"
 msgstr "Минута"
 
-msgid "Module operation mode"
-msgstr "Режим работы модуля"
+msgid "Module settings"
+msgstr "Настройки модуля"
 
 msgid "Name"
 msgstr "Имя"
@@ -321,6 +318,9 @@ msgstr "Сохранить"
 msgid "Send UDP traffic to Tor"
 msgstr "Отправлять в Tor UDP-трафик"
 
+msgid "Send UDP traffic to transparent proxy"
+msgstr "Отправлять в прозрачный прокси UDP-трафик"
+
 msgid "Service"
 msgstr "Служба"
 
@@ -395,8 +395,20 @@ msgstr "Конфигурационный файл Tor"
 msgid "Tor mode"
 msgstr "Режим Tor"
 
-msgid "Transparent proxy port for iptables rules"
-msgstr "Порт прозрачного прокси для правил iptables"
+msgid "Transparent proxy"
+msgstr "Прозрачный прокси"
+
+msgid "Transparent proxy mode"
+msgstr "Режим прозрачного прокси"
+
+msgid "Transparent proxy port"
+msgstr "Порт прозрачного прокси"
+
+msgid "Transparent proxy TCP port"
+msgstr "TCP порт прозрачного прокси"
+
+msgid "Transparent proxy UDP port"
+msgstr "UDP порт прозрачного прокси"
 
 msgid "Type an expression..."
 msgstr "Введите выражение..."
@@ -466,6 +478,9 @@ msgstr "шаблон сети"
 
 msgid "none (user entries only)"
 msgstr "нет (только записи пользователя)"
+
+msgid "requires installed blacklist module"
+msgstr "необходим установленный модуль блэклиста"
 
 msgid "user entries only"
 msgstr "только записи пользователя"
