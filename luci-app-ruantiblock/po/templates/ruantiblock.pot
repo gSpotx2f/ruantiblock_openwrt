@@ -13,7 +13,7 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-msgid "All entries except matching expressions"
+msgid "All entries except matching patterns"
 msgstr ""
 
 msgid "All hosts except listed"
@@ -250,7 +250,7 @@ msgstr ""
 msgid "One of the following:"
 msgstr ""
 
-msgid "Only entries matching expressions"
+msgid "Only entries matching patterns"
 msgstr ""
 
 msgid "Only listed hosts"

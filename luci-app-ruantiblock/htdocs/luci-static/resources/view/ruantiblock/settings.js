@@ -279,8 +279,8 @@ return view.extend({
 			// BLLIST_FQDN_FILTER_TYPE
 			o = s.taboption('parser_settings_tab', form.ListValue, 'bllist_fqdn_filter_type',
 				_('FQDN filter type'));
-			o.value('0', _('All entries except matching expressions'));
-			o.value('1', _('Only entries matching expressions'));
+			o.value('0', _('All entries except matching patterns'));
+			o.value('1', _('Only entries matching patterns'));
 
 			// BLLIST_FQDN_FILTER_FILE edit dialog
 			o = s.taboption('parser_settings_tab', form.Button, '_fqdn_filter_btn',
@@ -328,8 +328,8 @@ return view.extend({
 			// BLLIST_IP_FILTER_TYPE
 			o = s.taboption('parser_settings_tab', form.ListValue, 'bllist_ip_filter_type',
 				_('IP filter type'));
-			o.value('0', _('All entries except matching expressions'));
-			o.value('1', _('Only entries matching expressions'));
+			o.value('0', _('All entries except matching patterns'));
+			o.value('1', _('Only entries matching patterns'));
 
 			// BLLIST_IP_FILTER_FILE edit dialog
 			o = s.taboption('parser_settings_tab', form.Button, '_ip_filter_btn',

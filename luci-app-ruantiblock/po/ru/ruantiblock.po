@@ -25,8 +25,8 @@ msgstr "Тревога"
 msgid "All"
 msgstr "Все"
 
-msgid "All entries except matching expressions"
-msgstr "Все записи, кроме соответствующих выражениям"
+msgid "All entries except matching patterns"
+msgstr "Все записи, кроме соответствующих шаблонам"
 
 msgid "All hosts except listed"
 msgstr "Все хосты, кроме перечисленных"
@@ -273,8 +273,8 @@ msgstr ""
 msgid "One of the following:"
 msgstr "Одно из следующих значений:"
 
-msgid "Only entries matching expressions"
-msgstr "Только записи, соответствующие выражениям"
+msgid "Only entries matching patterns"
+msgstr "Только записи, соответствующие шаблонам"
 
 msgid "Only listed hosts"
 msgstr "Только перечисленные хосты"
