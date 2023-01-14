@@ -12,8 +12,8 @@
 				"/etc/tor/torrc": [ "read" ],
 				"/etc/crontabs/root": [ "read" ],
 				"/usr/bin/ruantiblock*": [ "exec" ],
-				"/sbin/logread -e ruantiblock": [ "exec" ],
-				"/usr/sbin/logread -e ruantiblock": [ "exec" ]
+				"/sbin/logread -e ruantiblock:": [ "exec" ],
+				"/usr/sbin/logread -e ruantiblock:": [ "exec" ]
 			},
 			"uci": [ "network", "ruantiblock" ],
 			"ubus": {
