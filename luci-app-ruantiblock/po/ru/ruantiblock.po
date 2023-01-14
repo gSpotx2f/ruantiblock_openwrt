@@ -25,6 +25,9 @@ msgstr "Тревога"
 msgid "All"
 msgstr "Все"
 
+msgid "All entries except matching expressions"
+msgstr "Все записи, кроме соответствующих выражениям"
+
 msgid "All hosts except listed"
 msgstr "Все хосты, кроме перечисленных"
 
@@ -114,10 +117,10 @@ msgid "Enable"
 msgstr "Включить"
 
 msgid "Enable FQDN filter"
-msgstr "Включить фильтр FQDN"
+msgstr "Включить FQDN фильтр"
 
 msgid "Enable IP filter"
-msgstr "Включить фильтр IP"
+msgstr "Включить IP фильтр"
 
 msgid "Enabled"
 msgstr "Включено"
@@ -128,17 +131,14 @@ msgstr "Записи"
 msgid "Error"
 msgstr "Ошибка"
 
-msgid "Exclude IP addresses from blacklist by IP filter patterns"
-msgstr "Исключение IP адресов из блэклиста по шаблонам фильтра IP"
-
-msgid "Exclude domains from blacklist by FQDN filter patterns"
-msgstr "Исключение доменов из блэклиста по шаблонам фильтра FQDN"
-
 msgid "Expecting:"
 msgstr "Ожидается:"
 
 msgid "FQDN filter"
 msgstr "Фильтр FQDN"
+
+msgid "FQDN filter type"
+msgstr "Тип FQDN фильтра"
 
 msgid "Facility"
 msgstr "Категория"
@@ -158,6 +158,9 @@ msgstr "Фильтр хостов"
 msgid "Hour"
 msgstr "Час"
 
+msgid "If less than the specified number of entries are received from the source, then the lists are not updated"
+msgstr "Если от источника получено меньше указанного количества записей, то списки не обновляются"
+
 msgid "IP address"
 msgstr "IP-адрес"
 
@@ -166,6 +169,9 @@ msgstr "IP-адреса хостов"
 
 msgid "IP filter"
 msgstr "Фильтр IP"
+
+msgid "IP filter type"
+msgstr "Тип IP фильтра"
 
 msgid "IP limit"
 msgstr "Лимит IP адресов"
@@ -224,6 +230,9 @@ msgstr "Сообщение"
 msgid "Message filter"
 msgstr "Фильтр сообщений"
 
+msgid "Minimum allowed number of entries"
+msgstr "Минимально возможное количество записей"
+
 msgid "Minute"
 msgstr "Минута"
 
@@ -264,6 +273,9 @@ msgstr ""
 msgid "One of the following:"
 msgstr "Одно из следующих значений:"
 
+msgid "Only entries matching expressions"
+msgstr "Только записи, соответствующие выражениям"
+
 msgid "Only listed hosts"
 msgstr "Только перечисленные хосты"
 
@@ -290,6 +302,12 @@ msgstr ""
 "Шаблоны могут быть строками или регулярными выражениями. Каждый шаблон в "
 "отдельной строке, символ <code>#</code> в первой позиции строки - "
 "комментирует строку.<br />Примеры:"
+
+msgid "Pick IP addresses from blacklist by IP filter patterns"
+msgstr "Отбор IP адресов из блэклиста по шаблонам фильтра IP"
+
+msgid "Pick domains from blacklist by FQDN filter patterns"
+msgstr "Отбор  доменов из блэклиста по шаблонам фильтра FQDN"
 
 msgid "Proxy mode"
 msgstr "Режим прокси"

@@ -27,8 +27,10 @@ class Config:
         "BLLIST_GR_EXCLUDED_SLD",
         "BLLIST_GR_EXCLUDED_MASKS",
         "BLLIST_FQDN_FILTER",
+        "BLLIST_FQDN_FILTER_TYPE",
         "BLLIST_FQDN_FILTER_FILE",
         "BLLIST_IP_FILTER",
+        "BLLIST_IP_FILTER_TYPE",
         "BLLIST_IP_FILTER_FILE",
         "BLLIST_SD_LIMIT",
         "BLLIST_IP_LIMIT",
@@ -234,12 +236,12 @@ class BlackListParser(Config):
                     pass
 
     @staticmethod
-    def _check_filter(string, filter_patterns):
+    def _check_filter(string, filter_patterns, reverse=False):
         if filter_patterns and string:
             for pattern in filter_patterns:
                 if pattern and pattern.search(string):
-                    return True
-        return False
+                    return not reverse
+        return reverse
 
     def _get_subnet(self, ip_addr):
         regexp_obj = self.ip_pattern.fullmatch(ip_addr)
@@ -247,7 +249,8 @@ class BlackListParser(Config):
 
     def ip_field_processing(self, string):
         for i in string.split(self.ips_separator):
-            if self.BLLIST_IP_FILTER and self._check_filter(i, self.BLLIST_IP_FILTER_PATTERNS):
+            if self.BLLIST_IP_FILTER and self._check_filter(
+                i, self.BLLIST_IP_FILTER_PATTERNS, self.BLLIST_IP_FILTER_TYPE):
                 continue
             if self.ip_pattern.fullmatch(i) and i not in self.ip_set:
                 subnet = self._get_subnet(i)
@@ -284,7 +287,8 @@ class BlackListParser(Config):
         if self.BLLIST_STRIP_WWW:
             string = self.www_pattern.sub("", string)
         if not self.BLLIST_FQDN_FILTER or (
-            self.BLLIST_FQDN_FILTER and not self._check_filter(string, self.BLLIST_FQDN_FILTER_PATTERNS)
+            self.BLLIST_FQDN_FILTER and not self._check_filter(
+                string, self.BLLIST_FQDN_FILTER_PATTERNS, self.BLLIST_FQDN_FILTER_TYPE)
         ):
             if self.fqdn_pattern.fullmatch(string):
                 string = self._convert_to_punycode(string)
@@ -447,7 +451,6 @@ class AfIp(BlackListParser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.url = self.AF_IP_URL
-        self.BLLIST_MIN_ENTRIES = 100
 
     def parser_func(self):
         for entry in self._split_entries():

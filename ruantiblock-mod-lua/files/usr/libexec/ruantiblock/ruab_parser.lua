@@ -43,8 +43,10 @@ local Config = Class(nil, {
         ["BLLIST_GR_EXCLUDED_SLD"] = true,
         ["BLLIST_GR_EXCLUDED_MASKS"] = true,
         ["BLLIST_FQDN_FILTER"] = true,
+        ["BLLIST_FQDN_FILTER_TYPE"] = true,
         ["BLLIST_FQDN_FILTER_FILE"] = true,
         ["BLLIST_IP_FILTER"] = true,
+        ["BLLIST_IP_FILTER_TYPE"] = true,
         ["BLLIST_IP_FILTER_FILE"] = true,
         ["BLLIST_SD_LIMIT"] = true,
         ["BLLIST_IP_LIMIT"] = true,
@@ -130,6 +132,8 @@ end
 
 Config.BLLIST_ALT_NSLOOKUP = remap_bool(Config.BLLIST_ALT_NSLOOKUP)
 Config.BLLIST_ENABLE_IDN = remap_bool(Config.BLLIST_ENABLE_IDN)
+Config.BLLIST_FQDN_FILTER_TYPE = remap_bool(Config.BLLIST_FQDN_FILTER_TYPE)
+Config.BLLIST_IP_FILTER_TYPE = remap_bool(Config.BLLIST_IP_FILTER_TYPE)
 Config.BLLIST_STRIP_WWW = remap_bool(Config.BLLIST_STRIP_WWW)
 Config.BLLIST_FQDN_FILTER = remap_bool(Config.BLLIST_FQDN_FILTER)
 Config.BLLIST_IP_FILTER = remap_bool(Config.BLLIST_IP_FILTER)
@@ -257,15 +261,15 @@ function BlackListParser:convert_to_punycode(input)
     return input and (idn.encode(input))
 end
 
-function BlackListParser:check_filter(str, filter_patterns)
+function BlackListParser:check_filter(str, filter_patterns, reverse)
     if filter_patterns and str then
         for pattern in pairs(filter_patterns) do
             if str:match(pattern) then
-                return true
+                return not reverse
             end
         end
     end
-    return false
+    return reverse
 end
 
 function BlackListParser:get_subnet(ip)
@@ -275,7 +279,7 @@ end
 function BlackListParser:fill_ip_tables(val)
     if val and val ~= "" then
         for ip_entry in val:gmatch(self.ip_pattern .. "/?%d?%d?") do
-            if not self.BLLIST_IP_FILTER or (self.BLLIST_IP_FILTER and not self:check_filter(ip_entry, self.BLLIST_IP_FILTER_PATTERNS)) then
+            if not self.BLLIST_IP_FILTER or (self.BLLIST_IP_FILTER and not self:check_filter(ip_entry, self.BLLIST_IP_FILTER_PATTERNS, self.BLLIST_IP_FILTER_TYPE)) then
                 if ip_entry:match("^" .. self.ip_pattern .. "$") and not self.ip_table[ip_entry] then
                     local subnet = self:get_subnet(ip_entry)
                     if subnet and (self.BLLIST_GR_EXCLUDED_NETS[subnet] or ((not self.BLLIST_IP_LIMIT or self.BLLIST_IP_LIMIT == 0) or (not self.ip_subnet_table[subnet] or self.ip_subnet_table[subnet] <= self.BLLIST_IP_LIMIT))) then
@@ -301,7 +305,7 @@ function BlackListParser:fill_domain_tables(val)
     if self.BLLIST_STRIP_WWW then
         val = val:gsub("^www[0-9]?%.", "")
     end
-    if not self.BLLIST_FQDN_FILTER or (self.BLLIST_FQDN_FILTER and not self:check_filter(val, self.BLLIST_FQDN_FILTER_PATTERNS)) then
+    if not self.BLLIST_FQDN_FILTER or (self.BLLIST_FQDN_FILTER and not self:check_filter(val, self.BLLIST_FQDN_FILTER_PATTERNS, self.BLLIST_FQDN_FILTER_TYPE)) then
         if val:match("^" .. self.fqdn_pattern .. "+$") then
         elseif self.BLLIST_ENABLE_IDN and val:match("^[^\\/&%?]-[^\\/&%?%.]+%.[^\\/&%?%.]+%.?$") then
             val = self:convert_to_punycode(val)
@@ -461,7 +465,7 @@ end
 function BlackListParser:run()
     local return_code = 0
     if self:get_http_data(self.url) then
-        if (self.fqdn_count + self.ip_count + self.cidr_count) > self.BLLIST_MIN_ENTRIES then
+        if (self.fqdn_count + self.ip_count + self.cidr_count) >= self.BLLIST_MIN_ENTRIES then
             self:optimize_fqdn_table()
             self:optimize_ip_table()
             if self.BLLIST_SUMMARIZE_IP then
@@ -576,7 +580,6 @@ local AfIp = Class(Af, {
     url = Config.AF_IP_URL,
     ip_string_pattern = "(.-)\n",
     sink = ip_sink,
-    BLLIST_MIN_ENTRIES = 100,
 })
 
     -- ruantiblock

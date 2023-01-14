@@ -263,11 +263,24 @@ return view.extend({
 
 			s.tab('parser_settings_tab', _('Module settings'));
 
+			// BLLIST_MIN_ENTRIES
+			o = s.taboption('parser_settings_tab', form.Value, 'bllist_min_entries',
+				_("Minimum allowed number of entries"));
+			o.description = _('If less than the specified number of entries are received from the source, then the lists are not updated');
+			o.rmempty     = false;
+			o.datatype    = 'uinteger';
+
 			// BLLIST_FQDN_FILTER
 			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_fqdn_filter',
 				_("Enable FQDN filter"));
-			o.description = _('Exclude domains from blacklist by FQDN filter patterns');
+			o.description = _('Pick domains from blacklist by FQDN filter patterns');
 			o.rmempty     = false;
+
+			// BLLIST_FQDN_FILTER_TYPE
+			o = s.taboption('parser_settings_tab', form.ListValue, 'bllist_fqdn_filter_type',
+				_('FQDN filter type'));
+			o.value('0', _('All entries except matching expressions'));
+			o.value('1', _('Only entries matching expressions'));
 
 			// BLLIST_FQDN_FILTER_FILE edit dialog
 			o = s.taboption('parser_settings_tab', form.Button, '_fqdn_filter_btn',
@@ -309,8 +322,14 @@ return view.extend({
 			// BLLIST_IP_FILTER
 			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_ip_filter',
 				_("Enable IP filter"));
-			o.description = _('Exclude IP addresses from blacklist by IP filter patterns');
+			o.description = _('Pick IP addresses from blacklist by IP filter patterns');
 			o.rmempty     = false;
+
+			// BLLIST_IP_FILTER_TYPE
+			o = s.taboption('parser_settings_tab', form.ListValue, 'bllist_ip_filter_type',
+				_('IP filter type'));
+			o.value('0', _('All entries except matching expressions'));
+			o.value('1', _('Only entries matching expressions'));
 
 			// BLLIST_IP_FILTER_FILE edit dialog
 			o = s.taboption('parser_settings_tab', form.Button, '_ip_filter_btn',

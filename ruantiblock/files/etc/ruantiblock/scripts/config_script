@@ -1,6 +1,6 @@
 AWK_CMD="awk"
 UCI_SECTION="ruantiblock.config"
-UCI_VARS="proxy_mode proxy_local_clients ipset_clear_sets allowed_hosts_mode allowed_hosts_list if_vpn tor_trans_port tor_allow_udp onion_dns_addr t_proxy_port_tcp t_proxy_port_udp t_proxy_allow_udp add_user_entries user_entries_dns enable_logging bllist_module bllist_preset bllist_ip_limit bllist_gr_excluded_nets bllist_summarize_ip bllist_summarize_cidr bllist_ip_filter bllist_sd_limit bllist_gr_excluded_sld bllist_fqdn_filter bllist_enable_idn bllist_alt_nslookup bllist_alt_dns_addr update_at_startup"
+UCI_VARS="proxy_mode proxy_local_clients ipset_clear_sets allowed_hosts_mode allowed_hosts_list if_vpn tor_trans_port tor_allow_udp onion_dns_addr t_proxy_port_tcp t_proxy_port_udp t_proxy_allow_udp add_user_entries user_entries_dns enable_logging bllist_min_entries bllist_module bllist_preset bllist_ip_limit bllist_gr_excluded_nets bllist_summarize_ip bllist_summarize_cidr bllist_ip_filter bllist_ip_filter_type bllist_sd_limit bllist_gr_excluded_sld bllist_fqdn_filter bllist_fqdn_filter_type bllist_enable_idn bllist_alt_nslookup bllist_alt_dns_addr update_at_startup"
 
 eval `uci show "$UCI_SECTION" | $AWK_CMD -F "=" -v UCI_VARS="$UCI_VARS" '
     BEGIN {

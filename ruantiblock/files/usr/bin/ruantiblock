@@ -83,7 +83,7 @@ export BLLIST_MODULE=""
 ### Режим обхода блокировок: ruantiblock-fqdn, ruantiblock-ip, zapret-info-fqdn, zapret-info-ip, rublacklist-fqdn, rublacklist-ip, antifilter-ip
 export BLLIST_PRESET=""
 ### В случае если из источника получено менее указанного кол-ва записей, то обновления списков не происходит
-export BLLIST_MIN_ENTRIES=30000
+export BLLIST_MIN_ENTRIES=3000
 ### Лимит IP адресов. При достижении, в конфиг ipset будет добавлена вся подсеть /24 вместо множества IP адресов пренадлежащих этой сети (0 - off)
 export BLLIST_IP_LIMIT=0
 ### Подсети класса C (/24). IP адреса из этих подсетей не группируются при оптимизации (записи д.б. в виде: 68.183.221. 149.154.162. и пр.). Прим.: "68.183.221. 149.154.162."
@@ -94,6 +94,8 @@ export BLLIST_SUMMARIZE_IP=0
 export BLLIST_SUMMARIZE_CIDR=0
 ### Фильтрация записей блэклиста по шаблонам из файла BLLIST_IP_FILTER_FILE. Записи (IP, CIDR) попадающие под шаблоны исключаются из кофига ipset (0 - off, 1 - on)
 export BLLIST_IP_FILTER=0
+### Тип фильтра IP (0 - все записи, кроме совпадающих с выражениями; 1 - только записи, совпадающие с выражениями)
+export BLLIST_IP_FILTER_TYPE=0
 ### Файл с шаблонами IP для опции BLLIST_IP_FILTER (каждый шаблон в отдельной строке. # в первом символе строки - комментирует строку)
 export BLLIST_IP_FILTER_FILE="${CONFIG_DIR}/ip_filter"
 ### Лимит субдоменов для группировки. При достижении, в конфиг dnsmasq будет добавлен весь домен 2-го ур-ня вместо множества субдоменов (0 - off)
@@ -104,6 +106,8 @@ export BLLIST_GR_EXCLUDED_SLD="livejournal.com facebook.com vk.com blog.jp msk.r
 export BLLIST_GR_EXCLUDED_MASKS=""
 ### Фильтрация записей блэклиста по шаблонам из файла ENTRIES_FILTER_FILE. Записи (FQDN) попадающие под шаблоны исключаются из кофига dnsmasq (0 - off, 1 - on)
 export BLLIST_FQDN_FILTER=0
+### Тип фильтра FQDN (0 - все записи, кроме совпадающих с выражениями; 1 - только записи, совпадающие с выражениями)
+export BLLIST_FQDN_FILTER_TYPE=0
 ### Файл с шаблонами FQDN для опции BLLIST_FQDN_FILTER (каждый шаблон в отдельной строке. # в первом символе строки - комментирует строку)
 export BLLIST_FQDN_FILTER_FILE="${CONFIG_DIR}/fqdn_filter"
 ### Обрезка www[0-9]. в FQDN (0 - off, 1 - on)

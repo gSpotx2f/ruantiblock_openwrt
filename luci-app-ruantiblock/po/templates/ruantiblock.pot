@@ -13,6 +13,9 @@ msgstr ""
 msgid "All"
 msgstr ""
 
+msgid "All entries except matching expressions"
+msgstr ""
+
 msgid "All hosts except listed"
 msgstr ""
 
@@ -111,16 +114,13 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-msgid "Exclude IP addresses from blacklist by IP filter patterns"
-msgstr ""
-
-msgid "Exclude domains from blacklist by FQDN filter patterns"
-msgstr ""
-
 msgid "Expecting:"
 msgstr ""
 
 msgid "FQDN filter"
+msgstr ""
+
+msgid "FQDN filter type"
 msgstr ""
 
 msgid "Facility"
@@ -141,6 +141,9 @@ msgstr ""
 msgid "Hour"
 msgstr ""
 
+msgid "If less than the specified number of entries are received from the source, then the lists are not updated"
+msgstr ""
+
 msgid "IP address"
 msgstr ""
 
@@ -148,6 +151,9 @@ msgid "IP addresses of hosts"
 msgstr ""
 
 msgid "IP filter"
+msgstr ""
+
+msgid "IP filter type"
 msgstr ""
 
 msgid "IP limit"
@@ -204,6 +210,9 @@ msgstr ""
 msgid "Message filter"
 msgstr ""
 
+msgid "Minimum allowed number of entries"
+msgstr ""
+
 msgid "Minute"
 msgstr ""
 
@@ -241,6 +250,9 @@ msgstr ""
 msgid "One of the following:"
 msgstr ""
 
+msgid "Only entries matching expressions"
+msgstr ""
+
 msgid "Only listed hosts"
 msgstr ""
 
@@ -260,6 +272,12 @@ msgid ""
 "Patterns can be strings or regular expressions. Each pattern in a separate "
 "line, the symbol <code>#</code> in the first position of the line - comments "
 "on the line.<br />Examples:"
+msgstr ""
+
+msgid "Pick IP addresses from blacklist by IP filter patterns"
+msgstr ""
+
+msgid "Pick domains from blacklist by FQDN filter patterns"
 msgstr ""
 
 msgid "Proxy mode"
