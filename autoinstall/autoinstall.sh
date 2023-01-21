@@ -219,7 +219,7 @@ InstallTorConfig() {
     TorrcSettings
     $UCI_CMD set ruantiblock.config.proxy_mode="1"
     $UCI_CMD commit ruantiblock
-    $UCI_CMD set dhcp.@dnsmasq[0].rebind_domain='.onion'
+    $UCI_CMD set dhcp.@dnsmasq[0].rebind_domain='onion'
     $UCI_CMD commit dhcp
 }
 
