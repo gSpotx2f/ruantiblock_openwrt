@@ -41,8 +41,7 @@ return view.extend({
 				if(e) {
 					lines.push(
 						`<tr class="tr"><td class="td left" data-title="${_('IP address')}">${e[0]}</td>` +
-						((e[1]) ? `<td class="td left" data-title="${_('Timeout')}">${this.secToTimeString(e[1])}</td>` : '') +
-						`</tr>`
+						`<td class="td left" data-title="${_('Timeout')}">${(e[1]) ? this.secToTimeString(e[1]) : ''}</td></tr>`
 					);
 				};
 			});

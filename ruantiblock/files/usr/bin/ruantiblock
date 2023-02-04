@@ -167,9 +167,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 WGET_PARAMS="--no-check-certificate -q -O"
-
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
-
 export IPSET_ALLOWED_HOSTS="r_allowed_ip"
 export IPSET_ONION="r_onion"
 export IPSET_CIDR="rc"
@@ -177,7 +175,6 @@ export IPSET_CIDR_TMP="${IPSET_CIDR}t"
 export IPSET_IP="ri"
 export IPSET_IP_TMP="${IPSET_IP}t"
 export IPSET_DNSMASQ="rd"
-
 export UPDATE_STATUS_FILE="${DATA_DIR}/update_status"
 UPDATE_PID_FILE="/var/run/${NAME}_update.pid"
 START_PID_FILE="/var/run/${NAME}_start.pid"
@@ -227,10 +224,17 @@ cat << EOF
 EOF
 }
 
+MakeLogRecord() {
+    if [ $ENABLE_LOGGING = "1" ]; then
+        $LOGGER_CMD $LOGGER_PARAMS -p "user.${1}" "$2"
+    fi
+}
+
 Download() {
     $WGET_CMD $WGET_PARAMS "$1" "$2"
     if [ $? -ne 0 ]; then
-        echo "Connection error (${2})" >&2
+        echo "Blacklist downloading failed! Connection error (${2})" >&2
+        MakeLogRecord "err" "Blacklist downloading failed! Connection error (${2})"
         return 1
     fi
 }
@@ -245,15 +249,10 @@ DownloadRuabBlacklist() {
         ;;
         *)
             echo "Blacklist configuration error (${1})" >&2
+            MakeLogRecord "err" "Blacklist configuration error (${1})"
             exit 1
         ;;
     esac
-}
-
-MakeLogRecord() {
-    if [ $ENABLE_LOGGING = "1" ]; then
-        $LOGGER_CMD $LOGGER_PARAMS -p "user.${1}" "$2"
-    fi
 }
 
 DnsmasqRestart() {
