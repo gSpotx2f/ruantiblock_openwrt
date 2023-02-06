@@ -284,7 +284,7 @@ return view.extend({
 		btn_destroy.onclick = L.bind(this.dialogDestroy, this);
 
 		layout_append(btn_destroy, _('Shutdown'),
-			_('Complete service shutdown, as well as deleting ipsets and blacklist data'));
+			_('Complete service shutdown, as well as deleting nftsets and blacklist data'));
 
 		this.setAppStatus(status_array, [
 			status_string,

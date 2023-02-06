@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=96
+START=99
 STOP=01
 
 APP_NAME="ruantiblock"

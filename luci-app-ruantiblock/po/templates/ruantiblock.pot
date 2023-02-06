@@ -49,14 +49,14 @@ msgstr ""
 msgid "Changes have been saved."
 msgstr ""
 
-msgid "Clean up ipsets before updating blacklist"
+msgid "Clean up nftsets before updating blacklist"
 msgstr ""
 
 msgid "Command failed"
 msgstr ""
 
 msgid ""
-"Complete service shutdown, as well as deleting ipsets and blacklist data"
+"Complete service shutdown, as well as deleting nftsets and blacklist data"
 msgstr ""
 
 msgid "Contents have been saved."
@@ -171,10 +171,7 @@ msgstr ""
 msgid "Invalid regular expression"
 msgstr ""
 
-msgid "Ipset"
-msgstr ""
-
-msgid "Iptables rules"
+msgid "Nftables rules"
 msgstr ""
 
 msgid "Last blacklist update"

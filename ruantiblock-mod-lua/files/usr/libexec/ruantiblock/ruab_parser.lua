@@ -53,10 +53,11 @@ local Config = Class(nil, {
         ["BLLIST_GR_EXCLUDED_NETS"] = true,
         ["BLLIST_MIN_ENTRIES"] = true,
         ["BLLIST_STRIP_WWW"] = true,
-        ["DATA_DIR"] = true,
-        ["IPSET_DNSMASQ"] = true,
-        ["IPSET_IP_TMP"] = true,
-        ["IPSET_CIDR_TMP"] = true,
+        ["NFT_TABLE"] = true,
+        ["NFT_TABLE_DNSMASQ"] = true,
+        ["NFTSET_CIDR_CFG"] = true,
+        ["NFTSET_IP_CFG"] = true,
+        ["NFTSET_DNSMASQ"] = true,
         ["DNSMASQ_DATA_FILE"] = true,
         ["IP_DATA_FILE"] = true,
         ["UPDATE_STATUS_FILE"] = true,
@@ -65,10 +66,10 @@ local Config = Class(nil, {
         ["ZI_ALL_URL"] = true,
         ["AF_IP_URL"] = true,
         ["AF_FQDN_URL"] = true,
-        ["RA_IP_IPSET_URL"] = true,
+        ["RA_IP_NFTSET_URL"] = true,
         ["RA_IP_DMASK_URL"] = true,
         ["RA_IP_STAT_URL"] = true,
-        ["RA_FQDN_IPSET_URL"] = true,
+        ["RA_FQDN_NFTSET_URL"] = true,
         ["RA_FQDN_DMASK_URL"] = true,
         ["RA_FQDN_STAT_URL"] = true,
         ["RBL_ENCODING"] = true,
@@ -228,16 +229,16 @@ function BlackListParser:new(t)
     instance.records_separator = instance["records_separator"] or self.records_separator
     instance.ips_separator = instance["ips_separator"] or self.ips_separator
     instance.site_encoding = instance["site_encoding"] or self.site_encoding
-    instance.ip_records_count = 0
-    instance.ip_count = 0
     instance.ip_subnet_table = {}
     instance.cidr_count = 0
-    instance.fqdn_table = {}
+    instance.ip_records_count = 0
+    instance.ip_count = 0
     instance.fqdn_count = 0
     instance.sld_table = {}
     instance.fqdn_records_count = 0
-    instance.ip_table = {}
     instance.cidr_table = {}
+    instance.ip_table = {}
+    instance.fqdn_table = {}
     instance.iconv_handler = iconv and iconv.open(instance.encoding, instance.site_encoding) or nil
     return instance
 end
@@ -387,19 +388,34 @@ function BlackListParser:group_cidr_ranges()
 end
 
 function BlackListParser:write_ipset_config()
-    local file_handler = assert(io.open(self.IP_DATA_FILE, "w"), "Could not open ipset config")
+    local file_handler = assert(io.open(self.IP_DATA_FILE, "w"), "Could not open nftset config")
+    file_handler:write(
+        string.format("table %s {\n%s", self.NFT_TABLE, self.NFTSET_IP_CFG)
+    )
     local i = 0
-    for ipaddr in pairs(self.ip_table) do
-        file_handler:write(string.format("add %s %s\n", self.IPSET_IP_TMP, ipaddr))
-        i = i + 1
+    if next(self.ip_table) then
+        file_handler:write("elements={")
+        for ipaddr in pairs(self.ip_table) do
+            file_handler:write(string.format("%s,", ipaddr))
+            i = i + 1
+        end
+        file_handler:write("};")
     end
+    file_handler:write(
+        string.format("}\n%s", self.NFTSET_CIDR_CFG)
+        )
     self.ip_records_count = i
     local c = 0
-    for cidr in pairs(self.cidr_table) do
-        file_handler:write(string.format("add %s %s\n", self.IPSET_CIDR_TMP, cidr))
-        c = c + 1
+    if next(self.cidr_table) then
+        file_handler:write("elements={")
+        for cidr in pairs(self.cidr_table) do
+            file_handler:write(string.format("%s,", cidr))
+            c = c + 1
+        end
+        file_handler:write("};")
     end
     self.cidr_count = c
+    file_handler:write("}\n}\n")
     file_handler:close()
 end
 
@@ -409,7 +425,7 @@ function BlackListParser:write_dnsmasq_config()
         if self.BLLIST_ALT_NSLOOKUP then
             file_handler:write(string.format("server=/%s/%s\n", fqdn, self.BLLIST_ALT_DNS_ADDR))
         end
-        file_handler:write(string.format("ipset=/%s/%s\n", fqdn, self.IPSET_DNSMASQ))
+        file_handler:write(string.format("nftset=/%s/%s#%s\n", fqdn, self.NFT_TABLE_DNSMASQ, self.NFTSET_DNSMASQ))
     end
     file_handler:close()
 end
@@ -465,7 +481,7 @@ end
 function BlackListParser:run()
     local return_code = 0
     if self:get_http_data(self.url) then
-        if (self.fqdn_count + self.ip_count + self.cidr_count) >= self.BLLIST_MIN_ENTRIES then
+        if (self.fqdn_count + self.ip_count + self.cidr_count) > self.BLLIST_MIN_ENTRIES then
             self:optimize_fqdn_table()
             self:optimize_ip_table()
             if self.BLLIST_SUMMARIZE_IP then
@@ -593,6 +609,7 @@ local Ra = Class(BlackListParser, {
 function Ra:download_config(url, file)
     local ret_val = false
     self.current_file_handler = assert(io.open(file, "w"), "Could not open file")
+    --self.current_file_handler:setvbuf("no")
     if self:get_http_data(url) then
         ret_val = true
     end

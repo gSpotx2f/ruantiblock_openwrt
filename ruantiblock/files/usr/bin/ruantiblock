@@ -15,7 +15,7 @@ export LANGUAGE="en"
 
 CONFIG_DIR="/etc/${NAME}"
 CONFIG_FILE="${CONFIG_DIR}/${NAME}.conf"
-export DATA_DIR="/var/${NAME}"
+export DATA_DIR="${CONFIG_DIR}/var"
 export MODULES_DIR="/usr/libexec/${NAME}"
 ### Дополнительный конфиг dnsmasq с FQDN записями блэклиста
 export DNSMASQ_DATA_FILE="/var/dnsmasq.d/${NAME}.dnsmasq"
@@ -26,12 +26,12 @@ export HTML_DIR="/www"
 
 ########################## Default Settings ############################
 
-### Режим обработки пакетов в правилах iptables (1 - Tor, 2 - VPN, 3 - Прозрачный прокси)
+### Режим обработки пакетов в правилах nftables (1 - Tor, 2 - VPN, 3 - Прозрачный прокси)
 export PROXY_MODE=1
-### Применять правила проксификации для трафика локальных сервисов роутера (0 - off, 1 - on)
+### Применять правила проксификации для трафика локальных сервисов роутера (0 - выкл, 1 - вкл)
 export PROXY_LOCAL_CLIENTS=1
-### Удаление записей из основных сетов перед началом заполнения временных сетов при обновлении (для освобождения оперативной памяти перед заполнением сетов) (0 - off, 1 - on)
-export IPSET_CLEAR_SETS=0
+### Удаление записей сетов перед началом обновления (для освобождения оперативной памяти перед обновлением сетов) (0 - выкл, 1 - вкл)
+export NFTSET_CLEAR_SETS=0
 ### Режим фильтра хостов которым разрешено обходить блокировки (0 - выкл., 1 - только адреса из списка, 2 - любые адреса кроме присутствующих в списке)
 export ALLOWED_HOSTS_MODE=0
 ### Список IP адресов хостов для фильтра, через пробел (прим.: 192.168.0.10 192.168.0.15)
@@ -40,7 +40,7 @@ export ALLOWED_HOSTS_LIST=""
 export IF_VPN="tun0"
 ### Порт прозрачного прокси Tor (параметр TransPort в torrc)
 export TOR_TRANS_PORT=9040
-### Отправлять в Tor UDP-трафик (0 - off, 1 - on)
+### Отправлять в Tor UDP-трафик (0 - выкл, 1 - вкл)
 export TOR_ALLOW_UDP=0
 ### DNS-сервер для резолвинга в домене .onion (Tor)
 export ONION_DNS_ADDR="127.0.0.1#9053"
@@ -50,9 +50,9 @@ export VPN_PKTS_MARK=8
 export T_PROXY_PORT_TCP=1100
 ### UDP порт прокси в режиме прозрачного прокси
 export T_PROXY_PORT_UDP=1100
-### Отправлять в прозрачный прокси UDP-трафик (0 - off, 1 - on)
+### Отправлять в прозрачный прокси UDP-трафик (0 - выкл, 1 - вкл)
 export T_PROXY_ALLOW_UDP=0
-### Добавление в список блокировок пользовательских записей из файла $USER_ENTRIES_FILE (0 - off, 1 - on)
+### Добавление в список блокировок пользовательских записей из файла $USER_ENTRIES_FILE (0 - выкл, 1 - вкл)
 ###  В $DATA_DIR можно создать текстовый файл user_entries с записями IP, CIDR или FQDN (одна на строку). Эти записи будут добавлены в список блокировок
 ###  В записях FQDN можно задать DNS-сервер для разрешения данного домена, через пробел (прим.: domain.com 8.8.8.8)
 ###  Можно комментировать строки (#)
@@ -61,14 +61,20 @@ export ADD_USER_ENTRIES=0
 export USER_ENTRIES_DNS=""
 ### Файл пользовательских записей
 export USER_ENTRIES_FILE="${CONFIG_DIR}/user_entries"
-### Запись событий в syslog (0 - off, 1 - on)
+### Запись событий в syslog (0 - выкл, 1 - вкл)
 export ENABLE_LOGGING=1
-### Html-страница с инфо о текущем статусе (0 - off, 1 - on) (не используется в OpenWrt)
+### Html-страница с инфо о текущем статусе (0 - выкл, 1 - вкл) (не используется в OpenWrt)
 export ENABLE_HTML_INFO=0
-### Максимальное кол-во элементов списка ipset
-export IPSET_MAXELEM=2000000
-### Таймаут для записей в сете $IPSET_DNSMASQ
-export IPSET_DNSMASQ_TIMEOUT=3600
+### Максимальное кол-во элементов списка nftables
+export NFTSET_MAXELEM_CIDR=65535
+export NFTSET_MAXELEM_IP=1000000
+export NFTSET_MAXELEM_DNSMASQ=65535
+### Политика отбора элементов в сетах nftables. "performance" - производительность и большее потребление RAM. "memory" - хуже производительность и меньше потребление RAM
+export NFTSET_POLICY_CIDR="memory"
+export NFTSET_POLICY_IP="memory"
+export NFTSET_POLICY_DNSMASQ="performance"
+### Таймаут для записей в сете $NFTSET_DNSMASQ
+export NFTSET_DNSMASQ_TIMEOUT="1h"
 ### Кол-во попыток обновления блэклиста (в случае неудачи)
 export MODULE_RUN_ATTEMPTS=3
 ### Таймаут между попытками обновления
@@ -84,7 +90,7 @@ export BLLIST_MODULE=""
 export BLLIST_PRESET=""
 ### В случае если из источника получено менее указанного кол-ва записей, то обновления списков не происходит
 export BLLIST_MIN_ENTRIES=3000
-### Лимит IP адресов. При достижении, в конфиг ipset будет добавлена вся подсеть /24 вместо множества IP адресов пренадлежащих этой сети (0 - off)
+### Лимит IP адресов. При достижении, в конфиг ipset будет добавлена вся подсеть /24 вместо множества IP адресов пренадлежащих этой сети (0 - выкл)
 export BLLIST_IP_LIMIT=0
 ### Подсети класса C (/24). IP адреса из этих подсетей не группируются при оптимизации (записи д.б. в виде: 68.183.221. 149.154.162. и пр.). Прим.: "68.183.221. 149.154.162."
 export BLLIST_GR_EXCLUDED_NETS=""
@@ -92,29 +98,29 @@ export BLLIST_GR_EXCLUDED_NETS=""
 export BLLIST_SUMMARIZE_IP=0
 ### Группировать идущие подряд подсети /24 в диапазоны CIDR
 export BLLIST_SUMMARIZE_CIDR=0
-### Фильтрация записей блэклиста по шаблонам из файла BLLIST_IP_FILTER_FILE. Записи (IP, CIDR) попадающие под шаблоны исключаются из кофига ipset (0 - off, 1 - on)
+### Фильтрация записей блэклиста по шаблонам из файла BLLIST_IP_FILTER_FILE. Записи (IP, CIDR) попадающие под шаблоны исключаются из кофига ipset (0 - выкл, 1 - вкл)
 export BLLIST_IP_FILTER=0
 ### Тип фильтра IP (0 - все записи, кроме совпадающих с шаблонами; 1 - только записи, совпадающие с шаблонами)
 export BLLIST_IP_FILTER_TYPE=0
 ### Файл с шаблонами IP для опции BLLIST_IP_FILTER (каждый шаблон в отдельной строке. # в первом символе строки - комментирует строку)
 export BLLIST_IP_FILTER_FILE="${CONFIG_DIR}/ip_filter"
-### Лимит субдоменов для группировки. При достижении, в конфиг dnsmasq будет добавлен весь домен 2-го ур-ня вместо множества субдоменов (0 - off)
+### Лимит субдоменов для группировки. При достижении, в конфиг dnsmasq будет добавлен весь домен 2-го ур-ня вместо множества субдоменов (0 - выкл)
 export BLLIST_SD_LIMIT=16
 ### SLD не подлежащие группировке при оптимизации (через пробел)
 export BLLIST_GR_EXCLUDED_SLD="livejournal.com facebook.com vk.com blog.jp msk.ru net.ru org.ru net.ua com.ua org.ua co.uk amazonaws.com"
 ### Не группировать SLD попадающие под выражения (через пробел) ("[.][a-z]{2,3}[.][a-z]{2}$")
 export BLLIST_GR_EXCLUDED_MASKS=""
-### Фильтрация записей блэклиста по шаблонам из файла ENTRIES_FILTER_FILE. Записи (FQDN) попадающие под шаблоны исключаются из кофига dnsmasq (0 - off, 1 - on)
+### Фильтрация записей блэклиста по шаблонам из файла ENTRIES_FILTER_FILE. Записи (FQDN) попадающие под шаблоны исключаются из кофига dnsmasq (0 - выкл, 1 - вкл)
 export BLLIST_FQDN_FILTER=0
 ### Тип фильтра FQDN (0 - все записи, кроме совпадающих с шаблонами; 1 - только записи, совпадающие с шаблонами)
 export BLLIST_FQDN_FILTER_TYPE=0
 ### Файл с шаблонами FQDN для опции BLLIST_FQDN_FILTER (каждый шаблон в отдельной строке. # в первом символе строки - комментирует строку)
 export BLLIST_FQDN_FILTER_FILE="${CONFIG_DIR}/fqdn_filter"
-### Обрезка www[0-9]. в FQDN (0 - off, 1 - on)
+### Обрезка www[0-9]. в FQDN (0 - выкл, 1 - вкл)
 export BLLIST_STRIP_WWW=1
-### Преобразование кириллических доменов в punycode (0 - off, 1 - on)
+### Преобразование кириллических доменов в punycode (0 - выкл, 1 - вкл)
 export BLLIST_ENABLE_IDN=0
-### Перенаправлять DNS-запросы на альтернативный DNS-сервер для заблокированных FQDN (0 - off, 1 - on)
+### Перенаправлять DNS-запросы на альтернативный DNS-сервер для заблокированных FQDN (0 - выкл, 1 - вкл)
 export BLLIST_ALT_NSLOOKUP=0
 ### Альтернативный DNS-сервер
 export BLLIST_ALT_DNS_ADDR="8.8.8.8"
@@ -125,12 +131,12 @@ export RBL_IP_URL="https://reestr.rublacklist.net/api/v3/ips/"
 export ZI_ALL_URL="https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv"
 export AF_IP_URL="https://antifilter.download/list/allyouneed.lst"
 export AF_FQDN_URL="https://antifilter.download/list/domains.lst"
-export RA_IP_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist/ip/ruantiblock.ip"
-export RA_IP_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist/ip/ruantiblock.dnsmasq"
-export RA_IP_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist/ip/update_status"
-export RA_FQDN_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist/fqdn/ruantiblock.ip"
-export RA_FQDN_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist/fqdn/ruantiblock.dnsmasq"
-export RA_FQDN_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist/fqdn/update_status"
+export RA_IP_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/ip/ruantiblock.ip"
+export RA_IP_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/ip/ruantiblock.dnsmasq"
+export RA_IP_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/ip/update_status"
+export RA_FQDN_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/fqdn/ruantiblock.ip"
+export RA_FQDN_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/fqdn/ruantiblock.dnsmasq"
+export RA_FQDN_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/fqdn/update_status"
 export RBL_ENCODING=""
 export ZI_ENCODING="CP1251"
 export AF_ENCODING=""
@@ -141,18 +147,19 @@ export RA_ENCODING=""
 ### External config
 [ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
 
-CONFIG_SCRIPT="${CONFIG_DIR}/scripts/config_script"
-START_SCRIPT="${CONFIG_DIR}/scripts/start_script"
-STOP_SCRIPT="${CONFIG_DIR}/scripts/stop_script"
+SCRIPTS_DIR="${CONFIG_DIR}/scripts"
+CONFIG_SCRIPT="${SCRIPTS_DIR}/config_script"
+START_SCRIPT="${SCRIPTS_DIR}/start_script"
+STOP_SCRIPT="${SCRIPTS_DIR}/stop_script"
 
 ### Config script
 [ -f "$CONFIG_SCRIPT" ] && . "$CONFIG_SCRIPT"
 
 ### Utilities
 AWK_CMD="awk"
-IPSET_CMD=`which ipset`
+NFT_CMD=`which nft`
 if [ $? -ne 0 ]; then
-    echo " Error! Ipset doesn't exists" >&2
+    echo " Error! Nftables doesn't exists" >&2
     exit 1
 fi
 LOGGER_CMD=`which logger`
@@ -168,24 +175,33 @@ if [ $? -ne 0 ]; then
 fi
 WGET_PARAMS="--no-check-certificate -q -O"
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
-export IPSET_ALLOWED_HOSTS="r_allowed_ip"
-export IPSET_ONION="r_onion"
-export IPSET_CIDR="rc"
-export IPSET_CIDR_TMP="${IPSET_CIDR}t"
-export IPSET_IP="ri"
-export IPSET_IP_TMP="${IPSET_IP}t"
-export IPSET_DNSMASQ="rd"
+export NFT_TABLE="ip r"
+export NFT_TABLE_DNSMASQ="4#ip#r"
+export NFTSET_ALLOWED_HOSTS="allowed_ip"
+export NFTSET_ONION="onion"
+export NFTSET_CIDR="c"
+export NFTSET_IP="i"
+export NFTSET_DNSMASQ="d"
+export NFTSET_CIDR_USER="cu"
+export NFTSET_IP_USER="iu"
+export NFTSET_DNSMASQ_USER="du"
+export NFTSET_ALLOWED_HOSTS_TYPE="ipv4_addr"
+export NFTSET_CIDR_TYPE="ipv4_addr"
+export NFTSET_IP_TYPE="ipv4_addr"
+export NFTSET_DNSMASQ_TYPE="ipv4_addr"
+export NFTSET_CIDR_CFG="set ${NFTSET_CIDR} {type ${NFTSET_CIDR_TYPE};size ${NFTSET_MAXELEM_CIDR};policy ${NFTSET_POLICY_CIDR};flags interval;auto-merge;"
+export NFTSET_IP_CFG="set ${NFTSET_IP} {type ${NFTSET_IP_TYPE};size ${NFTSET_MAXELEM_IP};policy ${NFTSET_POLICY_IP};"
 export UPDATE_STATUS_FILE="${DATA_DIR}/update_status"
-UPDATE_PID_FILE="/var/run/${NAME}_update.pid"
+U_PID_FILE="/var/run/${NAME}_update.pid"
 START_PID_FILE="/var/run/${NAME}_start.pid"
 TOKEN_FILE="/var/run/${NAME}.token"
 export HTML_OUTPUT="${HTML_DIR}/${NAME}.html"
-IPT_FUNCTIONS="${CONFIG_DIR}/scripts/ipt_functions"
-INFO_OUTPUT_FUNCTION="${CONFIG_DIR}/scripts/info_output"
+NFT_FUNCTIONS="${SCRIPTS_DIR}/nft_functions"
+INFO_OUTPUT_FUNCTION="${SCRIPTS_DIR}/info_output"
 
 ######################### External functions ###########################
 
-. "$IPT_FUNCTIONS"
+. "$NFT_FUNCTIONS"
 if [ -f "$INFO_OUTPUT_FUNCTION" ]; then
     . "$INFO_OUTPUT_FUNCTION"
 else
@@ -196,13 +212,13 @@ fi
 
 Help() {
 cat << EOF
- Usage: `basename $0` start|force-start|stop|destroy|restart|update|force-update|data-files|status|raw-status|html-info|help
+ Usage: `basename $0` start|force-start|stop|destroy|restart|reload|update|force-update|data-files|status|raw-status|html-info|help
         start : Start
         force-start : Removing the pid-file before running
         stop : Stop
-        destroy : Stop + destroy ipsets and clear all data files
+        destroy : Stop + remove nft table and clear all data files
         restart : Restart
-        reload : Renew iptables configuration
+        reload : Renew nftables configuration
         update : Update blacklist
         force-update : Force update blacklist
         data-files : Create ${IP_DATA_FILE} & ${DNSMASQ_DATA_FILE} (without network functions)
@@ -216,10 +232,12 @@ cat << EOF
         `basename $0` stop
         `basename $0` destroy
         `basename $0` restart
+        `basename $0` reload
         `basename $0` update
         `basename $0` force-update
         `basename $0` data-files
         `basename $0` status
+        `basename $0` raw-status
         `basename $0` html-info
 EOF
 }
@@ -259,86 +277,68 @@ DnsmasqRestart() {
     eval `echo "$DNSMASQ_RESTART_CMD"`
 }
 
-IsIpsetExists() {
-    $IPSET_CMD list "$1" -terse &> /dev/null
-    return $?
-}
-
-FlushIpSets() {
+FlushNftSets() {
     local _set
     for _set in "$@"
     do
-        IsIpsetExists "$_set" && $IPSET_CMD flush "$_set"
+        $NFT_CMD flush set $NFT_TABLE "$_set" &> /dev/null
     done
 }
 
-DestroyIpsets() {
-    local _set
-    for _set in "$@"
-    do
-        IsIpsetExists "$_set" && $IPSET_CMD destroy "$_set"
-    done
-}
-
-FillAllowedHostsSet() {
-    local _entry
-    for _entry in $ALLOWED_HOSTS_LIST
-    do
-        $IPSET_CMD add "$IPSET_ALLOWED_HOSTS" "$_entry"
-    done
-}
-
-AddIptRules() {
-    IptMainAdd
-    if [ "$PROXY_LOCAL_CLIENTS" = "1" ]; then
-        IptLocalClientsAdd
+AddNftSets() {
+    local _hosts
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_CIDR" { type "$NFTSET_CIDR_TYPE"\; size $NFTSET_MAXELEM_CIDR\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_CIDR_USER" { type "$NFTSET_CIDR_TYPE"\; size $NFTSET_MAXELEM_CIDR\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_IP" { type "$NFTSET_IP_TYPE"\; size $NFTSET_MAXELEM_IP\; policy "$NFTSET_POLICY_IP"\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_IP_USER" { type "$NFTSET_IP_TYPE"\; size $NFTSET_MAXELEM_IP\; policy "$NFTSET_POLICY_IP"\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_DNSMASQ" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_DNSMASQ_USER" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_ONION" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { type "$NFTSET_ALLOWED_HOSTS_TYPE"\; policy "$NFTSET_POLICY_IP"\; }
+    _hosts=`printf "$ALLOWED_HOSTS_LIST" | $AWK_CMD '{gsub(/[ ]+/, ",", $0); printf $0;}'`
+    if [ -n "$_hosts" ]; then
+        $NFT_CMD add element $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { "$_hosts" }
     fi
 }
 
-DelIptRules() {
-    IptLocalClientsDel
-    IptMainDel
+UpdateBllistSets() {
+    if [ -f "$IP_DATA_FILE" ]; then
+        echo " Updating nft sets..."
+        $NFT_CMD -f "$IP_DATA_FILE"
+        if [ $? -eq 0 ]; then
+            echo " Ok"
+        else
+            echo " Error! Nft set wasn't updated" >&2
+            MakeLogRecord "err" "Error! Nft set wasn't updated"
+        fi
+    fi
+}
+
+AddNftRules() {
+    NftMainAdd
+    if [ "$PROXY_LOCAL_CLIENTS" = "1" ]; then
+        NftLocalClientsAdd
+    fi
+}
+
+DeleteNftRules() {
+    NftMainDelete
 }
 
 SetNetConfig() {
-    local _set
-    ### Создание списков ipset. Проверка на наличие списка с таким же именем, если нет, то создается новый
-    for _set in "$IPSET_CIDR_TMP" "$IPSET_CIDR"
-    do
-        IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:net maxelem $IPSET_MAXELEM
-    done
-    for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_IP_TMP" "$IPSET_IP"
-    do
-        IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:ip maxelem $IPSET_MAXELEM
-    done
-    for _set in "$IPSET_DNSMASQ" "$IPSET_ONION"
-    do
-         IsIpsetExists "$_set" || $IPSET_CMD create "$_set" hash:ip maxelem $IPSET_MAXELEM timeout $IPSET_DNSMASQ_TIMEOUT
-    done
-    AddIptRules
+    $NFT_CMD add table $NFT_TABLE
+    AddNftSets
+    AddNftRules
 }
 
 DropNetConfig() {
-    DelIptRules
-    FlushIpSets "$IPSET_ALLOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+    DeleteNftRules
+    FlushNftSets "$NFTSET_ALLOWED_HOSTS" "$NFTSET_CIDR" "$NFTSET_CIDR_USER" "$NFTSET_IP" "$NFTSET_IP_USER" "$NFTSET_DNSMASQ" "$NFTSET_DNSMASQ_USER" "$NFTSET_ONION"
 }
 
-FillIpsets() {
-    local _set
-    ### Заполнение списков ipset $IPSET_IP и $IPSET_CIDR. Сначала restore загружает во временные списки, а затем swap из временных добавляет в основные
-    if [ -f "$IP_DATA_FILE" ]; then
-        echo " Filling ipsets..."
-        FlushIpSets "$IPSET_IP_TMP" "$IPSET_CIDR_TMP"
-        IsIpsetExists "$IPSET_IP_TMP" && IsIpsetExists "$IPSET_CIDR_TMP" && IsIpsetExists "$IPSET_IP" && IsIpsetExists "$IPSET_CIDR" &&\
-        cat "$IP_DATA_FILE" | $IPSET_CMD restore && { $IPSET_CMD swap "$IPSET_IP_TMP" "$IPSET_IP"; $IPSET_CMD swap "$IPSET_CIDR_TMP" "$IPSET_CIDR"; }
-        if [ $? -eq 0 ]; then
-            echo " Ok"
-            FlushIpSets "$IPSET_IP_TMP" "$IPSET_CIDR_TMP"
-        else
-            echo " Error! Ipset wasn't updated" >&2
-            MakeLogRecord "err" "Error! Ipset wasn't updated"
-        fi
-    fi
+DestroyNetConfig() {
+    $NFT_CMD flush table $NFT_TABLE &> /dev/null
+    $NFT_CMD delete table $NFT_TABLE &> /dev/null
 }
 
 ClearDataFiles() {
@@ -350,19 +350,8 @@ ClearDataFiles() {
 }
 
 CheckStatus() {
-    local _set _ipset_return=0 _return_code=1
-    if [ "$1" = "ipsets" ]; then
-        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
-        do
-            IsIpsetExists "$_set"
-            _ipset_return=$?
-            [ $_ipset_return -ne 0 ] && break
-        done
-    fi
-    if IptListBllistChain &> /dev/null && [ $_ipset_return -eq 0 ]; then
-        _return_code=0
-    fi
-    return $_return_code
+    NftReturnStatus
+    return $?
 }
 
 PreStartCheck() {
@@ -377,43 +366,64 @@ AddUserEntries() {
         if [ -f "$USER_ENTRIES_FILE" -a -s "$USER_ENTRIES_FILE" ]; then
             $AWK_CMD 'BEGIN {
                         null="";
-                        while((getline ip_string <ENVIRON["IP_DATA_FILE"]) > 0) {
-                            split(ip_string, ip_string_arr, " ");
-                            ip_data_array[ip_string_arr[3]]=null;
-                        };
-                        close(ENVIRON["IP_DATA_FILE"]);
-                        while((getline fqdn_string <ENVIRON["DNSMASQ_DATA_FILE"]) > 0) {
-                            split(fqdn_string, fqdn_string_arr, "/");
-                            fqdn_data_array[fqdn_string_arr[2]]=null;
-                        };
-                        close(ENVIRON["DNSMASQ_DATA_FILE"]);
+                        fqdn_array[0]=null;
+                        ip_list="";
+                        cidr_list="";
                     }
-                    function writeIpsetEntries(val, set) {
-                        printf "add %s %s\n", set, val >> ENVIRON["IP_DATA_FILE"];
-                    };
                     function writeDNSData(val, dns) {
-                        if(length(dns) == 0 && length(ENVIRON["USER_ENTRIES_DNS"]) > 0)
+                        if(length(dns) == 0 && length(ENVIRON["USER_ENTRIES_DNS"]) > 0) {
                             dns=ENVIRON["USER_ENTRIES_DNS"];
-                        if(length(dns) > 0)
+                        };
+                        if(length(dns) > 0) {
                             printf "server=/%s/%s\n", val, dns >> ENVIRON["DNSMASQ_DATA_FILE"];
-                        printf "ipset=/%s/%s\n", val, ENVIRON["IPSET_DNSMASQ"] >> ENVIRON["DNSMASQ_DATA_FILE"];
+                        };
+                        printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], ENVIRON["NFTSET_DNSMASQ_USER"] >> ENVIRON["DNSMASQ_DATA_FILE"];
+                    };
+                    function writeFqdnEntries() {
+                        delete fqdn_array[0];
+                        for(i in fqdn_array) {
+                            split(fqdn_array[i], a, " ");
+                            writeDNSData(a[1], a[2]);
+                        };
                     };
                     ($0 !~ /^([\040\011]*$|#)/) {
-                        if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/ && !($0 in ip_data_array))
-                            writeIpsetEntries($0, ENVIRON["IPSET_IP_TMP"]);
-                        else if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/ && !($0 in ip_data_array))
-                            writeIpsetEntries($0, ENVIRON["IPSET_CIDR_TMP"]);
-                        else if($0 ~ /^[a-z0-9.\052-]+[.]([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/ && !($1 in fqdn_data_array))
-                            writeDNSData($1, $2);
+                        if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/) {
+                            ip_list=ip_list $0 ",";
+                        }
+                        else if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/) {
+                            cidr_list=cidr_list $0 ",";
+                        }
+                        else if($0 ~ /^[a-z0-9.\052-]+[.]([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
+                            fqdn_array[length(fqdn_array)]=$1 " " $2;
+                        };
+                    }
+                    END {
+                        printf "table %s {\nset %s {type %s;size %s;flags interval;auto-merge;", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_CIDR_USER"], ENVIRON["NFTSET_CIDR_TYPE"], ENVIRON["NFTSET_MAXELEM_CIDR"] >> ENVIRON["IP_DATA_FILE"];
+                        if(length(cidr_list) > 0) {
+                            printf "elements={%s};", cidr_list >> ENVIRON["IP_DATA_FILE"];
+                        };
+                        printf "}\nset %s {type %s;size %s;", ENVIRON["NFTSET_IP_USER"],  ENVIRON["NFTSET_IP_TYPE"], ENVIRON["NFTSET_MAXELEM_IP"] >> ENVIRON["IP_DATA_FILE"];
+                        if(length(ip_list) > 0) {
+                            printf "elements={%s};", ip_list >> ENVIRON["IP_DATA_FILE"];
+                        };
+                        printf "}\n}\n" >> ENVIRON["IP_DATA_FILE"];
+                        writeFqdnEntries();
                     }' "$USER_ENTRIES_FILE"
         fi
+    fi
+}
+
+ToggleUPIDFile() {
+    if [ "$1" = "del" ]; then
+        rm -f "$U_PID_FILE"
+    else
+        echo "$$" > "$U_PID_FILE"
     fi
 }
 
 GetDataFiles() {
     local _return_code=1 _attempt=1 _update_string
     PreStartCheck
-    echo "$$" > "$UPDATE_PID_FILE"
     if [ -n "$BLLIST_PRESET" -a -n "$BLLIST_MODULE" ]; then
         while :
         do
@@ -445,16 +455,16 @@ GetDataFiles() {
         _return_code=0
     else
         _return_code=2
-        rm -f "$UPDATE_PID_FILE"
         return $_return_code
     fi
-    if [ "$PROXY_MODE" = "2" -o "$PROXY_MODE" = "3" ]; then
-        printf "\n" >> "$DNSMASQ_DATA_FILE"
-    else
-        ### Запись для .onion в $DNSMASQ_DATA_FILE
-        printf "server=/onion/%s\nipset=/onion/%s\n" "${ONION_DNS_ADDR}" "${IPSET_ONION}" >> "$DNSMASQ_DATA_FILE"
+    if [ $_return_code -eq 0 ]; then
+        if [ "$PROXY_MODE" = "2" -o "$PROXY_MODE" = "3" ]; then
+            printf "\n" >> "$DNSMASQ_DATA_FILE"
+        else
+            ### Запись для .onion в $DNSMASQ_DATA_FILE
+            printf "server=/onion/%s\nnftset=/onion/%s#%s\n" "$ONION_DNS_ADDR" "$NFT_TABLE_DNSMASQ" "$NFTSET_ONION" >> "$DNSMASQ_DATA_FILE"
+        fi
     fi
-    rm -f "$UPDATE_PID_FILE"
     return $_return_code
 }
 
@@ -464,22 +474,25 @@ MakeToken() {
 
 Update() {
     local _return_code=0
-    if CheckStatus ipsets; then
+    if CheckStatus; then
         :
     else
         echo " ${NAME} ${1} - Error! ${NAME} does not running or another error has occurred" >&2
         return 1
     fi
     MakeToken
-    if [ -e "$UPDATE_PID_FILE" ] && [ "$1" != "force-update" ]; then
+    if [ -e "$U_PID_FILE" ] && [ "$1" != "force-update" ]; then
         echo " ${NAME} ${1} - Error! Another instance of update is already running" >&2
         MakeLogRecord "err" "${1} - Error! Another instance of update is already running"
         _return_code=2
     else
+        ToggleUPIDFile add
         echo " ${NAME} ${1}..."
         MakeLogRecord "notice" "${1}..."
-        if [ "$IPSET_CLEAR_SETS" = "1" ]; then
-            FlushIpSets "$IPSET_IP" "$IPSET_CIDR" "$IPSET_DNSMASQ"
+        if [ "$NFTSET_CLEAR_SETS" = "1" ]; then
+            FlushNftSets "$NFTSET_CIDR" "$NFTSET_CIDR_USER" "$NFTSET_IP" "$NFTSET_IP_USER" "$NFTSET_DNSMASQ" "$NFTSET_DNSMASQ_USER"
+        elif [ -z "$BLLIST_PRESET" -a -z "$BLLIST_MODULE" ]; then
+            FlushNftSets "$NFTSET_IP" "$NFTSET_CIDR"
         fi
         GetDataFiles
         case $? in
@@ -488,8 +501,8 @@ Update() {
                 MakeLogRecord "notice" "Blacklist updated"
             ;;
             2)
-                echo " Blacklist update error!" >&2
-                MakeLogRecord "err" "Blacklist update error!"
+                echo " Error! Blacklist update error" >&2
+                MakeLogRecord "err" "Error! Blacklist update error"
                 _return_code=1
             ;;
             *)
@@ -498,10 +511,13 @@ Update() {
                 _return_code=1
             ;;
         esac
-        FlushIpSets "$IPSET_DNSMASQ"
-        FillIpsets
-        _return_code=$?
+        FlushNftSets "$NFTSET_DNSMASQ" "$NFTSET_ONION" "$NFTSET_DNSMASQ_USER"
+        if [ "$ADD_USER_ENTRIES" != "1" ]; then
+            FlushNftSets "$NFTSET_CIDR_USER" "$NFTSET_IP_USER"
+        fi
+        UpdateBllistSets
         DnsmasqRestart
+        ToggleUPIDFile del
     fi
     MakeToken
     return $_return_code
@@ -524,10 +540,8 @@ Start() {
         MakeLogRecord "info" "${1}..."
         DropNetConfig &> /dev/null
         SetNetConfig
-        FillAllowedHostsSet
         PreStartCheck
-        FillIpsets
-        _return_code=$?
+        UpdateBllistSets
         ### Start-script
         [ -x "$START_SCRIPT" ] && $START_SCRIPT > /dev/null 2>&1 &
     fi
@@ -565,48 +579,55 @@ Reload() {
         sleep 1
     done
     echo " ${NAME} reload..."
-    DelIptRules &> /dev/null
-    AddIptRules &> /dev/null
+    DeleteNftRules &> /dev/null
+    AddNftRules &> /dev/null
     MakeToken
 }
 
 Status() {
-    local _set
-    if CheckStatus; then
-        printf "\n \033[1m${NAME} status\033[m: \033[1;32mEnabled\033[m\n\n  PROXY_MODE: ${PROXY_MODE}\n  PROXY_LOCAL_CLIENTS: ${PROXY_LOCAL_CLIENTS}\n  BLLIST_PRESET: ${BLLIST_PRESET}\n  BLLIST_MODULE: ${BLLIST_MODULE}\n"
-        if [ -f "$UPDATE_STATUS_FILE" ]; then
-            $AWK_CMD '{
-                update_string=(NF < 4) ? "No data" : $4" (CIDR: "$1" | IP: "$2" | FQDN: "$3")";
-                printf "\n  Last blacklist update:  %s\n", update_string;
-            }' "$UPDATE_STATUS_FILE"
-        else
-            printf "\n  Last blacklist update:  No data\n"
-        fi
-        if [ "$PROXY_MODE" = "2" ] && ! IptVpnRouteStatus; then
-            printf "\n  \033[1;31mVPN ROUTING ERROR! (NEED THE RESTART)\033[m\n"
-        fi
-        printf "\n  \033[4mIptables rules\033[m:\n\n"
-        IptListBllistChain | $AWK_CMD '
-            {
-                if(NR > 2) {
-                    printf "   Match-set:  %s\n   Bytes:  %s\n\n", $11, $2;
-                };
-            }'
-        printf "  \033[4mIp sets\033[m:\n\n"
-        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_ONION" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ"
-        do
-            $IPSET_CMD list "$_set" -terse | $AWK_CMD -F ":" '
-                {
-                    if($1 ~ /^(Name|Size in memory|Number of entries)/) {
-                        printf "   %s: %s\n", $1, $2;
-                        if($1 ~ /^Number of entries/) printf "\n";
-                    };
-                }'
-        done
+    local _update_status _vpn_error
+    if [ -f "$UPDATE_STATUS_FILE" ]; then
+        _update_status=`$AWK_CMD '{
+            update_string=(NF < 4) ? "No data" : $4" (CIDR: "$1" | IP: "$2" | FQDN: "$3")";
+            printf "Last blacklist update:  %s", update_string;
+        }' "$UPDATE_STATUS_FILE"`
     else
-        printf "\n \033[1m${NAME} status\033[m: \033[1mDisabled\033[m\n\n"
-        exit 2
+        _update_status="Last blacklist update:  No data"
     fi
+    if [ "$PROXY_MODE" = "2" ] && ! NftVpnRouteStatus; then
+        _vpn_error="\033[1;31mVPN ROUTING ERROR! (NEED THE RESTART)\033[m"
+    fi
+    NftListBllistChain 2> /dev/null | $AWK_CMD -v UPDATE_STATUS="$_update_status" -v VPN_ERROR="$_vpn_error" '
+        BEGIN {
+            rules_str = "";
+            nftset = "";
+            bytes = "";
+        }
+        /@/ {
+            if(match($0, /@[^ ]+/) != 0) {
+                nftset = substr($0, RSTART+1, RLENGTH-1);
+                if(match($0, /bytes [^ ]+/) != 0) {
+                    bytes = substr($0, RSTART+6, RLENGTH-6);
+                };
+                rules_str = rules_str "   Match-set:  " nftset "\n   Bytes:  " bytes "\n\n";
+            };
+        }
+        END {
+            if(NR == 0) {
+                printf "\n \033[1m" ENVIRON["NAME"] " status\033[m: \033[1mDisabled\033[m\n\n";
+                exit 2;
+            };
+
+            printf "\n \033[1m" ENVIRON["NAME"] " status\033[m: \033[1;32mEnabled\033[m\n\n  PROXY_MODE: " ENVIRON["PROXY_MODE"] "\n  PROXY_LOCAL_CLIENTS: " ENVIRON["PROXY_LOCAL_CLIENTS"] "\n  BLLIST_PRESET: " ENVIRON["BLLIST_PRESET"] "\n  BLLIST_MODULE: " ENVIRON["BLLIST_MODULE"] "\n";
+            printf "\n  "UPDATE_STATUS"\n";
+
+            if(length(VPN_ERROR) > 0) {
+                printf "\n  "VPN_ERROR"\n";
+            };
+
+            printf "\n  \033[4mNftables rules\033[m:\n\n";
+            printf rules_str;
+        }'
 }
 
 StatusOutput() {
@@ -651,7 +672,7 @@ case "$BLLIST_PRESET" in
         export BLLIST_MODE="fqdn"
         BLLIST_MODULE="DownloadRuabBlacklist $BLLIST_MODE"
     ;;
-	*)
+    *)
         export BLLIST_SOURCE=""
         export BLLIST_MODE=""
     ;;
@@ -683,10 +704,10 @@ case "$1" in
     ;;
     destroy)
         Stop "$1" &> /dev/null
-        DestroyIpsets "$IPSET_ALLOWED_HOSTS" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP" "$IPSET_DNSMASQ" "$IPSET_ONION"
+        DestroyNetConfig
         ClearDataFiles
         return_code=$?
-        rm -f "$UPDATE_PID_FILE" "$START_PID_FILE"
+        ToggleUPIDFile del
         DnsmasqRestart
         StatusOutput
     ;;
@@ -696,7 +717,7 @@ case "$1" in
         StatusOutput
     ;;
     data-files)
-        if [ -e "$UPDATE_PID_FILE" ] && [ "$1" != "force-update" ]; then
+        if [ -e "$U_PID_FILE" ] && [ "$1" != "force-update" ]; then
             echo " ${NAME} - Error! Another instance of update is already running" >&2
             exit 2
         else
@@ -716,7 +737,7 @@ case "$1" in
                 if [ -e "$START_PID_FILE" ]; then
                     return_code=3
                     echo 3
-                elif [ -e "$UPDATE_PID_FILE" ]; then
+                elif [ -e "$U_PID_FILE" ]; then
                     return_code=4
                     echo 4
                 else
@@ -730,7 +751,7 @@ case "$1" in
         esac
     ;;
     vpn-route-status)
-        IptVpnRouteStatus
+        NftVpnRouteStatus
         return_code=$?
         echo $return_code
     ;;

@@ -1,66 +1,36 @@
 Info() {
-    local _set
-    if CheckStatus; then
-        printf "{\"status\":\"enabled\",\"last_blacklist_update\":{"
-        if [ -f "$UPDATE_STATUS_FILE" ]; then
-            $AWK_CMD '{
-                if(NF < 4)
-                    print "\"status\":false";
-                else
-                    print "\"status\":true,\"date\":\""$4"\",\"cidr\":\""$1"\",\"ip\":\""$2"\",\"fqdn\":\""$3"\"";
-            }' "$UPDATE_STATUS_FILE"
-        else
-            printf "\"status\":false"
-        fi
-        printf "},"
-        IptListBllistChain | $AWK_CMD '
+    local _update_status
+    if [ -f "$UPDATE_STATUS_FILE" ]; then
+        _update_status=`$AWK_CMD '{
+            if(NF < 4)
+                printf "{\"status\":false}";
+            else
+                printf "{\"status\":true,\"date\":\""$4"\",\"cidr\":\""$1"\",\"ip\":\""$2"\",\"fqdn\":\""$3"\"}";
+        }' "$UPDATE_STATUS_FILE"`
+    else
+        _update_status="{\"status\":false}"
+    fi
+    NftListBllistChainJson 2> /dev/null | $AWK_CMD -v UPDATE_STATUS="$_update_status" '
         BEGIN {
-            printf "\"iptables\":{"
+            rules_str = "";
         }
         {
-            if(NR > 2)
-                printf "\""(($10 == "!") ? $12 : $11)"\":\""$2"\",";
+            rules_str = rules_str $0;
         }
         END {
-            printf "\"_dummy\":false},";
+            if(NR == 0) {
+                printf "{\"status\": \"disabled\"}";
+                exit 1;
+            } else {
+                printf "{\"status\":\"enabled\",\"last_blacklist_update\":%s,\"rules\":%s", UPDATE_STATUS, rules_str;
+                exit 0;
+            };
         }'
-        printf "\"ipset\":{";
-        for _set in "$IPSET_ALLOWED_HOSTS" "$IPSET_ONION" "$IPSET_CIDR_TMP" "$IPSET_CIDR" "$IPSET_IP_TMP" "$IPSET_IP"
-        do
-            $IPSET_CMD list "$_set" -terse | $AWK_CMD -F ": " '
-                {
-                    if($1 ~ /^Name/) {
-                        printf "\""$2"\":[";
-                    }
-                    else if($1 ~ /^Size in memory/) {
-                        printf "\""$2"\",";
-                    }
-                    else if($1 ~ /^Number of entries/) {
-                        printf "\""$2"\"],";
-                    };
-                }'
-        done
-        $IPSET_CMD list "$IPSET_DNSMASQ" | $AWK_CMD -F ": " '
-            {
-                if($1 ~ /^Name/) {
-                    printf "\""$2"\":[";
-                }
-                else if($1 ~ /^Size in memory/) {
-                    printf "\""$2"\",";
-                }
-                else if($1 ~ /^Number of entries/) {
-                    printf "\""$2"\"]},\"dnsmasq\":[";
-                }
-                else if($0 ~ /^[0-9]/) {
-                    split($0, a, " ");
-                    printf "[\"" a[1] "\",\"" a[3] "\"],";
-                };
-            }
-            END {
-                printf "false],";
-            }'
-        printf "\"_dummy\":false}"
-    else
-        printf "{\"status\": \"disabled\"}"
+    if [ $? -eq 0 ]; then
+        printf ",\"dnsmasq\":"
+        $NFT_CMD -j list set $NFT_TABLE "$NFTSET_DNSMASQ" 2> /dev/null
+        printf ",\"dnsmasq_u\":"
+        $NFT_CMD -j list set $NFT_TABLE "$NFTSET_DNSMASQ_USER" 2> /dev/null
+        printf "}"
     fi
 }

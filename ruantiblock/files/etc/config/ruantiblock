@@ -2,7 +2,7 @@
 config main 'config'
 	option proxy_mode '1'
 	option proxy_local_clients '1'
-	option ipset_clear_sets '1'
+	option nftset_clear_sets '1'
 	option allowed_hosts_mode '0'
 	option if_vpn 'tun0'
 	option tor_trans_port '9040'

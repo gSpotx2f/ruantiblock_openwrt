@@ -5,7 +5,18 @@
 'require view';
 'require view.ruantiblock.tools as tools';
 
+document.head.append(E('style', {'type': 'text/css'},
+`
+.log-entries-count {
+	margin: 0 0 5px 5px;
+	font-weight: bold;
+	opacity: 0.7;
+}
+`));
+
 return view.extend({
+	pollInterval   : L.env.pollinterval,
+
 	secToTimeString: function(value) {
 		let string = '';
 		if(/^\d+$/.test(value)) {
@@ -31,11 +42,52 @@ return view.extend({
 		return string;
 	},
 
+	formatNftJson: function(data) {
+		let output = { 'rules': [] };
+		if(data.rules.nftables && data.rules.nftables.length > 1) {
+			for(let i of data.rules.nftables) {
+				if(!i.rule) continue;
+
+				let set, bytes;
+				i.rule.expr.forEach(e => {
+					if(e.match) {
+						set = e.match.right.replace('@', '');
+					}
+					else if(e.counter) {
+						bytes = e.counter.bytes;
+					};
+				});
+				output.rules.push([ set, bytes ]);
+
+			};
+
+			function parseDnsmasqData(set) {
+				let sArray = [];
+				if(data[set].nftables && data[set].nftables.length > 1) {
+					data[set].nftables.forEach(e => {
+						if(e.set && e.set.elem) {
+							e.set.elem.forEach(i => {
+								if(i.elem) {
+									sArray.push([ i.elem.val, i.elem.expires ]);
+								};
+							});
+						};
+					});
+				};
+				return sArray;
+			};
+
+			output.dnsmasq   = parseDnsmasqData('dnsmasq');
+			output.dnsmasq_u = parseDnsmasqData('dnsmasq_u');
+		};
+		return output;
+	},
+
 	makeDnsmasqTable: function(ipDataArray) {
 		let lines   = `<tr class="tr"><td class="td center">${_('No entries available...')}</td></tr>`;
 		let ipTable = E('table', { 'id': 'ipTable', 'class': 'table' });
 
-		if(ipDataArray.length > 1) {
+		if(ipDataArray.length > 0) {
 			lines = [];
 			ipDataArray.forEach((e, i) => {
 				if(e) {
@@ -57,18 +109,23 @@ return view.extend({
 
 		try {
 			ipTable.insertAdjacentHTML('beforeend', lines);
-		} catch(err) {
-			if(err.name === 'SyntaxError') {
+		} catch(e) {
+			if(e.name === 'SyntaxError') {
 				ui.addNotification(null,
-					E('p', {}, _('HTML/XML error') + ': ' + err.message), 'error');
+					E('p', {}, _('HTML/XML error') + ': ' + e.message), 'error');
 			};
-			throw err;
+			throw e;
 		};
 
-		return ipTable;
+		return E([
+			E('div', { 'class': 'log-entries-count' },
+				`${_('Entries')}: ${ipDataArray.length}`
+			),
+			ipTable,
+		]);
 	},
 
-	infoPoll: function() {
+	pollInfo: function() {
 		return fs.exec_direct(tools.execPath, [ 'html-info' ], 'json').catch(e => {
 			ui.addNotification(null, E('p', _('Unable to execute or read contents')
 				+ ': %s [ %s ]'.format(e.message, tools.execPath)
@@ -81,7 +138,7 @@ return view.extend({
 
 			try {
 				data = JSON.parse(data);
-			} catch(err) {};
+			} catch(e) {};
 
 			if(data.status === 'enabled') {
 				let date = document.getElementById('last_blacklist_update.date');
@@ -111,34 +168,27 @@ return view.extend({
 					};
 				};
 
-				if(data.iptables) {
-					for(let [k, v] of Object.entries(data.iptables)) {
-						if(k === '_dummy') continue;
+				let nft_data = this.formatNftJson(data);
 
-						let elem = document.getElementById('iptables.' + k);
+				if(nft_data.rules.length > 0) {
+					for(let [set, bytes] of nft_data.rules) {
+						let elem = document.getElementById('rules.' + set);
 						if(elem) {
-							elem.textContent = v;
+							elem.textContent = bytes;
 						};
 					};
 				};
 
-				if(data.ipset) {
-					for(let [k, v] of Object.entries(data.ipset)) {
-						if(k === '_dummy') continue;
-
-						let elem0 = document.getElementById('ipset.' + k + '.' + '0');
-						let elem1 = document.getElementById('ipset.' + k + '.' + '1');
-						if(elem0 && elem1) {
-							elem0.textContent = v[0];
-							elem1.textContent = v[1];
-						};
-					};
-				};
-
-				if(data.dnsmasq) {
+				if(nft_data.dnsmasq.length > 0) {
 					let rdTableWrapper = document.getElementById('rdTableWrapper');
 					rdTableWrapper.innerHTML = '';
-					rdTableWrapper.append(this.makeDnsmasqTable(data.dnsmasq));
+					rdTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq));
+				};
+
+				if(nft_data.dnsmasq_u.length > 0) {
+					let rduTableWrapper = document.getElementById('rduTableWrapper');
+					rduTableWrapper.innerHTML = '';
+					rduTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq_u));
 				};
 			} else {
 				if(poll.active()) {
@@ -163,12 +213,12 @@ return view.extend({
 
 		try {
 			data = JSON.parse(data);
-		} catch(err) {};
+		} catch(e) {};
 
 		let update_status = null,
-			iptables = null,
-			ipset    = null,
-			dnsmasq  = null;
+			rules         = null,
+			dnsmasq       = null,
+			dnsmasq_u     = null;
 		if(data) {
 			if(data.status === 'enabled') {
 				update_status = E('table', { 'class': 'table' });
@@ -211,8 +261,10 @@ return view.extend({
 					);
 				};
 
-				if(data.iptables) {
-					let table_iptables = E('table', { 'class': 'table' }, [
+				let nft_data = this.formatNftJson(data);
+
+				if(nft_data.rules) {
+					let table_rules = E('table', { 'class': 'table' }, [
 						E('tr', { 'class': 'tr table-titles' }, [
 							E('th', { 'class': 'th left', 'style': 'min-width:33%' },
 								_('Match-set')),
@@ -220,76 +272,33 @@ return view.extend({
 						]),
 					]);
 
-					for(let [k, v] of Object.entries(data.iptables)) {
-						if(k === '_dummy') continue;
-
-						table_iptables.append(
+					for(let [set, bytes] of nft_data.rules) {
+						table_rules.append(
 							E('tr', { 'class': 'tr' }, [
-								E('td', {
+								E('td',{
 									'class'     : 'td left',
 									'data-title': _('Match-set'),
-								}, k),
+								}, set + ' (' + set.replace(/^c/, 'CIDR').replace(/^i/, 'IP').replace(/^d/, 'dnsmasq').replace(/u$/, '-user') + ')'),
 								E('td', {
 									'class'     : 'td left',
-									'id'        : 'iptables.' + k,
+									'id'        : 'rules.' + set,
 									'data-title': _('Bytes'),
-								}, v),
+								}, bytes),
 							])
 						);
 					};
 
-					iptables = E([
-						E('h3', {}, _('Iptables rules')),
-						table_iptables,
+					rules = E([
+						E('h3', {}, _('Nftables rules')),
+						table_rules,
 					]);
 				};
 
-				if(data.ipset) {
-					let table_ipset = E('table', { 'class': 'table' },
-						E('tr', { 'class': 'tr table-titles' }, [
-							E('th', { 'class': 'th left', 'style': 'min-width:33%' },
-								_('Name')),
-							E('th', { 'class': 'th left' },
-								_('Size in memory')),
-							E('th', { 'class': 'th left' },
-								_('Number of entries')),
-						])
-					);
-
-					for(let [k, v] of Object.entries(data.ipset)) {
-						if(k === '_dummy') continue;
-
-						table_ipset.append(
-							E('tr', { 'class': 'tr' }, [
-								E('td', {
-									'class': 'td left',
-									'data-title': _('Name'),
-								}, k),
-								E('td', {
-									'class'     : 'td left',
-									'id'        : 'ipset.' + k + '.' + '0',
-									'data-title': _('Size in memory'),
-								}, v[0]),
-								E('td', {
-									'class'     : 'td left',
-									'id'        : 'ipset.' + k + '.' + '1',
-									'data-title': _('Number of entries'),
-								}, v[1]),
-							])
-						);
-					};
-
-					ipset = E([
-						E('h3', {}, _('Ipset')),
-						table_ipset,
-					]);
-				};
-
-				if(data.dnsmasq) {
+				if(nft_data.dnsmasq) {
 					let rdTableWrapper = E('div', {
 						'id'   : 'rdTableWrapper',
 						'style': 'width:100%'
-					}, this.makeDnsmasqTable(data.dnsmasq));
+					}, this.makeDnsmasqTable(nft_data.dnsmasq));
 
 					dnsmasq = E([
 						E('h3', {}, _('Dnsmasq')),
@@ -297,7 +306,19 @@ return view.extend({
 					]);
 				};
 
-				poll.add(L.bind(this.infoPoll, this));
+				if(nft_data.dnsmasq_u) {
+					let rduTableWrapper = E('div', {
+						'id'   : 'rduTableWrapper',
+						'style': 'width:100%'
+					}, this.makeDnsmasqTable(nft_data.dnsmasq_u));
+
+					dnsmasq_u = E([
+						E('h3', {}, _('Dnsmasq') + ' - ' + _('User entries')),
+						rduTableWrapper,
+					]);
+				};
+
+				poll.add(L.bind(this.pollInfo, this), this.pollInterval);
 			} else {
 				update_status = E('em', {}, _('Status') + ' : ' + _('disabled'));
 			};
@@ -311,15 +332,14 @@ return view.extend({
 				E('div', { 'class': 'cbi-section-node' }, update_status)
 			),
 			E('div', { 'class': 'cbi-section fade-in' },
-				E('div', { 'class': 'cbi-section-node' }, iptables)
-			),
-			E('div', { 'class': 'cbi-section fade-in' },
-				E('div', { 'class': 'cbi-section-node' }, ipset)
+				E('div', { 'class': 'cbi-section-node' }, rules)
 			),
 			E('div', { 'class': 'cbi-section fade-in' },
 				E('div', { 'class': 'cbi-section-node' }, dnsmasq)
 			),
-
+			E('div', { 'class': 'cbi-section fade-in' },
+				E('div', { 'class': 'cbi-section-node' }, dnsmasq_u)
+			),
 		]);
 	},
 

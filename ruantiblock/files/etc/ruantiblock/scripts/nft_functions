@@ -1,0 +1,118 @@
+IP_CMD="ip"
+NFT_ALLOWED_HOSTS_CHAIN="allowed_hosts"
+NFT_BLLIST_CHAIN="blacklist"
+NFT_ACTION_CHAIN="action"
+NFT_LOCAL_CLIENTS_CHAIN="local_clients"
+VPN_ROUTE_TABLE_ID=99
+
+if [ "$PROXY_MODE" = "2" ]; then
+    MAIN_CHAIN_TYPE="type filter hook prerouting priority -160; policy accept;"
+    LOCAL_CLIENTS_CHAIN_TYPE="type route hook output priority -160; policy accept;"
+else
+    MAIN_CHAIN_TYPE="type nat hook prerouting priority -110; policy accept;"
+    LOCAL_CLIENTS_CHAIN_TYPE="type nat hook output priority -110; policy accept;"
+fi
+
+case "$ALLOWED_HOSTS_MODE" in
+    "1")
+        IPT_ALLOWED_HOSTS_RULE="ip saddr @${NFTSET_ALLOWED_HOSTS} jump ${NFT_BLLIST_CHAIN}"
+    ;;
+    "2")
+        IPT_ALLOWED_HOSTS_RULE="ip saddr != @${NFTSET_ALLOWED_HOSTS} jump ${NFT_BLLIST_CHAIN}"
+    ;;
+    *)
+        IPT_ALLOWED_HOSTS_RULE="jump ${NFT_BLLIST_CHAIN}"
+    ;;
+esac
+
+NftCmdWrapper() {
+    local _i=0 _attempts=10 _return_code=1
+    while [ $_i -lt $_attempts ]
+    do
+        if $*; then
+            _return_code=$?
+            break
+        fi
+        _i=`expr $_i + 1`
+    done
+    return $_return_code
+}
+
+IptVpnRouteDel() {
+    $IP_CMD route flush table $VPN_ROUTE_TABLE_ID
+    $IP_CMD rule del table $VPN_ROUTE_TABLE_ID
+}
+
+IptVpnRouteAdd() {
+    VPN_IP=`$IP_CMD addr list dev $IF_VPN 2> /dev/null | $AWK_CMD '/inet/{sub("/[0-9]{1,2}$", "", $2); print $2; exit}'`
+    if [ -n "$VPN_IP" ]; then
+        echo 0 > /proc/sys/net/ipv4/conf/$IF_VPN/rp_filter
+        IptVpnRouteDel 2> /dev/null
+        $IP_CMD rule add fwmark $VPN_PKTS_MARK table $VPN_ROUTE_TABLE_ID priority 1000
+        $IP_CMD route add default via $VPN_IP table $VPN_ROUTE_TABLE_ID
+    fi
+}
+
+NftVpnRouteStatus() {
+    [ -n "`$IP_CMD route show table $VPN_ROUTE_TABLE_ID 2> /dev/null`" ] && return 0
+    return 1
+}
+
+NftMainAdd() {
+    local _nft_sets="${NFTSET_CIDR} ${NFTSET_CIDR_USER} ${NFTSET_IP} ${NFTSET_IP_USER} ${NFTSET_DNSMASQ} ${NFTSET_DNSMASQ_USER}" _set
+    $NFT_CMD add chain $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN" { $LOCAL_CLIENTS_CHAIN_TYPE }
+    $NFT_CMD add chain $NFT_TABLE "$NFT_ACTION_CHAIN"
+    $NFT_CMD add chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
+    $NFT_CMD add chain $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" { $MAIN_CHAIN_TYPE }
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" $IPT_ALLOWED_HOSTS_RULE
+    if [ "$PROXY_MODE" = "2" ]; then
+        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ACTION_CHAIN" mark set $VPN_PKTS_MARK
+    elif [ "$PROXY_MODE" = "3" ]; then
+        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ACTION_CHAIN" tcp dport { 0-65535 } redirect to $T_PROXY_PORT_TCP
+        if [ "$T_PROXY_ALLOW_UDP" = "1" ]; then
+            NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ACTION_CHAIN" udp dport { 0-65535 } redirect to $T_PROXY_PORT_UDP
+        fi
+    else
+        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ACTION_CHAIN" tcp dport { 0-65535 } redirect to $TOR_TRANS_PORT
+        if [ "$TOR_ALLOW_UDP" = "1" ]; then
+            NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ACTION_CHAIN" udp dport { 0-65535 } redirect to $TOR_TRANS_PORT
+        fi
+        _nft_sets="${NFTSET_ONION} ${_nft_sets}"
+    fi
+    for _set in $_nft_sets
+    do
+        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" ip daddr "@${_set}" counter goto "$NFT_ACTION_CHAIN"
+    done
+    if [ "$PROXY_MODE" = "2" ]; then
+        IptVpnRouteAdd
+    fi
+}
+
+NftMainDelete() {
+    $NFT_CMD flush chain $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN"
+    $NFT_CMD delete chain $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN"
+    $NFT_CMD flush chain $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN"
+    $NFT_CMD delete chain $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN"
+    $NFT_CMD flush chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
+    $NFT_CMD delete chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
+    $NFT_CMD flush chain $NFT_TABLE "$NFT_ACTION_CHAIN"
+    $NFT_CMD delete chain $NFT_TABLE "$NFT_ACTION_CHAIN"
+    IptVpnRouteDel 2> /dev/null
+}
+
+NftLocalClientsAdd() {
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN" jump "$NFT_BLLIST_CHAIN"
+}
+
+NftListBllistChain() {
+    $NFT_CMD -t list chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
+}
+
+NftListBllistChainJson() {
+    $NFT_CMD -t -j list chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
+}
+
+NftReturnStatus() {
+    $NFT_CMD -c add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" continue &> /dev/null
+    return $?
+}

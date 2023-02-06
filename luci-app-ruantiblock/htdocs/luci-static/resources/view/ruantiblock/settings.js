@@ -8,11 +8,11 @@
 'require view.ruantiblock.tools as tools';
 
 return view.extend({
-	parsers: {},
+	parsers      : {},
 
-	appStatusCode   : null,
+	appStatusCode: null,
 
-	depends: function(elem, key, array, empty=true) {
+	depends      : function(elem, key, array, empty=true) {
 		if(empty && array.length === 0) {
 			elem.depends(key, '_dummy');
 		} else {
@@ -111,18 +111,17 @@ return view.extend({
 		s.anonymous = true;
 		s.addremove = false;
 
+
 		/* Main settings tab */
 
 		s.tab('main_settings', _('Main settings'));
 
 		// PROXY_MODE
-		if(this.appStatusCode == 1 || this.appStatusCode == 2) {
-			o = s.taboption('main_settings', form.ListValue, 'proxy_mode',
-				_('Proxy mode'));
-			o.value('1', 'Tor');
-			o.value('2', 'VPN');
-			o.value('3', _('Transparent proxy'));
-		};
+		o = s.taboption('main_settings', form.ListValue, 'proxy_mode',
+			_('Proxy mode'));
+		o.value('1', 'Tor');
+		o.value('2', 'VPN');
+		o.value('3', _('Transparent proxy'));
 
 		// PROXY_LOCAL_CLIENTS
 		let proxy_local_clients = s.taboption('main_settings', form.Flag, 'proxy_local_clients',
@@ -140,9 +139,9 @@ return view.extend({
 		o.description = _('Update blacklist after system startup');
 		o.rmempty = false;
 
-		// IPSET_CLEAR_SETS
-		o = s.taboption('main_settings', form.Flag, 'ipset_clear_sets',
-			_('Clean up ipsets before updating blacklist'));
+		// NFTSET_CLEAR_SETS
+		o = s.taboption('main_settings', form.Flag, 'nftset_clear_sets',
+			_('Clean up nftsets before updating blacklist'));
 		o.description = _('Reduces RAM consumption during update');
 		o.rmempty = false;
 
@@ -160,70 +159,68 @@ return view.extend({
 		o.datatype = "ip4addr";
 
 
-		if(this.appStatusCode == 1 || this.appStatusCode == 2) {
-			/* Tor tab */
+		/* Tor tab */
 
-			s.tab('tor_settings', _('Tor mode'));
+		s.tab('tor_settings', _('Tor mode'));
 
-			// TOR_TRANS_PORT
-			o = s.taboption('tor_settings', form.Value, 'tor_trans_port',
-				_('Transparent proxy port'));
-			o.rmempty  = false;
-			o.datatype = "port";
+		// TOR_TRANS_PORT
+		o = s.taboption('tor_settings', form.Value, 'tor_trans_port',
+			_('Transparent proxy port'));
+		o.rmempty  = false;
+		o.datatype = "port";
 
-			//TOR_ALLOW_UDP
-			o = s.taboption('tor_settings', form.Flag, 'tor_allow_udp',
-				_("Send UDP traffic to Tor"));
-			o.rmempty = false;
+		//TOR_ALLOW_UDP
+		o = s.taboption('tor_settings', form.Flag, 'tor_allow_udp',
+			_("Send UDP traffic to Tor"));
+		o.rmempty = false;
 
-			// ONION_DNS_ADDR
-			o = s.taboption('tor_settings', form.Value, 'onion_dns_addr',
-				_("Optional DNS resolver for '.onion' zone"), '<code>ipaddress#port</code>');
-			o.rmempty  = false;
-			o.validate = this.validateIpPort;
+		// ONION_DNS_ADDR
+		o = s.taboption('tor_settings', form.Value, 'onion_dns_addr',
+			_("Optional DNS resolver for '.onion' zone"), '<code>ipaddress#port</code>');
+		o.rmempty  = false;
+		o.validate = this.validateIpPort;
 
-			// Torrc edit dialog
-			o = s.taboption('tor_settings', form.Button, '_torrc_btn',
-				_('Tor configuration file'));
-			o.onclick    = () => torrc_edit.show();
-			o.inputtitle = _('Edit');
-			o.inputstyle = 'edit btn';
-
-
-			/* VPN tab */
-
-			s.tab('vpn_settings', _('VPN mode'));
-
-			// IF_VPN
-			o = s.taboption('vpn_settings', widgets.DeviceSelect, 'if_vpn',
-				_('VPN interface'));
-			o.multiple  = false;
-			o.noaliases = true;
-			o.rmempty   = false;
-			o.default   = 'tun0';
+		// Torrc edit dialog
+		o = s.taboption('tor_settings', form.Button, '_torrc_btn',
+			_('Tor configuration file'));
+		o.onclick    = () => torrc_edit.show();
+		o.inputtitle = _('Edit');
+		o.inputstyle = 'edit btn';
 
 
-			/* Proxy tab */
+		/* VPN tab */
 
-			s.tab('proxy_settings', _('Transparent proxy mode'));
+		s.tab('vpn_settings', _('VPN mode'));
 
-			// T_PROXY_PORT_TCP
-			o = s.taboption('proxy_settings', form.Value, 't_proxy_port_tcp',
-				_('Transparent proxy TCP port'));
-			o.rmempty  = false;
-			o.datatype = "port";
+		// IF_VPN
+		o = s.taboption('vpn_settings', widgets.DeviceSelect, 'if_vpn',
+			_('VPN interface'));
+		o.multiple  = false;
+		o.noaliases = true;
+		o.rmempty   = false;
+		o.default   = 'tun0';
 
-			//T_PROXY_ALLOW_UDP
-			o = s.taboption('proxy_settings', form.Flag, 't_proxy_allow_udp',
-				_("Send UDP traffic to transparent proxy"));
-			o.rmempty = false;
 
-			// T_PROXY_PORT_UDP
-			o = s.taboption('proxy_settings', form.Value, 't_proxy_port_udp',
-				_('Transparent proxy UDP port'));
-			o.rmempty  = false;
-			o.datatype = "port";
-		};
+		/* Proxy tab */
+
+		s.tab('proxy_settings', _('Transparent proxy mode'));
+
+		// T_PROXY_PORT_TCP
+		o = s.taboption('proxy_settings', form.Value, 't_proxy_port_tcp',
+			_('Transparent proxy TCP port'));
+		o.rmempty  = false;
+		o.datatype = "port";
+
+		//T_PROXY_ALLOW_UDP
+		o = s.taboption('proxy_settings', form.Flag, 't_proxy_allow_udp',
+			_("Send UDP traffic to transparent proxy"));
+		o.rmempty = false;
+
+		// T_PROXY_PORT_UDP
+		o = s.taboption('proxy_settings', form.Value, 't_proxy_port_udp',
+			_('Transparent proxy UDP port'));
+		o.rmempty  = false;
+		o.datatype = "port";
 
 
 		/* Blacklist module tab */
