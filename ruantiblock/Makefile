@@ -17,7 +17,7 @@ define Package/$(PKG_NAME)
   TITLE:=Ruantiblock
   URL:=https://github.com/gSpotx2f/ruantiblock_openwrt
   PKGARCH:=all
-  DEPENDS:=+wget +dnsmasq-full
+  DEPENDS:=+dnsmasq-full
 endef
 
 define Package/$(PKG_NAME)/description

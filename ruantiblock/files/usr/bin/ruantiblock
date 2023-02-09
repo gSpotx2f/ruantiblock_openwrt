@@ -302,16 +302,19 @@ AddNftSets() {
 }
 
 UpdateBllistSets() {
+    local _return_code=0
     if [ -f "$IP_DATA_FILE" ]; then
         echo " Updating nft sets..."
         $NFT_CMD -f "$IP_DATA_FILE"
-        if [ $? -eq 0 ]; then
+        _return_code=$?
+        if [ $_return_code -eq 0 ]; then
             echo " Ok"
         else
             echo " Error! Nft set wasn't updated" >&2
             MakeLogRecord "err" "Error! Nft set wasn't updated"
         fi
     fi
+    return $_return_code
 }
 
 AddNftRules() {
@@ -525,6 +528,7 @@ Update() {
             FlushNftSets "$NFTSET_CIDR_USER" "$NFTSET_IP_USER"
         fi
         UpdateBllistSets
+        _return_code=$?
         DnsmasqRestart
         ToggleUPIDFile del
     fi
@@ -551,6 +555,7 @@ Start() {
         SetNetConfig
         PreStartCheck
         UpdateBllistSets
+        _return_code=$?
         ### Start-script
         [ -x "$START_SCRIPT" ] && $START_SCRIPT > /dev/null 2>&1 &
     fi
