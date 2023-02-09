@@ -70,8 +70,8 @@ export NFTSET_MAXELEM_CIDR=65535
 export NFTSET_MAXELEM_IP=1000000
 export NFTSET_MAXELEM_DNSMASQ=65535
 ### Политика отбора элементов в сетах nftables. "performance" - производительность и большее потребление RAM. "memory" - хуже производительность и меньше потребление RAM
-export NFTSET_POLICY_CIDR="memory"
-export NFTSET_POLICY_IP="memory"
+export NFTSET_POLICY_CIDR="performance"
+export NFTSET_POLICY_IP="performance"
 export NFTSET_POLICY_DNSMASQ="performance"
 ### Таймаут для записей в сете $NFTSET_DNSMASQ
 export NFTSET_DNSMASQ_TIMEOUT="1h"
