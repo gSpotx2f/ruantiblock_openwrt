@@ -39,6 +39,12 @@ class Config:
         "BLLIST_STRIP_WWW",
         "NFT_TABLE",
         "NFT_TABLE_DNSMASQ",
+        "NFTSET_CIDR",
+        "NFTSET_IP",
+        "NFTSET_DNSMASQ",
+        "NFTSET_CIDR_USER",
+        "NFTSET_IP_USER",
+        "NFTSET_DNSMASQ_USER",
         "NFTSET_CIDR_CFG",
         "NFTSET_IP_CFG",
         "NFTSET_DNSMASQ",
@@ -497,6 +503,9 @@ class WriteConfigFiles(Config):
 
     def write_ipset_config(self, ip_set, cidr_set):
         with open(self.IP_DATA_FILE, "wt", buffering=self.write_buffer) as file_handler:
+            for i in (self.NFTSET_CIDR, self.NFTSET_IP,
+                      self.NFTSET_CIDR_USER, self.NFTSET_IP_USER):
+                file_handler.write("flush set {} {}\n".format(self.NFT_TABLE, i))
             file_handler.write(
                 "table {} {{\n{}".format(self.NFT_TABLE, self.NFTSET_IP_CFG)
             )

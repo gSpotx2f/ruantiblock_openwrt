@@ -55,6 +55,12 @@ local Config = Class(nil, {
         ["BLLIST_STRIP_WWW"] = true,
         ["NFT_TABLE"] = true,
         ["NFT_TABLE_DNSMASQ"] = true,
+        ["NFTSET_CIDR"] = true,
+        ["NFTSET_IP"] = true,
+        ["NFTSET_DNSMASQ"] = true,
+        ["NFTSET_CIDR_USER"] = true,
+        ["NFTSET_IP_USER"] = true,
+        ["NFTSET_DNSMASQ_USER"] = true,
         ["NFTSET_CIDR_CFG"] = true,
         ["NFTSET_IP_CFG"] = true,
         ["NFTSET_DNSMASQ"] = true,
@@ -389,6 +395,9 @@ end
 
 function BlackListParser:write_ipset_config()
     local file_handler = assert(io.open(self.IP_DATA_FILE, "w"), "Could not open nftset config")
+    for _, v in ipairs({ self.NFTSET_CIDR, self.NFTSET_IP, self.NFTSET_CIDR_USER, self.NFTSET_IP_USER }) do
+        file_handler:write(string.format("flush set %s %s\n", self.NFT_TABLE, v))
+    end
     file_handler:write(
         string.format("table %s {\n%s", self.NFT_TABLE, self.NFTSET_IP_CFG)
     )
@@ -609,7 +618,6 @@ local Ra = Class(BlackListParser, {
 function Ra:download_config(url, file)
     local ret_val = false
     self.current_file_handler = assert(io.open(file, "w"), "Could not open file")
-    --self.current_file_handler:setvbuf("no")
     if self:get_http_data(url) then
         ret_val = true
     end
