@@ -469,8 +469,8 @@ return baseclass.extend({
 			let tailReset = E('input', {
 				'type' : 'button',
 				'form' : 'logForm',
-				'class': 'cbi-button btn cbi-button-reset',
-				'value': 'Χ',
+				'class': 'cbi-button btn',
+				'value': '×',
 				'click': ev => {
 					tailInput.value = null;
 					logFormSubmitBtn.click();
