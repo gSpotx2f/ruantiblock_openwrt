@@ -42,9 +42,6 @@ class Config:
         "NFTSET_CIDR",
         "NFTSET_IP",
         "NFTSET_DNSMASQ",
-        "NFTSET_CIDR_USER",
-        "NFTSET_IP_USER",
-        "NFTSET_DNSMASQ_USER",
         "NFTSET_CIDR_CFG",
         "NFTSET_IP_CFG",
         "NFTSET_DNSMASQ",
@@ -503,23 +500,22 @@ class WriteConfigFiles(Config):
 
     def write_ipset_config(self, ip_set, cidr_set):
         with open(self.IP_DATA_FILE, "wt", buffering=self.write_buffer) as file_handler:
-            for i in (self.NFTSET_CIDR, self.NFTSET_IP,
-                      self.NFTSET_CIDR_USER, self.NFTSET_IP_USER):
+            for i in (self.NFTSET_CIDR, self.NFTSET_IP):
                 file_handler.write("flush set {} {}\n".format(self.NFT_TABLE, i))
             file_handler.write(
-                "table {} {{\n{}".format(self.NFT_TABLE, self.NFTSET_IP_CFG)
-            )
-            if len(ip_set) > 0:
-                file_handler.write("elements={")
-                for i in ip_set:
-                    file_handler.write(f"{i},")
-                file_handler.write("};")
-            file_handler.write(
-                "}}\n{}".format(self.NFTSET_CIDR_CFG)
+                "table {} {{\n{}".format(self.NFT_TABLE, self.NFTSET_CIDR_CFG)
             )
             if len(cidr_set) > 0:
                 file_handler.write("elements={")
                 for i in cidr_set:
+                    file_handler.write(f"{i},")
+                file_handler.write("};")
+            file_handler.write(
+                "}}\n{}".format(self.NFTSET_IP_CFG)
+            )
+            if len(ip_set) > 0:
+                file_handler.write("elements={")
+                for i in ip_set:
                     file_handler.write(f"{i},")
                 file_handler.write("};")
             file_handler.write("}\n}\n")

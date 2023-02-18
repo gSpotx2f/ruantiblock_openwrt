@@ -70,8 +70,8 @@ export NFTSET_MAXELEM_CIDR=65535
 export NFTSET_MAXELEM_IP=1000000
 export NFTSET_MAXELEM_DNSMASQ=65535
 ### Политика отбора элементов в сетах nftables. "performance" - производительность и большее потребление RAM. "memory" - хуже производительность и меньше потребление RAM
-export NFTSET_POLICY_CIDR="performance"
-export NFTSET_POLICY_IP="performance"
+export NFTSET_POLICY_CIDR="memory"
+export NFTSET_POLICY_IP="memory"
 export NFTSET_POLICY_DNSMASQ="performance"
 ### Таймаут для записей в сете $NFTSET_DNSMASQ
 export NFTSET_DNSMASQ_TIMEOUT="1h"
@@ -131,12 +131,12 @@ export RBL_IP_URL="https://reestr.rublacklist.net/api/v3/ips/"
 export ZI_ALL_URL="https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv"
 export AF_IP_URL="https://antifilter.download/list/allyouneed.lst"
 export AF_FQDN_URL="https://antifilter.download/list/domains.lst"
-export RA_IP_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/ip/ruantiblock.ip"
-export RA_IP_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/ip/ruantiblock.dnsmasq"
-export RA_IP_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/ip/update_status"
-export RA_FQDN_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/fqdn/ruantiblock.ip"
-export RA_FQDN_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/fqdn/ruantiblock.dnsmasq"
-export RA_FQDN_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.0/fqdn/update_status"
+export RA_IP_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/ip/ruantiblock.ip"
+export RA_IP_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/ip/ruantiblock.dnsmasq"
+export RA_IP_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/ip/update_status"
+export RA_FQDN_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/fqdn/ruantiblock.ip"
+export RA_FQDN_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/fqdn/ruantiblock.dnsmasq"
+export RA_FQDN_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/fqdn/update_status"
 export RBL_ENCODING=""
 export ZI_ENCODING="CP1251"
 export AF_ENCODING=""
@@ -182,15 +182,12 @@ export NFTSET_ONION="onion"
 export NFTSET_CIDR="c"
 export NFTSET_IP="i"
 export NFTSET_DNSMASQ="d"
-export NFTSET_CIDR_USER="cu"
-export NFTSET_IP_USER="iu"
-export NFTSET_DNSMASQ_USER="du"
 export NFTSET_ALLOWED_HOSTS_TYPE="ipv4_addr"
 export NFTSET_CIDR_TYPE="ipv4_addr"
 export NFTSET_IP_TYPE="ipv4_addr"
 export NFTSET_DNSMASQ_TYPE="ipv4_addr"
 export NFTSET_CIDR_CFG="set ${NFTSET_CIDR} {type ${NFTSET_CIDR_TYPE};size ${NFTSET_MAXELEM_CIDR};policy ${NFTSET_POLICY_CIDR};flags interval;auto-merge;"
-export NFTSET_IP_CFG="set ${NFTSET_IP} {type ${NFTSET_IP_TYPE};size ${NFTSET_MAXELEM_IP};policy ${NFTSET_POLICY_IP};"
+export NFTSET_IP_CFG="set ${NFTSET_IP} {type ${NFTSET_IP_TYPE};size ${NFTSET_MAXELEM_IP};policy ${NFTSET_POLICY_IP};flags dynamic;"
 export UPDATE_STATUS_FILE="${DATA_DIR}/update_status"
 U_PID_FILE="/var/run/${NAME}_update.pid"
 START_PID_FILE="/var/run/${NAME}_start.pid"
@@ -214,9 +211,9 @@ Help() {
 cat << EOF
  Usage: `basename $0` start|force-start|stop|destroy|restart|reload|update|force-update|data-files|status|raw-status|html-info|help
         start : Start
-        force-start : Removing the pid-file before running
+        force-start : Removing the PID-file before running
         stop : Stop
-        destroy : Stop + remove nft table and clear all data files
+        destroy : Stop, remove nft table and clear all data files
         restart : Restart
         reload : Renew nftables configuration
         update : Update blacklist
@@ -273,7 +270,7 @@ DownloadRuabBlacklist() {
     esac
 }
 
-DnsmasqRestart() {
+RestartDnsmasq() {
     eval `echo "$DNSMASQ_RESTART_CMD"`
 }
 
@@ -288,13 +285,10 @@ FlushNftSets() {
 AddNftSets() {
     local _hosts
     $NFT_CMD add set $NFT_TABLE "$NFTSET_CIDR" { type "$NFTSET_CIDR_TYPE"\; size $NFTSET_MAXELEM_CIDR\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_CIDR_USER" { type "$NFTSET_CIDR_TYPE"\; size $NFTSET_MAXELEM_CIDR\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_IP" { type "$NFTSET_IP_TYPE"\; size $NFTSET_MAXELEM_IP\; policy "$NFTSET_POLICY_IP"\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_IP_USER" { type "$NFTSET_IP_TYPE"\; size $NFTSET_MAXELEM_IP\; policy "$NFTSET_POLICY_IP"\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_DNSMASQ" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_DNSMASQ_USER" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_ONION" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { type "$NFTSET_ALLOWED_HOSTS_TYPE"\; policy "$NFTSET_POLICY_IP"\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_IP" { type "$NFTSET_IP_TYPE"\; size $NFTSET_MAXELEM_IP\; policy "$NFTSET_POLICY_IP"\; flags dynamic\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_DNSMASQ" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_ONION" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { type "$NFTSET_ALLOWED_HOSTS_TYPE"\; policy "$NFTSET_POLICY_IP"\; flags dynamic\; }
     _hosts=`printf "$ALLOWED_HOSTS_LIST" | $AWK_CMD '{gsub(/[ ]+/, ",", $0); printf $0;}'`
     if [ -n "$_hosts" ]; then
         $NFT_CMD add element $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { "$_hosts" }
@@ -336,7 +330,7 @@ SetNetConfig() {
 
 DropNetConfig() {
     DeleteNftRules
-    FlushNftSets "$NFTSET_ALLOWED_HOSTS" "$NFTSET_CIDR" "$NFTSET_CIDR_USER" "$NFTSET_IP" "$NFTSET_IP_USER" "$NFTSET_DNSMASQ" "$NFTSET_DNSMASQ_USER" "$NFTSET_ONION"
+    FlushNftSets "$NFTSET_ALLOWED_HOSTS" "$NFTSET_CIDR" "$NFTSET_IP" "$NFTSET_DNSMASQ" "$NFTSET_ONION"
 }
 
 DestroyNetConfig() {
@@ -387,7 +381,7 @@ AddUserEntries() {
                         if(length(dns) > 0) {
                             printf "server=/%s/%s\n", val, dns >> ENVIRON["DNSMASQ_DATA_FILE"];
                         };
-                        printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], ENVIRON["NFTSET_DNSMASQ_USER"] >> ENVIRON["DNSMASQ_DATA_FILE"];
+                        printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], ENVIRON["NFTSET_DNSMASQ"] >> ENVIRON["DNSMASQ_DATA_FILE"];
                     };
                     function writeFqdnEntries() {
                         delete fqdn_array[0];
@@ -408,12 +402,12 @@ AddUserEntries() {
                         };
                     }
                     END {
-                        printf "table %s {\nset %s {type %s;size %s;flags interval;auto-merge;", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_CIDR_USER"], ENVIRON["NFTSET_CIDR_TYPE"], ENVIRON["NFTSET_MAXELEM_CIDR"] >> ENVIRON["IP_DATA_FILE"];
+                        printf "table %s {\n%s", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_CIDR_CFG"] >> ENVIRON["IP_DATA_FILE"];
                         delete cidr_array[0];
                         if(length(cidr_array) > 0) {
                             printf "elements={%s};", writeIpList(cidr_array) >> ENVIRON["IP_DATA_FILE"];
                         };
-                        printf "}\nset %s {type %s;size %s;", ENVIRON["NFTSET_IP_USER"],  ENVIRON["NFTSET_IP_TYPE"], ENVIRON["NFTSET_MAXELEM_IP"] >> ENVIRON["IP_DATA_FILE"];
+                        printf "}\n%s", ENVIRON["NFTSET_IP_CFG"] >> ENVIRON["IP_DATA_FILE"];
                         delete ip_array[0];
                         if(length(ip_array) > 0) {
                             printf "elements={%s};", writeIpList(ip_array) >> ENVIRON["IP_DATA_FILE"];
@@ -502,7 +496,7 @@ Update() {
         echo " ${NAME} ${1}..."
         MakeLogRecord "notice" "${1}..."
         if [ "$NFTSET_CLEAR_SETS" = "1" ]; then
-            FlushNftSets "$NFTSET_CIDR" "$NFTSET_CIDR_USER" "$NFTSET_IP" "$NFTSET_IP_USER" "$NFTSET_DNSMASQ" "$NFTSET_DNSMASQ_USER"
+            FlushNftSets "$NFTSET_CIDR" "$NFTSET_IP" "$NFTSET_DNSMASQ"
         elif [ -z "$BLLIST_PRESET" -a -z "$BLLIST_MODULE" ]; then
             FlushNftSets "$NFTSET_IP" "$NFTSET_CIDR"
         fi
@@ -523,13 +517,10 @@ Update() {
                 _return_code=1
             ;;
         esac
-        FlushNftSets "$NFTSET_DNSMASQ" "$NFTSET_ONION" "$NFTSET_DNSMASQ_USER"
-        if [ "$ADD_USER_ENTRIES" != "1" ]; then
-            FlushNftSets "$NFTSET_CIDR_USER" "$NFTSET_IP_USER"
-        fi
+        FlushNftSets "$NFTSET_DNSMASQ" "$NFTSET_ONION"
         UpdateBllistSets
         _return_code=$?
-        DnsmasqRestart
+        RestartDnsmasq
         ToggleUPIDFile del
     fi
     MakeToken
@@ -722,7 +713,7 @@ case "$1" in
         ClearDataFiles
         return_code=$?
         ToggleUPIDFile del
-        DnsmasqRestart
+        RestartDnsmasq
         StatusOutput
     ;;
     update|force-update)

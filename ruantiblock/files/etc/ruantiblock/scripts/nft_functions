@@ -38,16 +38,16 @@ NftCmdWrapper() {
     return $_return_code
 }
 
-IptVpnRouteDel() {
+NftVpnRouteDelete() {
     $IP_CMD route flush table $VPN_ROUTE_TABLE_ID
     $IP_CMD rule del table $VPN_ROUTE_TABLE_ID
 }
 
-IptVpnRouteAdd() {
+NftVpnRouteAdd() {
     VPN_IP=`$IP_CMD addr list dev $IF_VPN 2> /dev/null | $AWK_CMD '/inet/{sub("/[0-9]{1,2}$", "", $2); print $2; exit}'`
     if [ -n "$VPN_IP" ]; then
         echo 0 > /proc/sys/net/ipv4/conf/$IF_VPN/rp_filter
-        IptVpnRouteDel 2> /dev/null
+        NftVpnRouteDelete 2> /dev/null
         $IP_CMD rule add fwmark $VPN_PKTS_MARK table $VPN_ROUTE_TABLE_ID priority 1000
         $IP_CMD route add default via $VPN_IP table $VPN_ROUTE_TABLE_ID
     fi
@@ -59,7 +59,7 @@ NftVpnRouteStatus() {
 }
 
 NftMainAdd() {
-    local _nft_sets="${NFTSET_CIDR} ${NFTSET_CIDR_USER} ${NFTSET_IP} ${NFTSET_IP_USER} ${NFTSET_DNSMASQ} ${NFTSET_DNSMASQ_USER}" _set
+    local _nft_sets="${NFTSET_CIDR} ${NFTSET_IP} ${NFTSET_DNSMASQ}" _set
     $NFT_CMD add chain $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN" { $LOCAL_CLIENTS_CHAIN_TYPE }
     $NFT_CMD add chain $NFT_TABLE "$NFT_ACTION_CHAIN"
     $NFT_CMD add chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
@@ -84,7 +84,7 @@ NftMainAdd() {
         NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" ip daddr "@${_set}" counter goto "$NFT_ACTION_CHAIN"
     done
     if [ "$PROXY_MODE" = "2" ]; then
-        IptVpnRouteAdd
+        NftVpnRouteAdd
     fi
 }
 
@@ -97,7 +97,7 @@ NftMainDelete() {
     $NFT_CMD delete chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
     $NFT_CMD flush chain $NFT_TABLE "$NFT_ACTION_CHAIN"
     $NFT_CMD delete chain $NFT_TABLE "$NFT_ACTION_CHAIN"
-    IptVpnRouteDel 2> /dev/null
+    NftVpnRouteDelete 2> /dev/null
 }
 
 NftLocalClientsAdd() {

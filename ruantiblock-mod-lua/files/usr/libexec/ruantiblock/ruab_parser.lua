@@ -58,9 +58,6 @@ local Config = Class(nil, {
         ["NFTSET_CIDR"] = true,
         ["NFTSET_IP"] = true,
         ["NFTSET_DNSMASQ"] = true,
-        ["NFTSET_CIDR_USER"] = true,
-        ["NFTSET_IP_USER"] = true,
-        ["NFTSET_DNSMASQ_USER"] = true,
         ["NFTSET_CIDR_CFG"] = true,
         ["NFTSET_IP_CFG"] = true,
         ["NFTSET_DNSMASQ"] = true,
@@ -395,25 +392,12 @@ end
 
 function BlackListParser:write_ipset_config()
     local file_handler = assert(io.open(self.IP_DATA_FILE, "w"), "Could not open nftset config")
-    for _, v in ipairs({ self.NFTSET_CIDR, self.NFTSET_IP, self.NFTSET_CIDR_USER, self.NFTSET_IP_USER }) do
+    for _, v in ipairs({ self.NFTSET_CIDR, self.NFTSET_IP }) do
         file_handler:write(string.format("flush set %s %s\n", self.NFT_TABLE, v))
     end
     file_handler:write(
-        string.format("table %s {\n%s", self.NFT_TABLE, self.NFTSET_IP_CFG)
+        string.format("table %s {\n%s", self.NFT_TABLE, self.NFTSET_CIDR_CFG)
     )
-    local i = 0
-    if next(self.ip_table) then
-        file_handler:write("elements={")
-        for ipaddr in pairs(self.ip_table) do
-            file_handler:write(string.format("%s,", ipaddr))
-            i = i + 1
-        end
-        file_handler:write("};")
-    end
-    file_handler:write(
-        string.format("}\n%s", self.NFTSET_CIDR_CFG)
-        )
-    self.ip_records_count = i
     local c = 0
     if next(self.cidr_table) then
         file_handler:write("elements={")
@@ -424,6 +408,19 @@ function BlackListParser:write_ipset_config()
         file_handler:write("};")
     end
     self.cidr_count = c
+    file_handler:write(
+        string.format("}\n%s", self.NFTSET_IP_CFG)
+    )
+    local i = 0
+    if next(self.ip_table) then
+        file_handler:write("elements={")
+        for ipaddr in pairs(self.ip_table) do
+            file_handler:write(string.format("%s,", ipaddr))
+            i = i + 1
+        end
+        file_handler:write("};")
+    end
+    self.ip_records_count = i
     file_handler:write("}\n}\n")
     file_handler:close()
 end

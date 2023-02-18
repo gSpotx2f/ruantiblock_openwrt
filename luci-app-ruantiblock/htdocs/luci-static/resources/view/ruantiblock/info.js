@@ -47,7 +47,6 @@ return view.extend({
 		if(data.rules.nftables && data.rules.nftables.length > 1) {
 			for(let i of data.rules.nftables) {
 				if(!i.rule) continue;
-
 				let set, bytes;
 				i.rule.expr.forEach(e => {
 					if(e.match) {
@@ -58,7 +57,6 @@ return view.extend({
 					};
 				});
 				output.rules.push([ set, bytes ]);
-
 			};
 
 			function parseDnsmasqData(set) {
@@ -77,8 +75,7 @@ return view.extend({
 				return sArray;
 			};
 
-			output.dnsmasq   = parseDnsmasqData('dnsmasq');
-			output.dnsmasq_u = parseDnsmasqData('dnsmasq_u');
+			output.dnsmasq = parseDnsmasqData('dnsmasq');
 		};
 		return output;
 	},
@@ -185,11 +182,6 @@ return view.extend({
 					rdTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq));
 				};
 
-				if(nft_data.dnsmasq_u.length > 0) {
-					let rduTableWrapper = document.getElementById('rduTableWrapper');
-					rduTableWrapper.innerHTML = '';
-					rduTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq_u));
-				};
 			} else {
 				if(poll.active()) {
 					poll.stop();
@@ -217,8 +209,7 @@ return view.extend({
 
 		let update_status = null,
 			rules         = null,
-			dnsmasq       = null,
-			dnsmasq_u     = null;
+			dnsmasq       = null;
 		if(data) {
 			if(data.status === 'enabled') {
 				update_status = E('table', { 'class': 'table' });
@@ -278,7 +269,7 @@ return view.extend({
 								E('td',{
 									'class'     : 'td left',
 									'data-title': _('Match-set'),
-								}, set + ' (' + set.replace(/^c/, 'CIDR').replace(/^i/, 'IP').replace(/^d/, 'dnsmasq').replace(/u$/, '-user') + ')'),
+								}, set + ' (' + set.replace(/^c/, 'CIDR').replace(/^i/, 'IP').replace(/^d/, 'dnsmasq') + ')'),
 								E('td', {
 									'class'     : 'td left',
 									'id'        : 'rules.' + set,
@@ -306,18 +297,6 @@ return view.extend({
 					]);
 				};
 
-				if(nft_data.dnsmasq_u) {
-					let rduTableWrapper = E('div', {
-						'id'   : 'rduTableWrapper',
-						'style': 'width:100%'
-					}, this.makeDnsmasqTable(nft_data.dnsmasq_u));
-
-					dnsmasq_u = E([
-						E('h3', {}, _('Dnsmasq') + ' - ' + _('User entries')),
-						rduTableWrapper,
-					]);
-				};
-
 				poll.add(L.bind(this.pollInfo, this), this.pollInterval);
 			} else {
 				update_status = E('em', {}, _('Status') + ' : ' + _('disabled'));
@@ -336,9 +315,6 @@ return view.extend({
 			),
 			E('div', { 'class': 'cbi-section fade-in' },
 				E('div', { 'class': 'cbi-section-node' }, dnsmasq)
-			),
-			E('div', { 'class': 'cbi-section fade-in' },
-				E('div', { 'class': 'cbi-section-node' }, dnsmasq_u)
 			),
 		]);
 	},

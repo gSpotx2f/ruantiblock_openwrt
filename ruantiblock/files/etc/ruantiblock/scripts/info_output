@@ -29,8 +29,6 @@ Info() {
     if [ $? -eq 0 ]; then
         printf ",\"dnsmasq\":"
         $NFT_CMD -j list set $NFT_TABLE "$NFTSET_DNSMASQ" 2> /dev/null
-        printf ",\"dnsmasq_u\":"
-        $NFT_CMD -j list set $NFT_TABLE "$NFTSET_DNSMASQ_USER" 2> /dev/null
         printf "}"
     fi
 }
