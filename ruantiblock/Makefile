@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock
 PKG_VERSION:=1.1
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
 include $(INCLUDE_DIR)/package.mk
@@ -42,10 +42,10 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/etc/ruantiblock
 	$(INSTALL_CONF) ./files/etc/ruantiblock/ruantiblock.conf $(1)/etc/ruantiblock/ruantiblock.conf
 	$(INSTALL_CONF) ./files/etc/ruantiblock/fqdn_filter $(1)/etc/ruantiblock/fqdn_filter
-	$(INSTALL_DIR) $(1)/etc/ruantiblock/scripts
-	$(INSTALL_DATA) ./files/etc/ruantiblock/scripts/config_script $(1)/etc/ruantiblock/scripts/config_script
-	$(INSTALL_DATA) ./files/etc/ruantiblock/scripts/info_output $(1)/etc/ruantiblock/scripts/info_output
-	$(INSTALL_DATA) ./files/etc/ruantiblock/scripts/nft_functions $(1)/etc/ruantiblock/scripts/nft_functions
+	$(INSTALL_DIR) $(1)/usr/share/ruantiblock
+	$(INSTALL_DATA) ./files/usr/share/ruantiblock/config_script $(1)/usr/share/ruantiblock/config_script
+	$(INSTALL_DATA) ./files/usr/share/ruantiblock/info_output $(1)/usr/share/ruantiblock/info_output
+	$(INSTALL_DATA) ./files/usr/share/ruantiblock/nft_functions $(1)/usr/share/ruantiblock/nft_functions
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/ruantiblock $(1)/usr/bin/ruantiblock
 endef

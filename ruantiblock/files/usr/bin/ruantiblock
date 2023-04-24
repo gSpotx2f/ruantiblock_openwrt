@@ -15,6 +15,7 @@ export LANGUAGE="en"
 
 CONFIG_DIR="/etc/${NAME}"
 CONFIG_FILE="${CONFIG_DIR}/${NAME}.conf"
+SCRIPTS_DIR="/usr/share/${NAME}"
 export DATA_DIR="${CONFIG_DIR}/var"
 export MODULES_DIR="/usr/libexec/${NAME}"
 ### Дополнительный конфиг dnsmasq с FQDN записями блэклиста
@@ -147,7 +148,6 @@ export RA_ENCODING=""
 ### External config
 [ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
 
-SCRIPTS_DIR="${CONFIG_DIR}/scripts"
 CONFIG_SCRIPT="${SCRIPTS_DIR}/config_script"
 START_SCRIPT="${SCRIPTS_DIR}/start_script"
 STOP_SCRIPT="${SCRIPTS_DIR}/stop_script"
