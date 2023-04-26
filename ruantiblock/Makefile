@@ -1,12 +1,12 @@
 #
-# (с) 2020 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+# (с) 2023 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock
 PKG_VERSION:=1.1
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
 include $(INCLUDE_DIR)/package.mk
@@ -24,6 +24,11 @@ define Package/$(PKG_NAME)/description
 endef
 
 define Package/$(PKG_NAME)/conffiles
+/etc/config/ruantiblock
+/etc/ruantiblock/ruantiblock.conf
+/etc/ruantiblock/fqdn_filter
+/etc/ruantiblock/ip_filter
+/etc/ruantiblock/user_entries
 endef
 
 define Build/Configure
@@ -41,7 +46,9 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/etc/hotplug.d/iface/40-ruantiblock $(1)/etc/hotplug.d/iface/40-ruantiblock
 	$(INSTALL_DIR) $(1)/etc/ruantiblock
 	$(INSTALL_CONF) ./files/etc/ruantiblock/ruantiblock.conf $(1)/etc/ruantiblock/ruantiblock.conf
-	$(INSTALL_CONF) ./files/etc/ruantiblock/fqdn_filter $(1)/etc/ruantiblock/fqdn_filter
+	$(INSTALL_DATA) ./files/etc/ruantiblock/fqdn_filter $(1)/etc/ruantiblock/fqdn_filter
+	$(INSTALL_DATA) ./files/etc/ruantiblock/ip_filter $(1)/etc/ruantiblock/ip_filter
+	$(INSTALL_DATA) ./files/etc/ruantiblock/user_entries $(1)/etc/ruantiblock/user_entries
 	$(INSTALL_DIR) $(1)/usr/share/ruantiblock
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/config_script $(1)/usr/share/ruantiblock/config_script
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/info_output $(1)/usr/share/ruantiblock/info_output
@@ -53,22 +60,9 @@ endef
 define Package/$(PKG_NAME)/preinst
 #!/bin/sh
 
-RUAB_CFG_DIR="/etc/ruantiblock"
-BACKUP_DIR="$${RUAB_CFG_DIR}/autoinstall.bak.`date +%s`"
-FILE_CONFIG="$${RUAB_CFG_DIR}/ruantiblock.conf"
-FILE_FQDN_FILTER="$${RUAB_CFG_DIR}/fqdn_filter"
-FILE_IP_FILTER="$${RUAB_CFG_DIR}/ip_filter"
-FILE_USER_ENTRIES="$${RUAB_CFG_DIR}/user_entries"
-FILE_UCI_CONFIG="/etc/config/ruantiblock"
 FILE_MAIN_SCRIPT="/usr/bin/ruantiblock"
 
 test -e "$$FILE_MAIN_SCRIPT" && $$FILE_MAIN_SCRIPT destroy
-
-mkdir -p "$$BACKUP_DIR"
-for _file in "$$FILE_CONFIG" "$$FILE_FQDN_FILTER" "$$FILE_IP_FILTER" "$$FILE_USER_ENTRIES" "$$FILE_UCI_CONFIG"
-do
-	[ -e "$$_file" ] && cp -f "$$_file" "$${BACKUP_DIR}/`basename $$_file`"
-done
 
 exit 0
 endef
