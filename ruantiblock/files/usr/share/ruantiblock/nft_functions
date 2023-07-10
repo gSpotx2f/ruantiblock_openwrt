@@ -6,11 +6,11 @@ NFT_LOCAL_CLIENTS_CHAIN="local_clients"
 VPN_ROUTE_TABLE_ID=99
 
 if [ "$PROXY_MODE" = "2" ]; then
-    MAIN_CHAIN_TYPE="type filter hook prerouting priority -160; policy accept;"
-    LOCAL_CLIENTS_CHAIN_TYPE="type route hook output priority -160; policy accept;"
+    MAIN_CHAIN_TYPE="type filter hook prerouting priority ${NFT_PRIO_ROUTE}; policy accept;"
+    LOCAL_CLIENTS_CHAIN_TYPE="type route hook output priority ${NFT_PRIO_ROUTE}; policy accept;"
 else
-    MAIN_CHAIN_TYPE="type nat hook prerouting priority -110; policy accept;"
-    LOCAL_CLIENTS_CHAIN_TYPE="type nat hook output priority -110; policy accept;"
+    MAIN_CHAIN_TYPE="type nat hook prerouting priority ${NFT_PRIO_NAT}; policy accept;"
+    LOCAL_CLIENTS_CHAIN_TYPE="type nat hook output priority ${NFT_PRIO_NAT}; policy accept;"
 fi
 
 case "$ALLOWED_HOSTS_MODE" in
@@ -48,7 +48,7 @@ NftVpnRouteAdd() {
     if [ -n "$VPN_IP" ]; then
         echo 0 > /proc/sys/net/ipv4/conf/$IF_VPN/rp_filter
         NftVpnRouteDelete 2> /dev/null
-        $IP_CMD rule add fwmark $VPN_PKTS_MARK table $VPN_ROUTE_TABLE_ID priority 1000
+        $IP_CMD rule add fwmark $VPN_PKTS_MARK table $VPN_ROUTE_TABLE_ID priority $VPN_RULE_PRIO
         $IP_CMD route add default via $VPN_IP table $VPN_ROUTE_TABLE_ID
     fi
 }
