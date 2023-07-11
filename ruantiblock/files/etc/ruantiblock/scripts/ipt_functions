@@ -72,18 +72,20 @@ IptMainAdd() {
     $IPT_CMD -t "$IPT_TABLE" -N "$IPT_BLLIST_CHAIN"
     $IPT_CMD -t "$IPT_TABLE" -N "$IPT_ALLOWED_HOSTS_CHAIN"
     IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -A "$IPT_ALLOWED_HOSTS_CHAIN" $IPT_ALLOWED_HOSTS_RULE
-    IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -I "$IPT_FIRST_CHAIN" 1 -j "$IPT_ALLOWED_HOSTS_CHAIN"
 
     if [ "$PROXY_MODE" = "2" ]; then
+        IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -A "$IPT_FIRST_CHAIN" -j "$IPT_ALLOWED_HOSTS_CHAIN"
         IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -A "$IPT_ACTION_CHAIN" -j MARK --set-mark $VPN_PKTS_MARK
         IPT_IPSETS="${IPSET_CIDR} ${IPSET_IP} ${IPSET_DNSMASQ}"
     elif [ "$PROXY_MODE" = "3" ]; then
+        IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -I "$IPT_FIRST_CHAIN" 1 -j "$IPT_ALLOWED_HOSTS_CHAIN"
         IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -A "$IPT_ACTION_CHAIN" -p tcp -j REDIRECT --to-ports ${T_PROXY_PORT_TCP}
         if [ "$T_PROXY_ALLOW_UDP" = "1" ]; then
             IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -A "$IPT_ACTION_CHAIN" -p udp -j REDIRECT --to-ports ${T_PROXY_PORT_UDP}
         fi
         IPT_IPSETS="${IPSET_CIDR} ${IPSET_IP} ${IPSET_DNSMASQ}"
     else
+        IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -I "$IPT_FIRST_CHAIN" 1 -j "$IPT_ALLOWED_HOSTS_CHAIN"
         IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -A "$IPT_ACTION_CHAIN" -p tcp -j REDIRECT --to-ports ${TOR_TRANS_PORT}
         if [ "$TOR_ALLOW_UDP" = "1" ]; then
             IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -A "$IPT_ACTION_CHAIN" -p udp -j REDIRECT --to-ports ${TOR_TRANS_PORT}
@@ -116,7 +118,11 @@ IptMainDel() {
 IPT_OUTPUT_FIRST_RULE="-j ${IPT_BLLIST_CHAIN}"
 
 IptLocalClientsAdd() {
-    IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -I OUTPUT 1 $IPT_OUTPUT_FIRST_RULE
+    if [ "$PROXY_MODE" = "2" ]; then
+        IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -A OUTPUT $IPT_OUTPUT_FIRST_RULE
+    else
+        IptCmdWrapper $IPT_CMD -t "$IPT_TABLE" -I OUTPUT 1 $IPT_OUTPUT_FIRST_RULE
+    fi
 }
 
 IptLocalClientsDel() {
