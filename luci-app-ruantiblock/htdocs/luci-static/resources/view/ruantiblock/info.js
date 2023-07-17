@@ -176,11 +176,9 @@ return view.extend({
 					};
 				};
 
-				if(nft_data.dnsmasq.length > 0) {
-					let rdTableWrapper = document.getElementById('rdTableWrapper');
-					rdTableWrapper.innerHTML = '';
-					rdTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq));
-				};
+				let rdTableWrapper = document.getElementById('rdTableWrapper');
+				rdTableWrapper.innerHTML = '';
+				rdTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq));
 
 			} else {
 				if(poll.active()) {
