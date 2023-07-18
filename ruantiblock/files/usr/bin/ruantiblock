@@ -37,6 +37,10 @@ export NFTSET_CLEAR_SETS=0
 export ALLOWED_HOSTS_MODE=0
 ### Список IP адресов хостов для фильтра, через пробел (прим.: 192.168.0.10 192.168.0.15)
 export ALLOWED_HOSTS_LIST=""
+### Режим списка IP адресов исключаемых из обхода блокировок (0 - выкл, 1 - вкл)
+export BYPASS_IP_MODE=0
+### Список IP адресов, которые исключаются из обхода блокировок, через пробел (прим.: 52.49.102.199 52.49.102.200)
+export BYPASS_IP_LIST=""
 ### VPN интерфейс для правил маршрутизации
 export IF_VPN="tun0"
 ### Порт прозрачного прокси Tor (параметр TransPort в torrc)
@@ -57,8 +61,12 @@ export T_PROXY_PORT_UDP=1100
 export T_PROXY_ALLOW_UDP=0
 ### Приоритет правила отбора пакетов nftables для конфигупации Tor или прозрачного прокси
 export NFT_PRIO_NAT="dstnat - 10"
+### Приоритет правила отбора пакетов nftables для трафика локальных клиентов в конфигупации Tor или прозрачного прокси
+export NFT_PRIO_NAT_LOCAL="filter - 10"
 ### Приоритет правила отбора пакетов nftables для VPN-конфигурации
 export NFT_PRIO_ROUTE="mangle + 10"
+### Приоритет правила отбора пакетов nftables для трафика локальных клиентов в VPN-конфигурации
+export NFT_PRIO_ROUTE_LOCAL="mangle + 10"
 ### Добавление в список блокировок пользовательских записей из файла $USER_ENTRIES_FILE (0 - выкл, 1 - вкл)
 ###  В $DATA_DIR можно создать текстовый файл user_entries с записями IP, CIDR или FQDN (одна на строку). Эти записи будут добавлены в список блокировок
 ###  В записях FQDN можно задать DNS-сервер для разрешения данного домена, через пробел (прим.: domain.com 8.8.8.8)
@@ -184,11 +192,13 @@ export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
 export NFT_TABLE="ip r"
 export NFT_TABLE_DNSMASQ="4#ip#r"
 export NFTSET_ALLOWED_HOSTS="allowed_ip"
+export NFTSET_BYPASS_IP="bypass_ip"
 export NFTSET_ONION="onion"
 export NFTSET_CIDR="c"
 export NFTSET_IP="i"
 export NFTSET_DNSMASQ="d"
 export NFTSET_ALLOWED_HOSTS_TYPE="ipv4_addr"
+export NFTSET_BYPASS_IP_TYPE="ipv4_addr"
 export NFTSET_CIDR_TYPE="ipv4_addr"
 export NFTSET_IP_TYPE="ipv4_addr"
 export NFTSET_DNSMASQ_TYPE="ipv4_addr"
@@ -289,15 +299,20 @@ FlushNftSets() {
 }
 
 AddNftSets() {
-    local _hosts
+    local _allowed_hosts _bypass_ips
     $NFT_CMD add set $NFT_TABLE "$NFTSET_CIDR" { type "$NFTSET_CIDR_TYPE"\; size $NFTSET_MAXELEM_CIDR\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
     $NFT_CMD add set $NFT_TABLE "$NFTSET_IP" { type "$NFTSET_IP_TYPE"\; size $NFTSET_MAXELEM_IP\; policy "$NFTSET_POLICY_IP"\; flags dynamic\; }
     $NFT_CMD add set $NFT_TABLE "$NFTSET_DNSMASQ" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
     $NFT_CMD add set $NFT_TABLE "$NFTSET_ONION" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { type "$NFTSET_ALLOWED_HOSTS_TYPE"\; policy "$NFTSET_POLICY_IP"\; flags dynamic\; }
-    _hosts=`printf "$ALLOWED_HOSTS_LIST" | $AWK_CMD '{gsub(/[ ]+/, ",", $0); printf $0;}'`
-    if [ -n "$_hosts" ]; then
-        $NFT_CMD add element $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { "$_hosts" }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { type "$NFTSET_ALLOWED_HOSTS_TYPE"\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
+    _allowed_hosts=`printf "$ALLOWED_HOSTS_LIST" | $AWK_CMD '{gsub(/[ ]+/, ",", $0); printf $0;}'`
+    if [ -n "$_allowed_hosts" ]; then
+        $NFT_CMD add element $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { "$_allowed_hosts" }
+    fi
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_BYPASS_IP" { type "$NFTSET_BYPASS_IP_TYPE"\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
+    _bypass_ips=`printf "$BYPASS_IP_LIST" | $AWK_CMD '{gsub(/[ ]+/, ",", $0); printf $0;}'`
+    if [ -n "$_bypass_ips" ]; then
+        $NFT_CMD add element $NFT_TABLE "$NFTSET_BYPASS_IP" { "$_bypass_ips" }
     fi
 }
 
@@ -336,7 +351,7 @@ SetNetConfig() {
 
 DropNetConfig() {
     DeleteNftRules
-    FlushNftSets "$NFTSET_ALLOWED_HOSTS" "$NFTSET_CIDR" "$NFTSET_IP" "$NFTSET_DNSMASQ" "$NFTSET_ONION"
+    FlushNftSets "$NFTSET_ALLOWED_HOSTS" "$NFTSET_BYPASS_IP" "$NFTSET_CIDR" "$NFTSET_IP" "$NFTSET_DNSMASQ" "$NFTSET_ONION"
 }
 
 DestroyNetConfig() {

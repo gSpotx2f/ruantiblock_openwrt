@@ -119,6 +119,9 @@ msgstr "Включить"
 msgid "Enable FQDN filter"
 msgstr "Включить FQDN фильтр"
 
+msgid "Enable IP exclusion list"
+msgstr "Включить список исключений IP адресов"
+
 msgid "Enable IP filter"
 msgstr "Включить IP фильтр"
 
@@ -167,6 +170,9 @@ msgstr "IP-адрес"
 msgid "IP addresses of hosts"
 msgstr "IP-адреса хостов"
 
+msgid "IP exclusion list"
+msgstr "Список исключенных IP адресов"
+
 msgid "IP filter"
 msgstr "Фильтр IP"
 
@@ -202,6 +208,9 @@ msgstr "Последние записи"
 
 msgid "Level"
 msgstr "Уровень"
+
+msgid "List of IP addresses that are excluded from block bypass (always available directly)"
+msgstr "Список IP адресов, которые исключаются из обхода блокировок (всегда доступны напрямую)"
 
 msgid "Loading"
 msgstr "Загрузка"

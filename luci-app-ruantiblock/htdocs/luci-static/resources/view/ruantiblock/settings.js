@@ -249,6 +249,17 @@ return view.extend({
 		bllist_module.value('', _('disabled'));
 		bllist_module.depends({ bllist_preset: new RegExp('^($|' + tools.appName + ')'), '!reverse': true });
 
+		// BYPASS_IP_MODE
+		o = s.taboption('blacklist_tab', form.Flag, 'bypass_ip_mode',
+			_('Enable IP exclusion list'), _("List of IP addresses that are excluded from block bypass (always available directly)"));
+		o.rmempty = false;
+		o.default = 0;
+
+		// BYPASS_IP_LIST
+		o = s.taboption('blacklist_tab', form.DynamicList, 'bypass_ip_list',
+			_('IP exclusion list'));
+		o.datatype = "ip4addr";
+
 		Object.entries(this.parsers).forEach(
 			e => bllist_module.value(e[1], e[0]));
 

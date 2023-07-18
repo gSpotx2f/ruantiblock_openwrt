@@ -102,6 +102,9 @@ msgstr ""
 msgid "Enable FQDN filter"
 msgstr ""
 
+msgid "Enable IP exclusion list"
+msgstr ""
+
 msgid "Enable IP filter"
 msgstr ""
 
@@ -150,6 +153,9 @@ msgstr ""
 msgid "IP addresses of hosts"
 msgstr ""
 
+msgid "IP exclusion list"
+msgstr ""
+
 msgid "IP filter"
 msgstr ""
 
@@ -181,6 +187,9 @@ msgid "Last entries"
 msgstr ""
 
 msgid "Level"
+msgstr ""
+
+msgid "List of IP addresses that are excluded from block bypass (always available directly)"
 msgstr ""
 
 msgid "Loading"

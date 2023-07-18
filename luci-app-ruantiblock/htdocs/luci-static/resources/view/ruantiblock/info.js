@@ -47,6 +47,7 @@ return view.extend({
 		if(data.rules.nftables && data.rules.nftables.length > 1) {
 			for(let i of data.rules.nftables) {
 				if(!i.rule) continue;
+
 				let set, bytes;
 				i.rule.expr.forEach(e => {
 					if(e.match) {
@@ -262,12 +263,15 @@ return view.extend({
 					]);
 
 					for(let [set, bytes] of nft_data.rules) {
+						if(!set) {
+							continue;
+						};
 						table_rules.append(
 							E('tr', { 'class': 'tr' }, [
 								E('td',{
 									'class'     : 'td left',
 									'data-title': _('Match-set'),
-								}, set + ' (' + set.replace(/^c/, 'CIDR').replace(/^i/, 'IP').replace(/^d/, 'dnsmasq') + ')'),
+								}, set + ((set.length == 1) ? (' (' + set.replace(/^c/, 'CIDR').replace(/^i/, 'IP').replace(/^d/, 'dnsmasq') + ')') : '')),
 								E('td', {
 									'class'     : 'td left',
 									'id'        : 'rules.' + set,
