@@ -78,7 +78,7 @@ NftMainAdd() {
     $NFT_CMD add chain $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN"
     $NFT_CMD add chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
     $NFT_CMD add chain $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" { $MAIN_CHAIN_TYPE }
-    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN" ct state new set update ip daddr "@${NFTSET_DNSMASQ}" counter
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN" ct state new set update ip daddr "@${NFTSET_DNSMASQ}"
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN" jump "$NFT_ACTION_CHAIN"
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" $NFT_ALLOWED_HOSTS_EXPR
     if [ "$PROXY_MODE" = "2" ]; then
