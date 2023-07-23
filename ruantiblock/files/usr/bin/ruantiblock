@@ -59,14 +59,6 @@ export T_PROXY_PORT_TCP=1100
 export T_PROXY_PORT_UDP=1100
 ### Отправлять в прозрачный прокси UDP-трафик (0 - выкл, 1 - вкл)
 export T_PROXY_ALLOW_UDP=0
-### Приоритет правила отбора пакетов nftables для конфигупации Tor или прозрачного прокси
-export NFT_PRIO_NAT="dstnat - 10"
-### Приоритет правила отбора пакетов nftables для трафика локальных клиентов в конфигупации Tor или прозрачного прокси
-export NFT_PRIO_NAT_LOCAL="filter - 10"
-### Приоритет правила отбора пакетов nftables для VPN-конфигурации
-export NFT_PRIO_ROUTE="mangle + 10"
-### Приоритет правила отбора пакетов nftables для трафика локальных клиентов в VPN-конфигурации
-export NFT_PRIO_ROUTE_LOCAL="mangle + 10"
 ### Добавление в список блокировок пользовательских записей из файла $USER_ENTRIES_FILE (0 - выкл, 1 - вкл)
 ###  В $DATA_DIR можно создать текстовый файл user_entries с записями IP, CIDR или FQDN (одна на строку). Эти записи будут добавлены в список блокировок
 ###  В записях FQDN можно задать DNS-сервер для разрешения данного домена, через пробел (прим.: domain.com 8.8.8.8)
@@ -90,6 +82,16 @@ export NFTSET_POLICY_IP="memory"
 export NFTSET_POLICY_DNSMASQ="performance"
 ### Таймаут для записей в сете $NFTSET_DNSMASQ
 export NFTSET_DNSMASQ_TIMEOUT="1h"
+### Динамическое обновление таймаута записей в сете $NFTSET_DNSMASQ (0 - выкл, 1 - вкл)
+export NFTSET_DNSMASQ_TIMEOUT_UPDATE=1
+### Приоритет правила отбора пакетов nftables для конфигупации Tor или прозрачного прокси
+export NFT_PRIO_NAT="dstnat - 10"
+### Приоритет правила отбора пакетов nftables для трафика локальных клиентов в конфигупации Tor или прозрачного прокси
+export NFT_PRIO_NAT_LOCAL="filter - 10"
+### Приоритет правила отбора пакетов nftables для VPN-конфигурации
+export NFT_PRIO_ROUTE="mangle + 10"
+### Приоритет правила отбора пакетов nftables для трафика локальных клиентов в VPN-конфигурации
+export NFT_PRIO_ROUTE_LOCAL="mangle + 10"
 ### Кол-во попыток обновления блэклиста (в случае неудачи)
 export MODULE_RUN_ATTEMPTS=3
 ### Таймаут между попытками обновления

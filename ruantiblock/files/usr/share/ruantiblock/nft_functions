@@ -1,6 +1,7 @@
 IP_CMD="ip"
 NFT_ALLOWED_HOSTS_CHAIN="allowed_hosts"
 NFT_BLLIST_CHAIN="blacklist"
+NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN="dnsmasq_timeout_update"
 NFT_ACTION_CHAIN="action"
 NFT_LOCAL_CLIENTS_CHAIN="local_clients"
 VPN_ROUTE_TABLE_ID=99
@@ -15,24 +16,27 @@ fi
 
 case "$ALLOWED_HOSTS_MODE" in
     "1")
-        NFT_ALLOWED_HOSTS_RULE="ip saddr @${NFTSET_ALLOWED_HOSTS} jump ${NFT_BLLIST_CHAIN}"
+        NFT_ALLOWED_HOSTS_EXPR="ip saddr @${NFTSET_ALLOWED_HOSTS} jump ${NFT_BLLIST_CHAIN}"
     ;;
     "2")
-        NFT_ALLOWED_HOSTS_RULE="ip saddr != @${NFTSET_ALLOWED_HOSTS} jump ${NFT_BLLIST_CHAIN}"
+        NFT_ALLOWED_HOSTS_EXPR="ip saddr != @${NFTSET_ALLOWED_HOSTS} jump ${NFT_BLLIST_CHAIN}"
     ;;
     *)
-        NFT_ALLOWED_HOSTS_RULE="jump ${NFT_BLLIST_CHAIN}"
+        NFT_ALLOWED_HOSTS_EXPR="jump ${NFT_BLLIST_CHAIN}"
     ;;
 esac
 
-case "$BYPASS_IP_MODE" in
-    "1")
-        NFT_BYPASS_IP_RULE="ip daddr @${NFTSET_BYPASS_IP} counter accept"
-    ;;
-    *)
-        NFT_BYPASS_IP_RULE="continue"
-    ;;
-esac
+if [ "$BYPASS_IP_MODE" = "1" ]; then
+    NFT_BYPASS_IP_EXPR="ip daddr @${NFTSET_BYPASS_IP} counter accept"
+else
+    NFT_BYPASS_IP_EXPR="continue"
+fi
+
+if [ "$NFTSET_DNSMASQ_TIMEOUT_UPDATE" = "1" ]; then
+    NFT_DNSMASQ_RULE_TARGET="$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN"
+else
+    NFT_DNSMASQ_RULE_TARGET="$NFT_ACTION_CHAIN"
+fi
 
 NftCmdWrapper() {
     local _i=0 _attempts=10 _return_code=1
@@ -68,12 +72,15 @@ NftVpnRouteStatus() {
 }
 
 NftMainAdd() {
-    local _nft_sets="${NFTSET_CIDR} ${NFTSET_IP} ${NFTSET_DNSMASQ}" _set
+    local _nft_sets="${NFTSET_CIDR} ${NFTSET_IP}" _set
     $NFT_CMD add chain $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN" { $LOCAL_CLIENTS_CHAIN_TYPE }
     $NFT_CMD add chain $NFT_TABLE "$NFT_ACTION_CHAIN"
+    $NFT_CMD add chain $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN"
     $NFT_CMD add chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
     $NFT_CMD add chain $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" { $MAIN_CHAIN_TYPE }
-    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" $NFT_ALLOWED_HOSTS_RULE
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN" ct state new set update ip daddr "@${NFTSET_DNSMASQ}" counter
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN" jump "$NFT_ACTION_CHAIN"
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" $NFT_ALLOWED_HOSTS_EXPR
     if [ "$PROXY_MODE" = "2" ]; then
         NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ACTION_CHAIN" mark set $VPN_PKTS_MARK
     elif [ "$PROXY_MODE" = "3" ]; then
@@ -88,11 +95,12 @@ NftMainAdd() {
         fi
         NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" ip daddr "@${NFTSET_ONION}" counter goto "$NFT_ACTION_CHAIN"
     fi
-    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" $NFT_BYPASS_IP_RULE
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" $NFT_BYPASS_IP_EXPR
     for _set in $_nft_sets
     do
         NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" ip daddr "@${_set}" counter goto "$NFT_ACTION_CHAIN"
     done
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" ip daddr "@${NFTSET_DNSMASQ}" counter goto "$NFT_DNSMASQ_RULE_TARGET"
     if [ "$PROXY_MODE" = "2" ]; then
         NftVpnRouteAdd
     fi
@@ -105,6 +113,8 @@ NftMainDelete() {
     $NFT_CMD delete chain $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN"
     $NFT_CMD flush chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
     $NFT_CMD delete chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
+    $NFT_CMD flush chain $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN"
+    $NFT_CMD delete chain $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN"
     $NFT_CMD flush chain $NFT_TABLE "$NFT_ACTION_CHAIN"
     $NFT_CMD delete chain $NFT_TABLE "$NFT_ACTION_CHAIN"
     NftVpnRouteDelete 2> /dev/null

@@ -47,10 +47,9 @@ return view.extend({
 		if(data.rules.nftables && data.rules.nftables.length > 1) {
 			for(let i of data.rules.nftables) {
 				if(!i.rule) continue;
-
 				let set, bytes;
 				i.rule.expr.forEach(e => {
-					if(e.match) {
+					if(e.match && e.match.left && e.match.left.payload) {
 						set = e.match.right.replace('@', '');
 					}
 					else if(e.counter) {
