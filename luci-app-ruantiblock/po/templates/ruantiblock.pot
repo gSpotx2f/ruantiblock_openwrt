@@ -71,7 +71,10 @@ msgstr ""
 msgid "Current schedule"
 msgstr ""
 
-msgid "DNS server that is used for FQDN entries"
+msgid "DNS server that is used for the user's FQDN entries"
+msgstr ""
+
+msgid "DNS server that is used for the FQDN entries of exclusion list"
 msgstr ""
 
 msgid "Day"
@@ -102,10 +105,13 @@ msgstr ""
 msgid "Enable FQDN filter"
 msgstr ""
 
-msgid "Enable IP exclusion list"
+msgid "Enable IP filter"
 msgstr ""
 
-msgid "Enable IP filter"
+msgid "Enable exclusion list"
+msgstr ""
+
+msgid "Enable user entries"
 msgstr ""
 
 msgid "Enabled"
@@ -115,6 +121,9 @@ msgid "Entries"
 msgstr ""
 
 msgid "Error"
+msgstr ""
+
+msgid "Exclusion list"
 msgstr ""
 
 msgid "Expecting:"
@@ -153,9 +162,6 @@ msgstr ""
 msgid "IP addresses of hosts"
 msgstr ""
 
-msgid "IP exclusion list"
-msgstr ""
-
 msgid "IP filter"
 msgstr ""
 
@@ -189,7 +195,7 @@ msgstr ""
 msgid "Level"
 msgstr ""
 
-msgid "List of IP addresses that are excluded from block bypass (always available directly)"
+msgid "List of hosts that are excluded from block bypass (always available directly)"
 msgstr ""
 
 msgid "Loading"

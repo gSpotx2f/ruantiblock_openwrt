@@ -8,6 +8,7 @@
 				"/etc/ruantiblock/fqdn_filter": [ "read" ],
 				"/etc/ruantiblock/ip_filter": [ "read" ],
 				"/etc/ruantiblock/user_entries": [ "read" ],
+				"/etc/ruantiblock/bypass_entries": [ "read" ],
 				"/var/run/ruantiblock.token": [ "read" ],
 				"/etc/tor/torrc": [ "read" ],
 				"/etc/crontabs/root": [ "read" ],
@@ -25,6 +26,7 @@
 				"/etc/ruantiblock/fqdn_filter": [ "write" ],
 				"/etc/ruantiblock/ip_filter": [ "write" ],
 				"/etc/ruantiblock/user_entries": [ "write" ],
+				"/etc/ruantiblock/bypass_entries": [ "write" ],
 				"/etc/tor/torrc": [ "write" ],
 				"/etc/crontabs/root": [ "write" ]
 			},

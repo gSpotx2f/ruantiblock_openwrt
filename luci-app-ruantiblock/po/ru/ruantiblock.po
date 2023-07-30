@@ -86,8 +86,11 @@ msgstr "Критическая ситуация"
 msgid "Current schedule"
 msgstr "Текущее расписание"
 
-msgid "DNS server that is used for FQDN entries"
-msgstr "DNS сервер для FQDN записей"
+msgid "DNS server that is used for the user's FQDN entries"
+msgstr "DNS сервер для FQDN записей пользователя"
+
+msgid "DNS server that is used for the FQDN entries of exclusion list"
+msgstr "DNS сервер для FQDN записей списка исключений"
 
 msgid "Day"
 msgstr "День"
@@ -119,11 +122,14 @@ msgstr "Включить"
 msgid "Enable FQDN filter"
 msgstr "Включить FQDN фильтр"
 
-msgid "Enable IP exclusion list"
-msgstr "Включить список исключений IP адресов"
-
 msgid "Enable IP filter"
 msgstr "Включить IP фильтр"
+
+msgid "Enable exclusion list"
+msgstr "Включить список исключений"
+
+msgid "Enable user entries"
+msgstr "Включить записи пользователя"
 
 msgid "Enabled"
 msgstr "Включено"
@@ -133,6 +139,9 @@ msgstr "Записи"
 
 msgid "Error"
 msgstr "Ошибка"
+
+msgid "Exclusion list"
+msgstr "Список исключений"
 
 msgid "Expecting:"
 msgstr "Ожидается:"
@@ -170,9 +179,6 @@ msgstr "IP-адрес"
 msgid "IP addresses of hosts"
 msgstr "IP-адреса хостов"
 
-msgid "IP exclusion list"
-msgstr "Список исключенных IP адресов"
-
 msgid "IP filter"
 msgstr "Фильтр IP"
 
@@ -209,8 +215,8 @@ msgstr "Последние записи"
 msgid "Level"
 msgstr "Уровень"
 
-msgid "List of IP addresses that are excluded from block bypass (always available directly)"
-msgstr "Список IP адресов, которые исключаются из обхода блокировок (всегда доступны напрямую)"
+msgid "List of hosts that are excluded from block bypass (always available directly)"
+msgstr "Список хостов, которые исключаются из обхода блокировок (всегда доступны напрямую)"
 
 msgid "Loading"
 msgstr "Загрузка"

@@ -40,6 +40,7 @@ return baseclass.extend({
 	parsersDir       : '/usr/libexec/ruantiblock',
 	torrcFile        : '/etc/tor/torrc',
 	userEntriesFile  : '/etc/ruantiblock/user_entries',
+	bypassEntriesFile: '/etc/ruantiblock/bypass_entries',
 	fqdnFilterFile   : '/etc/ruantiblock/fqdn_filter',
 	ipFilterFile     : '/etc/ruantiblock/ip_filter',
 	crontabFile      : '/etc/crontabs/root',

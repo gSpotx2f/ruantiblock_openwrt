@@ -47,6 +47,7 @@ return view.extend({
 		if(data.rules.nftables && data.rules.nftables.length > 1) {
 			for(let i of data.rules.nftables) {
 				if(!i.rule) continue;
+
 				let set, bytes;
 				i.rule.expr.forEach(e => {
 					if(e.match && e.match.left && e.match.left.payload) {
@@ -75,7 +76,12 @@ return view.extend({
 				return sArray;
 			};
 
-			output.dnsmasq = parseDnsmasqData('dnsmasq');
+			if(data.dnsmasq) {
+				output.dnsmasq = parseDnsmasqData('dnsmasq');
+			};
+			if(data.dnsmasq_bypass) {
+				output.dnsmasq_bypass = parseDnsmasqData('dnsmasq_bypass');
+			};
 		};
 		return output;
 	},
@@ -177,8 +183,16 @@ return view.extend({
 				};
 
 				let rdTableWrapper = document.getElementById('rdTableWrapper');
-				rdTableWrapper.innerHTML = '';
-				rdTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq));
+				if(rdTableWrapper) {
+					rdTableWrapper.innerHTML = '';
+					rdTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq));
+				};
+
+				let rdbTableWrapper = document.getElementById('rdbTableWrapper');
+				if(rdbTableWrapper) {
+					rdbTableWrapper.innerHTML = '';
+					rdbTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq_bypass));
+				};
 
 			} else {
 				if(poll.active()) {
@@ -207,7 +221,9 @@ return view.extend({
 
 		let update_status = null,
 			rules         = null,
-			dnsmasq       = null;
+			dnsmasq       = null,
+			dnsmasqBypass = null;
+
 		if(data) {
 			if(data.status === 'enabled') {
 				update_status = E('table', { 'class': 'table' });
@@ -270,7 +286,9 @@ return view.extend({
 								E('td',{
 									'class'     : 'td left',
 									'data-title': _('Match-set'),
-								}, set + ((set.length == 1) ? (' (' + set.replace(/^c/, 'CIDR').replace(/^i/, 'IP').replace(/^d/, 'dnsmasq') + ')') : '')),
+								}, set + ((set.length >= 1) ? (
+									' (' + set.replace(/^c/, 'CIDR').replace(/^i/, 'IP').replace(/^d/, 'dnsmasq').replace(/^bi/, 'bypass IP').replace(/^bd/, 'bypass dnsmasq') + ')'
+								) : '')),
 								E('td', {
 									'class'     : 'td left',
 									'id'        : 'rules.' + set,
@@ -298,12 +316,25 @@ return view.extend({
 					]);
 				};
 
+				if(nft_data.dnsmasq_bypass) {
+					let rdbTableWrapper = E('div', {
+						'id'   : 'rdbTableWrapper',
+						'style': 'width:100%'
+					}, this.makeDnsmasqTable(nft_data.dnsmasq_bypass));
+
+					dnsmasqBypass = E([
+						E('h3', {}, _('Dnsmasq bypass')),
+						rdbTableWrapper,
+					]);
+				};
+
 				poll.add(L.bind(this.pollInfo, this), this.pollInterval);
 			} else {
 				update_status = E('em', {}, _('Status') + ' : ' + _('disabled'));
 			};
 		};
-		return E([
+
+		let layout = [
 			E('h2', { 'class': 'fade-in' },
 				_('Ruantiblock') + ' - ' + _('Statistics')
 			),
@@ -314,10 +345,25 @@ return view.extend({
 			E('div', { 'class': 'cbi-section fade-in' },
 				E('div', { 'class': 'cbi-section-node' }, rules)
 			),
-			E('div', { 'class': 'cbi-section fade-in' },
-				E('div', { 'class': 'cbi-section-node' }, dnsmasq)
-			),
-		]);
+		];
+
+		if(dnsmasqBypass) {
+			layout.splice(4, 0,
+				E('div', { 'class': 'cbi-section fade-in' },
+					E('div', { 'class': 'cbi-section-node' }, dnsmasqBypass)
+				)
+			);
+		};
+
+		if(dnsmasq) {
+			layout.splice(5, 0,
+				E('div', { 'class': 'cbi-section fade-in' },
+					E('div', { 'class': 'cbi-section-node' }, dnsmasq)
+				)
+			);
+		};
+
+		return E(layout);
 	},
 
 	handleSave     : null,

@@ -19,7 +19,8 @@ SCRIPTS_DIR="/usr/share/${NAME}"
 export DATA_DIR="${CONFIG_DIR}/var"
 export MODULES_DIR="/usr/libexec/${NAME}"
 ### Дополнительный конфиг dnsmasq с FQDN записями блэклиста
-export DNSMASQ_DATA_FILE="/var/dnsmasq.d/${NAME}.dnsmasq"
+export DNSMASQ_DATA_FILE="/var/dnsmasq.d/02-${NAME}.dnsmasq"
+export DNSMASQ_DATA_FILE_BYPASS="/var/dnsmasq.d/01-${NAME}_bypass.dnsmasq"
 ### Команда для перезапуска dnsmasq
 export DNSMASQ_RESTART_CMD="/etc/init.d/dnsmasq restart"
 ### Директория для html-страницы статуса (не используется в OpenWrt)
@@ -37,10 +38,6 @@ export NFTSET_CLEAR_SETS=0
 export ALLOWED_HOSTS_MODE=0
 ### Список IP адресов хостов для фильтра, через пробел (прим.: 192.168.0.10 192.168.0.15)
 export ALLOWED_HOSTS_LIST=""
-### Режим списка IP адресов исключаемых из обхода блокировок (0 - выкл, 1 - вкл)
-export BYPASS_IP_MODE=0
-### Список IP адресов, которые исключаются из обхода блокировок, через пробел (прим.: 52.49.102.199 52.49.102.200)
-export BYPASS_IP_LIST=""
 ### VPN интерфейс для правил маршрутизации
 export IF_VPN="tun0"
 ### Порт прозрачного прокси Tor (параметр TransPort в torrc)
@@ -49,7 +46,7 @@ export TOR_TRANS_PORT=9040
 export TOR_ALLOW_UDP=0
 ### DNS-сервер для резолвинга в домене .onion (Tor)
 export ONION_DNS_ADDR="127.0.0.1#9053"
-### --set-mark для отбора пакетов в VPN туннель
+### метка для отбора пакетов в VPN туннель
 export VPN_PKTS_MARK=8
 ### Приоритет правила отбора пакетов при маршрутизации в VPN-интерфейс
 export VPN_RULE_PRIO=1000
@@ -59,15 +56,6 @@ export T_PROXY_PORT_TCP=1100
 export T_PROXY_PORT_UDP=1100
 ### Отправлять в прозрачный прокси UDP-трафик (0 - выкл, 1 - вкл)
 export T_PROXY_ALLOW_UDP=0
-### Добавление в список блокировок пользовательских записей из файла $USER_ENTRIES_FILE (0 - выкл, 1 - вкл)
-###  В $DATA_DIR можно создать текстовый файл user_entries с записями IP, CIDR или FQDN (одна на строку). Эти записи будут добавлены в список блокировок
-###  В записях FQDN можно задать DNS-сервер для разрешения данного домена, через пробел (прим.: domain.com 8.8.8.8)
-###  Можно комментировать строки (#)
-export ADD_USER_ENTRIES=0
-### DNS-сервер для пользовательских записей (пустая строка - без DNS-сервера). Можно с портом: 8.8.8.8#53. Если в записи указан свой DNS-сервер - он имеет приоритет
-export USER_ENTRIES_DNS=""
-### Файл пользовательских записей
-export USER_ENTRIES_FILE="${CONFIG_DIR}/user_entries"
 ### Запись событий в syslog (0 - выкл, 1 - вкл)
 export ENABLE_LOGGING=1
 ### Html-страница с инфо о текущем статусе (0 - выкл, 1 - вкл) (не используется в OpenWrt)
@@ -76,6 +64,8 @@ export ENABLE_HTML_INFO=0
 export NFTSET_MAXELEM_CIDR=65535
 export NFTSET_MAXELEM_IP=1000000
 export NFTSET_MAXELEM_DNSMASQ=65535
+export NFTSET_MAXELEM_BYPASS_IP=65535
+export NFTSET_MAXELEM_BYPASS_FQDN=65535
 ### Политика отбора элементов в сетах nftables. "performance" - производительность и большее потребление RAM. "memory" - хуже производительность и меньше потребление RAM
 export NFTSET_POLICY_CIDR="memory"
 export NFTSET_POLICY_IP="memory"
@@ -92,6 +82,21 @@ export NFT_PRIO_NAT_LOCAL="filter - 10"
 export NFT_PRIO_ROUTE="mangle + 10"
 ### Приоритет правила отбора пакетов nftables для трафика локальных клиентов в VPN-конфигурации
 export NFT_PRIO_ROUTE_LOCAL="mangle + 10"
+### Добавление в список блокировок пользовательских записей из файла $USER_ENTRIES_FILE (0 - выкл, 1 - вкл)
+###  В $DATA_DIR можно создать текстовый файл user_entries с записями IP, CIDR или FQDN (одна на строку). Эти записи будут добавлены в список блокировок
+###  В записях FQDN можно задать DNS-сервер для разрешения данного домена, через пробел (прим.: domain.com 8.8.8.8)
+###  Можно комментировать строки (#)
+export ADD_USER_ENTRIES=0
+### DNS-сервер для пользовательских записей (пустая строка - без DNS-сервера). Можно с портом: 8.8.8.8#53. Если в записи указан свой DNS-сервер - он имеет приоритет
+export USER_ENTRIES_DNS=""
+### Файл пользовательских записей
+export USER_ENTRIES_FILE="${CONFIG_DIR}/user_entries"
+### Режим списка IP адресов исключаемых из обхода блокировок (0 - выкл, 1 - вкл)
+export BYPASS_MODE=0
+### DNS-сервер для исключаемых записей (пустая строка - без DNS-сервера). Можно с портом: 8.8.8.8#53. Если в записи указан свой DNS-сервер - он имеет приоритет
+export BYPASS_ENTRIES_DNS=""
+### Файл исключаемых записей
+export BYPASS_ENTRIES_FILE="${CONFIG_DIR}/bypass_entries"
 ### Кол-во попыток обновления блэклиста (в случае неудачи)
 export MODULE_RUN_ATTEMPTS=3
 ### Таймаут между попытками обновления
@@ -194,18 +199,21 @@ export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
 export NFT_TABLE="ip r"
 export NFT_TABLE_DNSMASQ="4#ip#r"
 export NFTSET_ALLOWED_HOSTS="allowed_ip"
-export NFTSET_BYPASS_IP="bypass_ip"
+export NFTSET_BYPASS_IP="bi"
+export NFTSET_BYPASS_FQDN="bd"
 export NFTSET_ONION="onion"
 export NFTSET_CIDR="c"
 export NFTSET_IP="i"
 export NFTSET_DNSMASQ="d"
 export NFTSET_ALLOWED_HOSTS_TYPE="ipv4_addr"
 export NFTSET_BYPASS_IP_TYPE="ipv4_addr"
+export NFTSET_BYPASS_FQDN_TYPE="ipv4_addr"
 export NFTSET_CIDR_TYPE="ipv4_addr"
 export NFTSET_IP_TYPE="ipv4_addr"
 export NFTSET_DNSMASQ_TYPE="ipv4_addr"
 export NFTSET_CIDR_CFG="set ${NFTSET_CIDR} {type ${NFTSET_CIDR_TYPE};size ${NFTSET_MAXELEM_CIDR};policy ${NFTSET_POLICY_CIDR};flags interval;auto-merge;"
 export NFTSET_IP_CFG="set ${NFTSET_IP} {type ${NFTSET_IP_TYPE};size ${NFTSET_MAXELEM_IP};policy ${NFTSET_POLICY_IP};flags dynamic;"
+export NFTSET_BYPASS_IP_CFG="set ${NFTSET_BYPASS_IP} {type ${NFTSET_BYPASS_IP_TYPE};size ${NFTSET_MAXELEM_BYPASS_IP};policy ${NFTSET_POLICY_CIDR};flags interval;auto-merge;"
 export UPDATE_STATUS_FILE="${DATA_DIR}/update_status"
 U_PID_FILE="/var/run/${NAME}_update.pid"
 START_PID_FILE="/var/run/${NAME}_start.pid"
@@ -236,7 +244,7 @@ cat << EOF
         reload : Renew nftables configuration
         update : Update blacklist
         force-update : Force update blacklist
-        data-files : Create ${IP_DATA_FILE} & ${DNSMASQ_DATA_FILE} (without network functions)
+        data-files : Create ${IP_DATA_FILE}, ${DNSMASQ_DATA_FILE}, ${DNSMASQ_DATA_FILE_BYPASS} (without network functions)
         status : Status & some info
         raw-status : Return code: 0 - enabled, 1 - error, 2 - disabled, 3 - starting, 4 - updating
         html-info : Return the html-info output
@@ -311,11 +319,8 @@ AddNftSets() {
     if [ -n "$_allowed_hosts" ]; then
         $NFT_CMD add element $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { "$_allowed_hosts" }
     fi
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_BYPASS_IP" { type "$NFTSET_BYPASS_IP_TYPE"\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
-    _bypass_ips=`printf "$BYPASS_IP_LIST" | $AWK_CMD '{gsub(/[ ]+/, ",", $0); printf $0;}'`
-    if [ -n "$_bypass_ips" ]; then
-        $NFT_CMD add element $NFT_TABLE "$NFTSET_BYPASS_IP" { "$_bypass_ips" }
-    fi
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_BYPASS_IP" { type "$NFTSET_BYPASS_IP_TYPE"\; size $NFTSET_MAXELEM_BYPASS_IP\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_BYPASS_FQDN" { type "$NFTSET_BYPASS_FQDN_TYPE"\; size $NFTSET_MAXELEM_BYPASS_FQDN\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
 }
 
 UpdateBllistSets() {
@@ -353,7 +358,7 @@ SetNetConfig() {
 
 DropNetConfig() {
     DeleteNftRules
-    FlushNftSets "$NFTSET_ALLOWED_HOSTS" "$NFTSET_BYPASS_IP" "$NFTSET_CIDR" "$NFTSET_IP" "$NFTSET_DNSMASQ" "$NFTSET_ONION"
+    FlushNftSets "$NFTSET_ALLOWED_HOSTS" "$NFTSET_BYPASS_IP" "$NFTSET_BYPASS_FQDN" "$NFTSET_CIDR" "$NFTSET_IP" "$NFTSET_DNSMASQ" "$NFTSET_ONION"
 }
 
 DestroyNetConfig() {
@@ -364,6 +369,7 @@ DestroyNetConfig() {
 ClearDataFiles() {
     if [ -d "$DATA_DIR" ]; then
         printf "" > "$DNSMASQ_DATA_FILE"
+        printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
         printf "" > "$IP_DATA_FILE"
         printf "0 0 0" > "$UPDATE_STATUS_FILE"
     fi
@@ -378,66 +384,121 @@ PreStartCheck() {
     [ -d "$DATA_DIR" ] || mkdir -p "$DATA_DIR"
     [ "$ENABLE_HTML_INFO" = "1" -a ! -d "$HTML_DIR" ] && mkdir -p "$HTML_DIR"
     ### Костыль для старта dnsmasq
-    [ -e "$DNSMASQ_DATA_FILE" ] || printf "\n" > "$DNSMASQ_DATA_FILE"
+    [ -e "$DNSMASQ_DATA_FILE" ] || printf "" > "$DNSMASQ_DATA_FILE"
+    [ -e "$DNSMASQ_DATA_FILE_BYPASS" ] || printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
 }
 
 AddUserEntries() {
     if [ "$ADD_USER_ENTRIES" = "1" ]; then
         if [ -f "$USER_ENTRIES_FILE" ]; then
             $AWK_CMD 'BEGIN {
-                        null="";
-                        ip_array[0]=null;
-                        cidr_array[0]=null;
-                        fqdn_array[0]=null;
+                    null = "";
+                    ip_array[0] = null;
+                    cidr_array[0] = null;
+                    fqdn_array[0] = null;
+                }
+                function writeIpList(array,  _str) {
+                    _str = "";
+                    for(i in array) {
+                        _str = _str i ",";
+                    };
+                    return _str;
+                };
+                function writeDNSData(val, dns) {
+                    if(length(dns) == 0 && length(ENVIRON["USER_ENTRIES_DNS"]) > 0) {
+                        dns = ENVIRON["USER_ENTRIES_DNS"];
+                    };
+                    if(length(dns) > 0) {
+                        printf "server=/%s/%s\n", val, dns >> ENVIRON["DNSMASQ_DATA_FILE"];
+                    };
+                    printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], ENVIRON["NFTSET_DNSMASQ"] >> ENVIRON["DNSMASQ_DATA_FILE"];
+                };
+                function writeFqdnEntries() {
+                    delete fqdn_array[0];
+                    for(i in fqdn_array) {
+                        split(fqdn_array[i], a, " ");
+                        writeDNSData(a[1], a[2]);
+                    };
+                };
+                ($0 !~ /^([\040\011]*$|#)/) {
+                    if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/) {
+                        ip_array[$0] = null;
                     }
-                    function writeIpList(array,  _str) {
-                        _str="";
-                        for(i in array) {
-                            _str=_str i ",";
-                        };
-                        return _str;
-                    };
-                    function writeDNSData(val, dns) {
-                        if(length(dns) == 0 && length(ENVIRON["USER_ENTRIES_DNS"]) > 0) {
-                            dns=ENVIRON["USER_ENTRIES_DNS"];
-                        };
-                        if(length(dns) > 0) {
-                            printf "server=/%s/%s\n", val, dns >> ENVIRON["DNSMASQ_DATA_FILE"];
-                        };
-                        printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], ENVIRON["NFTSET_DNSMASQ"] >> ENVIRON["DNSMASQ_DATA_FILE"];
-                    };
-                    function writeFqdnEntries() {
-                        delete fqdn_array[0];
-                        for(i in fqdn_array) {
-                            split(fqdn_array[i], a, " ");
-                            writeDNSData(a[1], a[2]);
-                        };
-                    };
-                    ($0 !~ /^([\040\011]*$|#)/) {
-                        if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/) {
-                            ip_array[$0]=null;
-                        }
-                        else if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/) {
-                            cidr_array[$0]=null;
-                        }
-                        else if($0 ~ /^[a-z0-9.\052-]+[.]([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
-                            fqdn_array[length(fqdn_array)]=$1 " " $2;
-                        };
+                    else if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/) {
+                        cidr_array[$0] = null;
                     }
-                    END {
-                        printf "table %s {\n%s", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_CIDR_CFG"] >> ENVIRON["IP_DATA_FILE"];
-                        delete cidr_array[0];
-                        if(length(cidr_array) > 0) {
-                            printf "elements={%s};", writeIpList(cidr_array) >> ENVIRON["IP_DATA_FILE"];
-                        };
-                        printf "}\n%s", ENVIRON["NFTSET_IP_CFG"] >> ENVIRON["IP_DATA_FILE"];
-                        delete ip_array[0];
-                        if(length(ip_array) > 0) {
-                            printf "elements={%s};", writeIpList(ip_array) >> ENVIRON["IP_DATA_FILE"];
-                        };
-                        printf "}\n}\n" >> ENVIRON["IP_DATA_FILE"];
-                        writeFqdnEntries();
-                    }' "$USER_ENTRIES_FILE"
+                    else if($0 ~ /^[a-z0-9.\052-]+[.]([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
+                        fqdn_array[length(fqdn_array)] = $1 " " $2;
+                    };
+                }
+                END {
+                    printf "table %s {\n%s", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_CIDR_CFG"] >> ENVIRON["IP_DATA_FILE"];
+                    delete cidr_array[0];
+                    if(length(cidr_array) > 0) {
+                        printf "elements={%s};", writeIpList(cidr_array) >> ENVIRON["IP_DATA_FILE"];
+                    };
+                    printf "}\n%s", ENVIRON["NFTSET_IP_CFG"] >> ENVIRON["IP_DATA_FILE"];
+                    delete ip_array[0];
+                    if(length(ip_array) > 0) {
+                        printf "elements={%s};", writeIpList(ip_array) >> ENVIRON["IP_DATA_FILE"];
+                    };
+                    printf "}\n}\n" >> ENVIRON["IP_DATA_FILE"];
+                    writeFqdnEntries();
+                }' "$USER_ENTRIES_FILE"
+        fi
+    fi
+}
+
+AddBypassEntries() {
+    printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
+    FlushNftSets "$NFTSET_BYPASS_IP" "$NFTSET_BYPASS_FQDN"
+    if [ "$BYPASS_MODE" = "1" ]; then
+        if [ -f "$BYPASS_ENTRIES_FILE" ]; then
+            $AWK_CMD 'BEGIN {
+                    null = "";
+                    ip_array[0] = null;
+                    fqdn_array[0] = null;
+                }
+                function writeIpList(array,  _str) {
+                    _str = "";
+                    for(i in array) {
+                        _str = _str i ",";
+                    };
+                    return _str;
+                };
+                function writeDNSData(val, dns) {
+                    if(length(dns) == 0 && length(ENVIRON["BYPASS_ENTRIES_DNS"]) > 0) {
+                        dns = ENVIRON["BYPASS_ENTRIES_DNS"];
+                    };
+                    if(length(dns) > 0) {
+                        printf "server=/%s/%s\n", val, dns >> ENVIRON["DNSMASQ_DATA_FILE_BYPASS"];
+                    };
+                    printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], ENVIRON["NFTSET_BYPASS_FQDN"] >> ENVIRON["DNSMASQ_DATA_FILE_BYPASS"];
+                };
+                function writeFqdnEntries() {
+                    delete fqdn_array[0];
+                    for(i in fqdn_array) {
+                        split(fqdn_array[i], a, " ");
+                        writeDNSData(a[1], a[2]);
+                    };
+                };
+                ($0 !~ /^([\040\011]*$|#)/) {
+                    if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}([\057][0-9]{1,2})?$/) {
+                        ip_array[$0] = null;
+                    }
+                    else if($0 ~ /^[a-z0-9.\052-]+[.]([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
+                        fqdn_array[length(fqdn_array)] = $1 " " $2;
+                    };
+                }
+                END {
+                    printf "table %s {\n%s", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_BYPASS_IP_CFG"] >> ENVIRON["IP_DATA_FILE"];
+                    delete ip_array[0];
+                    if(length(ip_array) > 0) {
+                        printf "elements={%s};", writeIpList(ip_array) >> ENVIRON["IP_DATA_FILE"];
+                    };
+                    printf "}\n}\n" >> ENVIRON["IP_DATA_FILE"];
+                    writeFqdnEntries();
+                }' "$BYPASS_ENTRIES_FILE"
         fi
     fi
 }
@@ -467,6 +528,7 @@ GetDataFiles() {
             sleep $MODULE_RUN_TIMEOUT
         done
         AddUserEntries
+        AddBypassEntries
         if [ $_return_code -eq 0 ]; then
             _update_string=`$AWK_CMD '{
                 printf "Received entries: %s\n", (NF < 3) ? "No data" : "CIDR: "$1", IP: "$2", FQDN: "$3;
@@ -481,6 +543,7 @@ GetDataFiles() {
         ClearDataFiles
         ADD_USER_ENTRIES=1
         AddUserEntries
+        AddBypassEntries
         _return_code=0
     else
         _return_code=2
@@ -488,7 +551,7 @@ GetDataFiles() {
     fi
     if [ $_return_code -eq 0 ]; then
         if [ "$PROXY_MODE" = "2" -o "$PROXY_MODE" = "3" ]; then
-            printf "\n" >> "$DNSMASQ_DATA_FILE"
+            printf "" >> "$DNSMASQ_DATA_FILE"
         else
             ### Запись для .onion в $DNSMASQ_DATA_FILE
             printf "server=/onion/%s\nnftset=/onion/%s#%s\n" "$ONION_DNS_ADDR" "$NFT_TABLE_DNSMASQ" "$NFTSET_ONION" >> "$DNSMASQ_DATA_FILE"

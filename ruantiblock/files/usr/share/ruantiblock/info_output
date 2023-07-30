@@ -29,6 +29,10 @@ Info() {
     if [ $? -eq 0 ]; then
         printf ",\"dnsmasq\":"
         $NFT_CMD -j list set $NFT_TABLE "$NFTSET_DNSMASQ" 2> /dev/null
+        if [ "$BYPASS_MODE" = "1" ]; then
+            printf ",\"dnsmasq_bypass\":"
+            $NFT_CMD -j list set $NFT_TABLE "$NFTSET_BYPASS_FQDN" 2> /dev/null
+        fi
         printf "}"
     fi
 }

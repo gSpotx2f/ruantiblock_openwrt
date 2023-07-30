@@ -90,6 +90,13 @@ return view.extend({
 				'<br /><code>#comment<br />domain.net<br />sub.domain.com 8.8.8.8<br />sub.domain.com 8.8.8.8#53<br />74.125.131.19<br />74.125.0.0/16</code>'
 		);
 
+		let bypass_entries_edit = new tools.fileEditDialog(
+			tools.bypassEntriesFile,
+			_('Exclusion list'),
+			_('One entry (IP, CIDR or FQDN) per line. In the FQDN records, you can specify the DNS server for resolving this domain (separated by a space). You can also comment on lines (<code>#</code> is the first character of a line).<br />Examples:') +
+				'<br /><code>#comment<br />domain.net<br />sub.domain.com 8.8.8.8<br />sub.domain.com 8.8.8.8#53<br />74.125.131.19<br />74.125.0.0/16</code>'
+		);
+
 		let torrc_edit = new tools.fileEditDialog(
 			tools.torrcFile,
 			_('Tor configuration file'),
@@ -249,19 +256,45 @@ return view.extend({
 		bllist_module.value('', _('disabled'));
 		bllist_module.depends({ bllist_preset: new RegExp('^($|' + tools.appName + ')'), '!reverse': true });
 
-		// BYPASS_IP_MODE
-		o = s.taboption('blacklist_tab', form.Flag, 'bypass_ip_mode',
-			_('Enable IP exclusion list'), _("List of IP addresses that are excluded from block bypass (always available directly)"));
+		Object.entries(this.parsers).forEach(
+			e => bllist_module.value(e[1], e[0]));
+
+		// ADD_USER_ENTRIES
+		o = s.taboption('blacklist_tab', form.Flag, 'add_user_entries',
+			_('Enable user entries'), _("Add user entries to the blacklist when updating"));
+		o.rmempty = false;
+		o.default = 0;
+		o.depends({ bllist_preset: '', '!reverse': true });
+
+		// USER_ENTRIES edit dialog
+		o = s.taboption('blacklist_tab', form.Button, '_user_entries_btn',
+			_('User entries'));
+		o.onclick    = () => user_entries_edit.show();
+		o.inputtitle = _('Edit');
+		o.inputstyle = 'edit btn';
+
+		// USER_ENTRIES_DNS
+		o = s.taboption('blacklist_tab', form.Value, 'user_entries_dns',
+			_("DNS server that is used for the user's FQDN entries"), '<code>ipaddress[#port]</code>');
+		o.validate = this.validateIpPort;
+
+		// BYPASS_MODE
+		o = s.taboption('blacklist_tab', form.Flag, 'bypass_mode',
+			_('Enable exclusion list'), _("List of hosts that are excluded from block bypass (always available directly)"));
 		o.rmempty = false;
 		o.default = 0;
 
-		// BYPASS_IP_LIST
-		o = s.taboption('blacklist_tab', form.DynamicList, 'bypass_ip_list',
-			_('IP exclusion list'));
-		o.datatype = "ip4addr";
+		// BYPASS_ENTRIES edit dialog
+		o = s.taboption('blacklist_tab', form.Button, '_bypass_entries_btn',
+			_('Exclusion list'));
+		o.onclick    = () => bypass_entries_edit.show();
+		o.inputtitle = _('Edit');
+		o.inputstyle = 'edit btn';
 
-		Object.entries(this.parsers).forEach(
-			e => bllist_module.value(e[1], e[0]));
+		// BYPASS_ENTRIES_DNS
+		o = s.taboption('blacklist_tab', form.Value, 'bypass_entries_dns',
+			_("DNS server that is used for the FQDN entries of exclusion list"), '<code>ipaddress[#port]</code>');
+		o.validate = this.validateIpPort;
 
 		if(availableParsers) {
 			bllist_preset.description += '<br /> ( * - ' + _('requires installed blacklist module') + ' )';
@@ -373,30 +406,6 @@ return view.extend({
 			o.rmempty = false;
 
 		};
-
-
-		/* User entries tab */
-
-		s.tab('user_entries_tab', _('User entries'));
-
-		// ADD_USER_ENTRIES
-		o = s.taboption('user_entries_tab', form.Flag, 'add_user_entries',
-			_('Enable'), _("Add user entries to the blacklist when updating"));
-		o.rmempty = false;
-		o.default = 0;
-		o.depends({ bllist_preset: '', '!reverse': true });
-
-		// USER_ENTRIES_DNS
-		o = s.taboption('user_entries_tab', form.Value, 'user_entries_dns',
-			_("DNS server that is used for FQDN entries"), '<code>ipaddress[#port]</code>');
-		o.validate = this.validateIpPort;
-
-		// USER_ENTRIES edit dialog
-		o = s.taboption('user_entries_tab', form.Button, '_user_entries_btn',
-			_('User entries'));
-		o.onclick    = () => user_entries_edit.show();
-		o.inputtitle = _('Edit');
-		o.inputstyle = 'edit btn';
 
 		let map_promise = m.render();
 		map_promise.then(node => node.classList.add('fade-in'));

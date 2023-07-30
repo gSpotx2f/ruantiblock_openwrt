@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock
 PKG_VERSION:=1.2
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
 include $(INCLUDE_DIR)/package.mk
@@ -29,6 +29,7 @@ define Package/$(PKG_NAME)/conffiles
 /etc/ruantiblock/fqdn_filter
 /etc/ruantiblock/ip_filter
 /etc/ruantiblock/user_entries
+/etc/ruantiblock/bypass_entries
 endef
 
 define Build/Configure
@@ -49,6 +50,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/etc/ruantiblock/fqdn_filter $(1)/etc/ruantiblock/fqdn_filter
 	$(INSTALL_DATA) ./files/etc/ruantiblock/ip_filter $(1)/etc/ruantiblock/ip_filter
 	$(INSTALL_DATA) ./files/etc/ruantiblock/user_entries $(1)/etc/ruantiblock/user_entries
+	$(INSTALL_DATA) ./files/etc/ruantiblock/bypass_entries $(1)/etc/ruantiblock/bypass_entries
 	$(INSTALL_DIR) $(1)/usr/share/ruantiblock
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/config_script $(1)/usr/share/ruantiblock/config_script
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/info_output $(1)/usr/share/ruantiblock/info_output
@@ -73,9 +75,10 @@ define Package/$(PKG_NAME)/prerm
 FILE_INIT_SCRIPT="/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="/usr/bin/ruantiblock"
 CRONTAB_FILE="/etc/crontabs/root"
-DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/ruantiblock.dnsmasq"
+DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/02-ruantiblock.dnsmasq"
+DNSMASQ_DATA_FILE_BYPASS="/tmp/dnsmasq.d/01-ruantiblock_bypass.dnsmasq"
 
-rm -f $$DNSMASQ_DATA_FILE
+rm -f $$DNSMASQ_DATA_FILE $$DNSMASQ_DATA_FILE_BYPASS
 test -e "$$FILE_MAIN_SCRIPT" && $$FILE_MAIN_SCRIPT destroy
 
 test -e "$$FILE_INIT_SCRIPT" && $$FILE_INIT_SCRIPT disable
