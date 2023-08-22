@@ -176,11 +176,6 @@ return view.extend({
 		o.rmempty  = false;
 		o.datatype = "port";
 
-		//TOR_ALLOW_UDP
-		o = s.taboption('tor_settings', form.Flag, 'tor_allow_udp',
-			_("Send UDP traffic to Tor"));
-		o.rmempty = false;
-
 		// ONION_DNS_ADDR
 		o = s.taboption('tor_settings', form.Value, 'onion_dns_addr',
 			_("Optional DNS resolver for '.onion' zone"), '<code>ipaddress#port</code>');

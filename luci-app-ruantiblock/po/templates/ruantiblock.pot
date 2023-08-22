@@ -316,9 +316,6 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-msgid "Send UDP traffic to Tor"
-msgstr ""
-
 msgid "Send UDP traffic to transparent proxy"
 msgstr ""
 

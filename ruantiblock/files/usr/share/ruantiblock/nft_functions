@@ -84,9 +84,6 @@ NftMainAdd() {
         fi
     else
         NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ACTION_CHAIN" tcp dport { 0-65535 } redirect to $TOR_TRANS_PORT
-        if [ "$TOR_ALLOW_UDP" = "1" ]; then
-            NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ACTION_CHAIN" udp dport { 0-65535 } redirect to $TOR_TRANS_PORT
-        fi
         NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" ip daddr "@${NFTSET_ONION}" counter goto "$NFT_ACTION_CHAIN"
     fi
     if [ "$BYPASS_MODE" = "1" ]; then
