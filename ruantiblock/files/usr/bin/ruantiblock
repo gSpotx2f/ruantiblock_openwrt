@@ -578,6 +578,9 @@ GetDataFiles() {
             [ $_attempt -gt $MODULE_RUN_ATTEMPTS ] && break
             sleep $MODULE_RUN_TIMEOUT
         done
+        if [ "$ENABLE_BLLIST_PROXY" = "1" ]; then
+            FlushNftSets "$NFTSET_BLLIST_PROXY"
+        fi
         AddUserEntries
         AddBypassEntries
         if [ $_return_code -eq 0 ]; then
