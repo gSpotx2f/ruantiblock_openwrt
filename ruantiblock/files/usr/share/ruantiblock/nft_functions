@@ -1,6 +1,7 @@
 IP_CMD="ip"
 NFT_ALLOWED_HOSTS_CHAIN="allowed_hosts"
 NFT_BLLIST_CHAIN="blacklist"
+NFT_FPROXY_FILTER="fproxy_filter"
 NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN="dnsmasq_timeout_update"
 NFT_ACTION_CHAIN="action"
 NFT_LOCAL_CLIENTS_CHAIN="local_clients"
@@ -69,9 +70,12 @@ NftMainAdd() {
     local _set
     $NFT_CMD add chain $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN" { $LOCAL_CLIENTS_CHAIN_TYPE }
     $NFT_CMD add chain $NFT_TABLE "$NFT_ACTION_CHAIN"
+    $NFT_CMD add chain $NFT_TABLE "$NFT_FPROXY_FILTER"
     $NFT_CMD add chain $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN"
     $NFT_CMD add chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
     $NFT_CMD add chain $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" { $MAIN_CHAIN_TYPE }
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE $NFT_FPROXY_FILTER ip daddr "@${NFTSET_FPROXY_PRIVATE}" return
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_FILTER" jump "$NFT_ACTION_CHAIN"
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN" ct state new set update ip daddr "@${NFTSET_DNSMASQ}"
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN" jump "$NFT_ACTION_CHAIN"
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" $NFT_ALLOWED_HOSTS_EXPR
@@ -85,6 +89,9 @@ NftMainAdd() {
     else
         NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ACTION_CHAIN" tcp dport { 0-65535 } redirect to $TOR_TRANS_PORT
         NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" ip daddr "@${NFTSET_ONION}" counter goto "$NFT_ACTION_CHAIN"
+    fi
+    if [ "$ENABLE_FPROXY" = "1" ]; then
+        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" ip saddr "@${NFTSET_FPROXY}" counter goto "$NFT_FPROXY_FILTER"
     fi
     if [ "$BYPASS_MODE" = "1" ]; then
         for _set in "$NFTSET_BYPASS_IP" "$NFTSET_BYPASS_FQDN"
@@ -100,6 +107,12 @@ NftMainAdd() {
     if [ "$PROXY_MODE" = "2" ]; then
         NftVpnRouteAdd
     fi
+    if [ "$ENABLE_BLLIST_PROXY" = "1" ]; then
+        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN" ip daddr "@${NFTSET_BLLIST_PROXY}" counter goto "$NFT_ACTION_CHAIN"
+    fi
+    if [ "$PROXY_LOCAL_CLIENTS" = "1" ]; then
+        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN" jump "$NFT_BLLIST_CHAIN"
+    fi
 }
 
 NftMainDelete() {
@@ -111,13 +124,11 @@ NftMainDelete() {
     $NFT_CMD delete chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
     $NFT_CMD flush chain $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN"
     $NFT_CMD delete chain $NFT_TABLE "$NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN"
+    $NFT_CMD flush chain $NFT_TABLE "$NFT_FPROXY_FILTER"
+    $NFT_CMD delete chain $NFT_TABLE "$NFT_FPROXY_FILTER"
     $NFT_CMD flush chain $NFT_TABLE "$NFT_ACTION_CHAIN"
     $NFT_CMD delete chain $NFT_TABLE "$NFT_ACTION_CHAIN"
     NftVpnRouteDelete 2> /dev/null
-}
-
-NftLocalClientsAdd() {
-    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN" jump "$NFT_BLLIST_CHAIN"
 }
 
 NftListBllistChain() {

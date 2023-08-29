@@ -19,6 +19,9 @@ msgstr ""
 msgid "All hosts except listed"
 msgstr ""
 
+msgid "All traffic of the specified hosts passes through the proxy, without a blacklist"
+msgstr ""
+
 msgid "Apply"
 msgstr ""
 
@@ -94,6 +97,10 @@ msgstr ""
 
 msgid "Download log"
 msgstr ""
+
+msgid "Downloading a blacklist via proxy"
+msgstr ""
+
 msgid "Edit"
 msgstr ""
 
@@ -109,6 +116,9 @@ msgid "Enable IP filter"
 msgstr ""
 
 msgid "Enable exclusion list"
+msgstr ""
+
+msgid "Enable full proxy mode"
 msgstr ""
 
 msgid "Enable user entries"
@@ -159,7 +169,10 @@ msgstr ""
 msgid "IP address"
 msgstr ""
 
-msgid "IP addresses of hosts"
+msgid "IP addresses for full proxy mode"
+msgstr ""
+
+msgid "IP addresses for host filter"
 msgstr ""
 
 msgid "IP filter"
@@ -399,6 +412,9 @@ msgid "Transparent proxy TCP port"
 msgstr ""
 
 msgid "Transparent proxy UDP port"
+msgstr ""
+
+msgid "Turn on if blacklist source is blocked"
 msgstr ""
 
 msgid "Type an expression..."

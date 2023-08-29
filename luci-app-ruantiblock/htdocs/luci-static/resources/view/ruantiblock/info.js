@@ -47,7 +47,6 @@ return view.extend({
 		if(data.rules.nftables && data.rules.nftables.length > 1) {
 			for(let i of data.rules.nftables) {
 				if(!i.rule) continue;
-
 				let set, bytes;
 				i.rule.expr.forEach(e => {
 					if(e.match && e.match.left && e.match.left.payload) {
@@ -287,7 +286,7 @@ return view.extend({
 									'class'     : 'td left',
 									'data-title': _('Match-set'),
 								}, set + ((set.length >= 1) ? (
-									' (' + set.replace(/^c/, 'CIDR').replace(/^i/, 'IP').replace(/^d/, 'dnsmasq').replace(/^bi/, 'bypass IP').replace(/^bd/, 'bypass dnsmasq') + ')'
+									' (' + set.replace(/^c/, 'CIDR').replace(/^i/, 'IP').replace(/^d/, 'dnsmasq').replace(/^bi/, 'bypass IP').replace(/^bd/, 'bypass dnsmasq').replace(/^fproxy/, 'full proxy') + ')'
 								) : '')),
 								E('td', {
 									'class'     : 'td left',

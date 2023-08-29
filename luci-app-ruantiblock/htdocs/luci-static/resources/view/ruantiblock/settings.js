@@ -162,7 +162,18 @@ return view.extend({
 
 		// ALLOWED_HOSTS_LIST
 		o = s.taboption('main_settings', form.DynamicList, 'allowed_hosts_list',
-			_('IP addresses of hosts'));
+			_('IP addresses for host filter'));
+		o.datatype = "ip4addr";
+
+		// ENABLE_FPROXY
+		o = s.taboption('main_settings', form.Flag, 'enable_fproxy',
+			_('Enable full proxy mode'));
+		o.description = _('All traffic of the specified hosts passes through the proxy, without a blacklist');
+		o.rmempty = false;
+
+		// FPROXY_LIST
+		o = s.taboption('main_settings', form.DynamicList, 'fproxy_list',
+			_('IP addresses for full proxy mode'));
 		o.datatype = "ip4addr";
 
 
@@ -253,6 +264,13 @@ return view.extend({
 
 		Object.entries(this.parsers).forEach(
 			e => bllist_module.value(e[1], e[0]));
+
+		// ENABLE_BLLIST_PROXY
+		o = s.taboption('blacklist_tab', form.Flag, 'enable_bllist_proxy',
+			_('Downloading a blacklist via proxy'), _('Turn on if blacklist source is blocked'));
+		o.rmempty = false;
+		o.default = 0;
+		o.depends({ bllist_preset: '', '!reverse': true });
 
 		// ADD_USER_ENTRIES
 		o = s.taboption('blacklist_tab', form.Flag, 'add_user_entries',
