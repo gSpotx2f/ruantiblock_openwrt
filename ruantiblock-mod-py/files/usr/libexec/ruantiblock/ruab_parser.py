@@ -376,7 +376,7 @@ class RblFQDN(BlackListParser):
     def __init__(self):
         super().__init__()
         self.url = self.RBL_ALL_URL
-        self.records_separator = '{"authority": '
+        self.records_separator = '{"appearDate": '
         self.ips_separator = ", "
 
     def parser_func(self):

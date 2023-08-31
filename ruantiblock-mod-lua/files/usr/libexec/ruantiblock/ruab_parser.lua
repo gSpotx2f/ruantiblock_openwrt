@@ -513,14 +513,14 @@ end
 
 local Rbl = Class(BlackListParser, {
     url = Config.RBL_ALL_URL,
-    records_separator = '%{"authority": ',
+    records_separator = '%{"appearDate": ',
     ips_separator = ", ",
 })
 
 function Rbl:sink()
     return function(chunk)
         if chunk and chunk ~= "" then
-            for fqdn_str, ip_str in chunk:gmatch('"domains": %["?(.-)"?%].-"ips": %[([a-f0-9/.:", ]*)%].-' .. self.records_separator .. "?") do
+            for fqdn_str, ip_str in chunk:gmatch('"domains": %["?(.-)"?%].-"ips": %[([a-f0-9/.:", ]*)%].-') do
                 fqdn_sink_func(self, ip_str, fqdn_str)
             end
         end
