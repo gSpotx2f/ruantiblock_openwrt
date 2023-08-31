@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock-mod-py
 PKG_VERSION:=1.3
-PKG_RELEASE:=0
+PKG_RELEASE:=1
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
 include $(INCLUDE_DIR)/package.mk
