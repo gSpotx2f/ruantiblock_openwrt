@@ -2,19 +2,19 @@
 # -*- coding: utf-8 -*-
 
 """
-(с) 2020 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+(с) 2023 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 
  Python >= 3.6
 """
 
 from contextlib import contextmanager
+from ipaddress import IPv4Address, IPv4Network, summarize_address_range
 import os
 import re
 import socket
 import ssl
 import sys
 from urllib import request
-from ruab_sum_ip import summarize_ip_ranges, summarize_nets
 
 
 class Config:
@@ -118,6 +118,98 @@ class Config:
     def load_ip_filter(cls, file_path=None):
         if cls.BLLIST_IP_FILTER:
             cls._load_filter(file_path or cls.BLLIST_IP_FILTER_FILE, cls.BLLIST_IP_FILTER_PATTERNS)
+
+
+class Summarize:
+    HOSTS_LIMIT = 0
+    NETS_LIMIT = 0
+
+    @staticmethod
+    def _sort_ip_func(e):
+        return IPv4Address(e)
+
+    @classmethod
+    def _group_ip_ranges(cls, ip_list, raw_list=None):
+
+        def remove_items(start, end):
+            for ip in range(int(start), int(end) + 1):
+                raw_list.remove(str(IPv4Address(ip)))
+
+        start = end = None
+        hosts = 1
+        for ip in ip_list:
+            ip_obj = IPv4Address(ip)
+            if end and (end + 1) == ip_obj:
+                hosts += 1
+            else:
+                if hosts > 1 and hosts >= cls.HOSTS_LIMIT:
+                    if raw_list:
+                        remove_items(start, end)
+                    yield start, end
+                start = ip_obj
+                hosts = 1
+            end = ip_obj
+        else:
+            if hosts > 1 and hosts >= HOSTS_LIMIT:
+                if raw_list:
+                    remove_items(start, end)
+                yield start, end
+
+    @classmethod
+    def summarize_ip_ranges(cls, ip_list, modify_raw_list=False):
+        for s, e in cls._group_ip_ranges(sorted(ip_list, key=cls._sort_ip_func),
+                                    modify_raw_list and ip_list):
+            for i in summarize_address_range(s, e):
+                if i.prefixlen == 32:
+                    if modify_raw_list:
+                        if type(ip_list) == set:
+                            ip_list.add(i.network_address)
+                        else:
+                            ip_list.append(i.network_address)
+                else:
+                    yield i
+
+    @staticmethod
+    def _sort_net_func(e):
+        return IPv4Network(e)
+
+    @classmethod
+    def _group_nets(cls, cidr_list, raw_list=None):
+
+        def remove_items(start, end):
+            for ip in range(int(start), int(end) + 1, 256):
+                raw_list.remove(str(IPv4Address(ip)) + "/24")
+
+        start = end = curr_super_net = None
+        nets = 1
+        for net in cidr_list:
+            net_obj = IPv4Network(net)
+            prefix_len = net_obj.prefixlen
+            if prefix_len == 24:
+                address = net_obj.network_address
+                super_net = net_obj.supernet(new_prefix=16)
+                if end and super_net == curr_super_net and (end + 256) == address:
+                    nets += 1
+                else:
+                    if nets > 1 and nets >= cls.NETS_LIMIT:
+                        if raw_list:
+                            remove_items(start, end)
+                        yield summarize_address_range(IPv4Address(start), IPv4Address(end + 255))
+                    start = address
+                    curr_super_net = super_net
+                    nets = 1
+                end = address
+        else:
+            if nets > 1 and nets >= cls.NETS_LIMIT:
+                if raw_list:
+                    remove_items(start, end)
+                yield summarize_address_range(IPv4Address(start), IPv4Address(end + 255))
+
+    @classmethod
+    def summarize_nets(cls, cidr_list):
+        for i in cls._group_nets(sorted(cidr_list, key=cls._sort_net_func), cidr_list):
+            for j in i:
+                yield j
 
 
 class ParserError(Exception):
@@ -349,13 +441,13 @@ class BlackListParser(Config):
 
     def _group_ip_ranges(self):
         if self.BLLIST_SUMMARIZE_IP:
-            for i in summarize_ip_ranges(self.ip_set, True):
+            for i in Summarize.summarize_ip_ranges(self.ip_set, True):
                 self.cidr_set.add(i.with_prefixlen)
             self.ip_count = len(self.ip_set)
 
     def _group_cidr_ranges(self):
         if self.BLLIST_SUMMARIZE_CIDR:
-            for i in summarize_nets(self.cidr_set):
+            for i in Summarize.summarize_nets(self.cidr_set):
                 self.cidr_set.add(i.with_prefixlen)
         self.cidr_count = len(self.cidr_set)
 

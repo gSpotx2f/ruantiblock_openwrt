@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock-mod-py
 PKG_VERSION:=1.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
 include $(INCLUDE_DIR)/package.mk
@@ -32,8 +32,6 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/libexec/ruantiblock
 	$(INSTALL_BIN) ./files/usr/libexec/ruantiblock/ruab_parser.py $(1)/usr/libexec/ruantiblock/ruab_parser.py
-	$(INSTALL_DIR) $(1)/usr/lib/python3.11
-	$(INSTALL_DATA) ./files/usr/lib/python3.11/ruab_sum_ip.py $(1)/usr/lib/python3.11/ruab_sum_ip.py
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DATA) ./files/etc/uci-defaults/ruantiblock-mod-py $(1)/etc/uci-defaults/ruantiblock-mod-py
 endef

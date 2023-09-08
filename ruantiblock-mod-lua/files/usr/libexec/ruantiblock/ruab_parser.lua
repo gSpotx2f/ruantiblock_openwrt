@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 
 --[[
- (с) 2020 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+ (с) 2023 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 
  lua == 5.1
 --]]
@@ -188,14 +188,11 @@ if Config.BLLIST_ENABLE_IDN and not idn then
 end
 local iconv = prequire("iconv")
 
-local si, it
+local it
 if prequire("bit") then
     it = prequire("iptool")
-    if it then
-        si = prequire("ruab_sum_ip")
-    end
 end
-if not si then
+if not it then
     Config.BLLIST_SUMMARIZE_CIDR = false
     Config.BLLIST_SUMMARIZE_IP = false
 end
@@ -212,6 +209,202 @@ if Config.ICONV_TYPE == "standalone" then
 elseif Config.ICONV_TYPE == "lua" then
 else
     error("Config.ICONV_TYPE should be either 'lua' or 'standalone'")
+end
+
+----------------------------- Summarize ------------------------------
+
+local Summarize = {
+    HOSTS_LIMIT = 0,
+    NETS_LIMIT = 0,
+}
+
+function Summarize:_sort_ip_list(t)
+    local t2 = {}
+    for k in pairs(t) do
+        t2[#t2 + 1] = k
+    end
+    table.sort(t2, function(a, b) return it.ip_to_int(a) < it.ip_to_int(b) end)
+    return t2
+end
+
+function Summarize:_group_ip_ranges(ip_list, raw_list)
+    local function remove_items(start, stop)
+        for i = start, stop do
+            if raw_list[i] then
+                raw_list[i] = nil
+                return
+            end
+            local item = it.int_to_ip(i)
+            if raw_list[item] then
+                raw_list[it.int_to_ip(i)] = nil
+            end
+        end
+    end
+
+    local start, stop, last_call
+    local hosts = 1
+    local i = 0
+    return function()
+        local ret_val
+        local ip
+        repeat
+            i = i + 1
+            ip = ip_list[i]
+            if ip then
+                local ip_dec = it.ip_to_int(ip)
+                if stop and (stop + 1) == ip_dec then
+                    hosts = hosts + 1
+                else
+                    if hosts > 1 and hosts >= self.HOSTS_LIMIT then
+                        if raw_list then
+                            remove_items(start, stop)
+                        end
+                        ret_val = {[1] = start, [2] = stop}
+                        start = ip_dec
+                        stop = ip_dec
+                        hosts = 1
+                        break
+                    end
+                    start = ip_dec
+                end
+                stop = ip_dec
+            elseif not last_call then
+                if hosts > 1 and hosts >= self.HOSTS_LIMIT then
+                    if raw_list then
+                        remove_items(start, stop)
+                    end
+                    ret_val = {[1] = start, [2] = stop}
+                    last_call = true
+                    break
+                end
+            end
+        until not ip
+        return ret_val
+    end
+end
+
+function Summarize:_sort_net_list(t)
+    local t2 = {}
+    for k, v in pairs(t) do
+        local ip, pref = it.get_network_addr(k)
+        t2[#t2 + 1] = {[1] = ip, [2] = pref}
+    end
+    table.sort(t2, function(a, b) return a[1] < b[1] end)
+    return t2
+end
+
+function Summarize:_group_nets(cidr_list, raw_list)
+    local function remove_items(start, stop)
+        for i = start, stop, 256 do
+            local item = it.int_to_ip(i) .. "/24"
+            if raw_list[item] then
+                raw_list[item] = nil
+            end
+        end
+    end
+
+    local start, stop, last_call, curr_supernet
+    local nets = 1
+    local i = 0
+    return function()
+        local ret_val
+        local cidr
+        repeat
+            i = i + 1
+            cidr = cidr_list[i]
+            if cidr then
+                local network_address, prefixlen
+                if type(cidr) == "string" then
+                    network_address, prefixlen = it.get_network_addr(cidr)
+                elseif type(cidr) == "table" then
+                    network_address, prefixlen = cidr[1], cidr[2]
+                end
+                if prefixlen == 24 then
+                    local supernet = it.get_supernet({[1] = network_address, [2] = prefixlen}, 16)
+                    if stop and supernet == curr_supernet and (stop + 256) == network_address then
+                        nets = nets + 1
+                    else
+                        if nets > 1 and nets >= self.NETS_LIMIT then
+                            if raw_list then
+                                remove_items(start, stop)
+                            end
+                            ret_val = {[1] = start, [2] = stop + 255}
+                            start = network_address
+                            stop = network_address
+                            nets = 1
+                            curr_supernet = supernet
+                            break
+                        end
+                        start = network_address
+                        curr_supernet = supernet
+                    end
+                    stop = network_address
+                end
+            elseif not last_call then
+                if nets > 1 and nets >= self.NETS_LIMIT then
+                    if raw_list then
+                        remove_items(start, stop)
+                    end
+                    ret_val = {[1] = start, [2] = stop + 255}
+                    last_call = true
+                    break
+                end
+            end
+        until not cidr
+        return ret_val
+    end
+end
+
+function Summarize:_summarize_ranges(ip_iter)
+    local s_range_iter
+    return function()
+        if s_range_iter then
+            repeat
+                local ip_t = s_range_iter()
+                if ip_t then
+                    return ip_t
+                end
+            until not ip_t
+        end
+        local ip_range = ip_iter()
+        if ip_range then
+            s_range_iter = it.summarize_address_range(ip_range[1], ip_range[2])
+            if s_range_iter then
+                repeat
+                    local ip_t = s_range_iter()
+                    if ip_t then
+                        return ip_t
+                    end
+                until not ip_t
+            end
+        else
+            return
+        end
+    end
+end
+
+function Summarize:summarize_ip_ranges(ip_list, modify_raw_list)
+    local summ_iter = self:_summarize_ranges(
+        self:_group_ip_ranges(self:_sort_ip_list(ip_list), modify_raw_list and ip_list)
+    )
+    return function()
+        repeat
+            local ip_t = summ_iter()
+            if ip_t and ip_t[2] == 32 then
+                if modify_raw_list then
+                    ip_list[it.int_to_ip(ip_t[1])] = true
+                end
+            else
+                return ip_t
+            end
+        until not ip_t
+    end
+end
+
+function Summarize:summarize_nets(cidr_list, modify_raw_list)
+    return self:_summarize_ranges(
+        self:_group_nets(self:_sort_net_list(cidr_list), modify_raw_list and cidr_list)
+    )
 end
 
 ------------------------------ Classes -------------------------------
@@ -379,13 +572,13 @@ function BlackListParser:optimize_fqdn_table()
 end
 
 function BlackListParser:group_ip_ranges()
-    for i in si.summarize_ip_ranges(self.ip_table, true) do
+    for i in Summarize:summarize_ip_ranges(self.ip_table, true) do
         self.cidr_table[string.format("%s/%s", it.int_to_ip(i[1]), i[2])] = true
     end
 end
 
 function BlackListParser:group_cidr_ranges()
-    for i in si.summarize_nets(self.cidr_table, true) do
+    for i in Summarize:summarize_nets(self.cidr_table, true) do
         self.cidr_table[string.format("%s/%s", it.int_to_ip(i[1]), i[2])] = true
     end
 end
