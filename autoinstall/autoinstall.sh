@@ -8,7 +8,7 @@ BLACKLIST=0
 LUA_MODULE=0
 LUCI_APP=1
 
-OWRT_VERSION="current"
+OWRT_VERSION="22.03"
 RUAB_VERSION="0.9.7-1"
 RUAB_MOD_LUA_VERSION="0.9.7-1"
 RUAB_LUCI_APP_VERSION="0.9.7-0"
@@ -27,7 +27,7 @@ URL_MOD_LUA_PKG="${BASE_URL}/${OWRT_VERSION}/ruantiblock-mod-lua_${RUAB_MOD_LUA_
 URL_LUCI_APP_PKG="${BASE_URL}/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
 URL_LUCI_APP_RU_PKG="${BASE_URL}/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
 ### tor
-URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/tor/etc/tor/torrc"
+URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/0.9/tor/etc/tor/torrc"
 ### ruantiblock-mod-lua
 URL_LUA_IPTOOL="https://raw.githubusercontent.com/gSpotx2f/iptool-lua/master/5.1/iptool.lua"
 URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
