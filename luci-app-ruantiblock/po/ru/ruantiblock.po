@@ -164,6 +164,9 @@ msgstr "Тип FQDN фильтра"
 msgid "Facility"
 msgstr "Категория"
 
+msgid "Facilities"
+msgstr "Категории"
+
 msgid "Failed to get %s init status: %s"
 msgstr "Не удалось получить статус инициализации %s: %s"
 
@@ -428,6 +431,9 @@ msgstr "Таймаут"
 msgid "Timestamp"
 msgstr "Время"
 
+msgid "Timestamp filter"
+msgstr "Фильтр даты"
+
 msgid "Tor configuration file"
 msgstr "Конфигурационный файл Tor"
 
@@ -469,6 +475,9 @@ msgstr "Невозможно сохранить изменения"
 
 msgid "Unable to save the contents"
 msgstr "Невозможно сохранить содержимое"
+
+msgid "Unsupported log format"
+msgstr "Неподдерживаемый формат лога"
 
 msgid "Update"
 msgstr "Обновить"

@@ -148,6 +148,9 @@ msgstr ""
 msgid "Facility"
 msgstr ""
 
+msgid "Facilities"
+msgstr ""
+
 msgid "Failed to get %s init status: %s"
 msgstr ""
 
@@ -393,6 +396,9 @@ msgstr ""
 msgid "Timestamp"
 msgstr ""
 
+msgid "Timestamp filter"
+msgstr ""
+
 msgid "Tor configuration file"
 msgstr ""
 
@@ -424,6 +430,7 @@ msgstr ""
 
 msgid "Unable to load log data:"
 msgstr ""
+
 msgid "Unable to read the contents"
 msgstr ""
 
@@ -431,6 +438,9 @@ msgid "Unable to save the changes"
 msgstr ""
 
 msgid "Unable to save the contents"
+msgstr ""
+
+msgid "Unsupported log format"
 msgstr ""
 
 msgid "Update"
