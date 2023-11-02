@@ -655,7 +655,7 @@ return baseclass.extend({
 					if(logdata) {
 						let timeFilterSection = document.getElementById('timeFilterSection');
 						if(this.isFacilities && !this.logFacilitiesDropdown) {
-							logFacilitiesDropdownElem = this.makeLogFacilitiesDropdownSection();
+							timeFilterSection.after(this.makeLogFacilitiesDropdownSection());
 						};
 						if(this.isLevels && !this.logLevelsDropdown) {
 							timeFilterSection.after(this.makeLogLevelsDropdownSection());
