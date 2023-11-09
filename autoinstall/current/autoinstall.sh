@@ -11,7 +11,7 @@ LUCI_APP=1
 OWRT_VERSION="current"
 RUAB_VERSION="1.3-1"
 RUAB_MOD_LUA_VERSION="1.3-2"
-RUAB_LUCI_APP_VERSION="1.3-1"
+RUAB_LUCI_APP_VERSION="1.3-2"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
 

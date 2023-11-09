@@ -17,6 +17,7 @@ document.head.append(E('style', {'type': 'text/css'},
 	--app-log-notice: #e3ffec;
 	--app-log-info: rgba(0,0,0,0);
 	--app-log-debug: #ebf6ff;
+	--app-log-entries-count-border: #ccc;
 }
 :root[data-darkmode="true"] {
 	--app-log-dark-font-color: #fff;
@@ -30,34 +31,7 @@ document.head.append(E('style', {'type': 'text/css'},
 	--app-log-notice: #007627;
 	--app-log-info: rgba(0,0,0,0);
 	--app-log-debug: #5986b1;
-}
-.log-entry-empty {
-}
-.log-entry-number {
-	min-width: 4em !important;
-}
-.log-entry-time {
-	min-width: 15em !important;
-}
-.log-entry-host {
-	min-width: 10em !important;
-}
-.log-entry-host-cell {
-	word-break: break-all !important;
-	word-wrap: break-word !important;
-}
-.log-entry-log-level {
-	max-width: 5em !important;
-}
-.log-entry-facility{
-	max-width: 7em !important;
-}
-.log-entry-message {
-	min-width: 25em !important;
-}
-.log-entry-message-cell {
-	overflow-x: hidden !important;
-	text-overflow: ellipsis !important;
+	--app-log-entries-count-border: #555;
 }
 .log-empty {
 }
@@ -123,6 +97,7 @@ log-emerg td {
 }
 .log-info {
 	background-color: var(--app-log-info) !important;
+	/*color: var(--app-log-dark-font-color) !important;*/
 }
 .log-debug {
 	background-color: var(--app-log-debug) !important;
@@ -150,12 +125,24 @@ log-emerg td {
 	-webkit-border-radius: 3px;
 	-moz-border-radius: 3px;
 	border-radius: 3px;
-	border: 1px solid #ccc;
+	border: 1px solid var(--app-log-entries-count-border);
 	font-weight: normal;
 }
 .log-host-dropdown-item {
 }
 .log-facility-dropdown-item {
+}
+.log-scroll-block {
+	position: fixed;
+	z-index: 1 !important;
+	opacity: 0.7;
+}
+.log-scroll-btn {
+	position: relative;
+	display: block;
+	margin: 0 !important;
+	left: 1px;
+	top: 1px;
 }
 `));
 
@@ -325,7 +312,7 @@ return baseclass.extend({
 		*
 		* @param {number} tail
 		* @returns {string}
-		* Returns the raw content of the log
+		* Returns the raw content of the log.
 		*/
 		getLogData(tail) {
 			throw new Error('getLogData must be overridden by a subclass');
@@ -338,10 +325,47 @@ return baseclass.extend({
 		* @param {string} logdata
 		* @param {number} tail
 		* @returns {Array<number, string|null, string|null, string|null, string|null, string|null>}
-		* Returns an array of values: [ #, Timestamp, Host, Level, Facility, Message ]
+		* Returns an array of values: [ #, Timestamp, Host, Level, Facility, Message ].
 		*/
 		parseLogData(logdata, tail) {
 			throw new Error('parseLogData must be overridden by a subclass');
+		},
+
+		/**
+		* Highlight the result of a regular expression.
+		* Abstract method, must be overridden by a subclass!
+		*
+		* @param {string} logdata
+		* @returns {string}
+		* Returns a string with the highlighted part.
+		*/
+		regexpFilterHighlightFunc(match) {
+			throw new Error('parseLogData must be overridden by a subclass');
+		},
+
+		setRegexpFilter(entriesArray, fieldNum, pattern) {
+			let fArr = [];
+			try {
+				let regExp = new RegExp(pattern, 'giu');
+				entriesArray.forEach((e, i) => {
+					if(e[fieldNum] !== null && regExp.test(e[fieldNum])) {
+						if(this.regexpFilterHighlightFunc) {
+							e[fieldNum] = e[fieldNum].replace(regExp, this.regexpFilterHighlightFunc);
+						};
+						fArr.push(e);
+					};
+					regExp.lastIndex = 0;
+				});
+			} catch(err) {
+				if(err.name === 'SyntaxError') {
+					ui.addNotification(null,
+						E('p', {}, _('Invalid regular expression') + ': ' + err.message));
+					return entriesArray;
+				} else {
+					throw err;
+				};
+			};
+			return fArr;
 		},
 
 		setDateFilter(entriesArray) {
@@ -389,35 +413,6 @@ return baseclass.extend({
 			return entriesArray;
 		},
 
-		regexpFilterHighlightFunc(match) {
-			return `<span class="log-highlight-item">${match}</span>`;
-		},
-
-		setRegexpFilter(entriesArray, fieldNum, pattern) {
-			let fArr = [];
-			try {
-				let regExp = new RegExp(pattern, 'giu');
-				entriesArray.forEach((e, i) => {
-					if(e[fieldNum] !== null && regExp.test(e[fieldNum])) {
-						if(this.regexpFilterHighlightFunc) {
-							e[fieldNum] = e[fieldNum].replace(regExp, this.regexpFilterHighlightFunc);
-						};
-						fArr.push(e);
-					};
-					regExp.lastIndex = 0;
-				});
-			} catch(err) {
-				if(err.name === 'SyntaxError') {
-					ui.addNotification(null,
-						E('p', {}, _('Invalid regular expression') + ': ' + err.message));
-					return entriesArray;
-				} else {
-					throw err;
-				};
-			};
-			return fArr;
-		},
-
 		setMsgFilter(entriesArray) {
 			let fPattern = document.getElementById('msgFilter').value;
 			if(!fPattern) {
@@ -426,70 +421,16 @@ return baseclass.extend({
 			return this.setRegexpFilter(entriesArray, 5, fPattern);
 		},
 
+		/**
+		* Creates the contents of the log area.
+		* Abstract method, must be overridden by a subclass!
+		*
+		* @param {Array<number, string|null, string|null, string|null, string|null, string|null>} logdataArray
+		* @returns {Node}
+		* Returns a DOM node containing the log area.
+		*/
 		makeLogArea(logdataArray) {
-			let lines    = `<tr class="tr"><td class="td center log-entry-empty">${_('No entries available...')}</td></tr>`;
-			let logTable = E('table', { 'id': 'logTable', 'class': 'table' });
-
-			for(let level of Object.keys(this.logLevels)) {
-				this.logLevelsStat[level] = 0;
-			};
-
-			if(logdataArray.length > 0) {
-				lines = [];
-				logdataArray.forEach((e, i) => {
-					if(e[4] in this.logLevels) {
-						this.logLevelsStat[e[4]] = this.logLevelsStat[e[4]] + 1;
-					};
-
-					lines.push(
-						`<tr class="tr log-${e[4] || 'empty'}"><td class="td left" data-title="#">${e[0]}</td>` +
-						((e[1]) ? `<td class="td left" data-title="${_('Timestamp')}"><span class="log-timestamp">${e[1]}</span></td>` : '') +
-						((e[2]) ? `<td class="td left log-entry-host-cell" data-title="${_('Host')}">${e[2]}</td>` : '') +
-						((e[3]) ? `<td class="td left" data-title="${_('Facility')}">${e[3]}</td>` : '') +
-						((e[4]) ? `<td class="td left" data-title="${_('Level')}">${e[4]}</td>` : '') +
-						((e[5]) ? `<td class="td left log-entry-message-cell" data-title="${_('Message')}">${e[5]}</td>` : '') +
-						`</tr>`
-					);
-				});
-				lines = lines.join('');
-
-				logTable.append(
-					E('tr', { 'class': 'tr table-titles' }, [
-						E('th', { 'class': 'th left log-entry-number' }, '#'),
-						(logdataArray[0][1]) ? E('th', { 'class': 'th left log-entry-time' }, _('Timestamp')) : '',
-						(logdataArray[0][2]) ? E('th', { 'class': 'th left log-entry-host' }, _('Host')) : '',
-						(logdataArray[0][4]) ? E('th', { 'class': 'th left log-entry-facility' }, _('Facility')) : '',
-						(logdataArray[0][3]) ? E('th', { 'class': 'th left log-entry-log-level' }, _('Level')) : '',
-						(logdataArray[0][5]) ? E('th', { 'class': 'th left log-entry-message' }, _('Message')) : '',
-					])
-				);
-			};
-
-			try {
-				logTable.insertAdjacentHTML('beforeend', lines);
-			} catch(err) {
-				if(err.name === 'SyntaxError') {
-					ui.addNotification(null,
-						E('p', {}, _('HTML/XML error') + ': ' + err.message), 'error');
-				};
-				throw err;
-			};
-
-			let levelsStatString = '';
-			if((Object.values(this.logLevelsStat).reduce((s,c) => s + c, 0)) > 0) {
-				Object.entries(this.logLevelsStat).forEach(e => {
-					if(e[0] in this.logLevels && e[1] > 0) {
-						levelsStatString += `<span class="log-entries-count-level log-${e[0]}" title="${e[0]}">${e[1]}</span>`;
-					};
-				});
-			};
-
-			return E([
-				E('div', { 'class': 'log-entries-count' },
-					`${_('Entries')}: ${logdataArray.length} / ${this.totalLogLines}${levelsStatString}`
-				),
-				logTable,
-			]);
+			throw new Error('parseLogData must be overridden by a subclass');
 		},
 
 		downloadLog(ev) {
@@ -529,7 +470,7 @@ return baseclass.extend({
 		render(logdata) {
 			let logWrapper = E('div', {
 				'id'   : 'logWrapper',
-				'style': 'width:100%; min-height:20em; padding: 0 0 0 45px; font-size:0.9em !important'
+				'style': 'width:100%; min-height:20em'
 			}, this.makeLogArea(this.parseLogData(logdata, this.tailValue)));
 
 			let tailInput = E('input', {
@@ -670,6 +611,29 @@ return baseclass.extend({
 				});
 			};
 
+			document.body.append(
+				E('div', {
+					'class': 'log-scroll-block',
+					'style': 'right:1px; top:' + (window.innerHeight / 4 * 3) + 'px',
+				}, [
+					E('button', {
+						'class': 'btn log-scroll-btn',
+						'click': ev => {
+							document.getElementById('logTitle').scrollIntoView(true);
+							ev.target.blur();
+						},
+					}, '&#8593;'),
+					E('button', {
+						'class': 'btn log-scroll-btn',
+						'style': 'margin-top:1px !important',
+						'click': ev => {
+							logWrapper.scrollIntoView(false);
+							ev.target.blur();
+						},
+					}, '&#8595;'),
+				])
+			);
+
 			return E([
 				E('h2', { 'id': 'logTitle', 'class': 'fade-in' }, this.title),
 				E('div', { 'class': 'cbi-section-descr fade-in' }),
@@ -740,27 +704,9 @@ return baseclass.extend({
 					])
 				),
 				E('div', { 'class': 'cbi-section fade-in' },
-					E('div', { 'class': 'cbi-section-node' }, [
-						E('div', { 'style': 'position:fixed; z-index:1 !important' }, [
-							E('button', {
-								'class': 'btn',
-								'style': 'position:relative; display:block; margin:0 !important; left:1px; top:1px',
-								'click': ev => {
-									document.getElementById('logTitle').scrollIntoView(true);
-									ev.target.blur();
-								},
-							}, '&#8593;'),
-							E('button', {
-								'class': 'btn',
-								'style': 'position:relative; display:block; margin:0 !important; margin-top:1px !important; left:1px; top:1px',
-								'click': ev => {
-									logWrapper.scrollIntoView(false);
-									ev.target.blur();
-								},
-							}, '&#8595;'),
-						]),
-						logWrapper,
-					])
+					E('div', { 'class': 'cbi-section-node' },
+						logWrapper
+					)
 				),
 				E('div', { 'class': 'cbi-section fade-in' },
 					E('div', { 'class': 'cbi-section-node' },
