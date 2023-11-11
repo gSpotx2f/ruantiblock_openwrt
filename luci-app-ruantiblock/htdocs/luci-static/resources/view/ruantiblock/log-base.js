@@ -340,7 +340,7 @@ return baseclass.extend({
 		* Returns a string with the highlighted part.
 		*/
 		regexpFilterHighlightFunc(match) {
-			throw new Error('parseLogData must be overridden by a subclass');
+			throw new Error('regexpFilterHighlightFunc must be overridden by a subclass');
 		},
 
 		setRegexpFilter(entriesArray, fieldNum, pattern) {
@@ -430,7 +430,7 @@ return baseclass.extend({
 		* Returns a DOM node containing the log area.
 		*/
 		makeLogArea(logdataArray) {
-			throw new Error('parseLogData must be overridden by a subclass');
+			throw new Error('makeLogArea must be overridden by a subclass');
 		},
 
 		downloadLog(ev) {
