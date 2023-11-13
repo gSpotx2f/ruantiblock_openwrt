@@ -1,7 +1,7 @@
 'use strict';
 'require baseclass';
 'require ui';
-'require view.log.log-base as abc';
+'require view.ruantiblock.log-base as abc';
 
 document.head.append(E('style', {'type': 'text/css'},
 `
