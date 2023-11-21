@@ -132,17 +132,18 @@ log-emerg td {
 }
 .log-facility-dropdown-item {
 }
-.log-scroll-block {
+.log-side-block {
 	position: fixed;
 	z-index: 1 !important;
 	opacity: 0.7;
 }
-.log-scroll-btn {
+.log-side-btn {
 	position: relative;
 	display: block;
-	margin: 0 !important;
 	left: 1px;
 	top: 1px;
+	margin: 0 !important;
+	min-width: 3.2em;
 }
 `));
 
@@ -197,6 +198,10 @@ return baseclass.extend({
 		},
 
 		tailValue            : 25,
+
+		fastTailIncrement    : 50,
+
+		fastTailValue        : null,
 
 		logSortingValue      : 'asc',
 
@@ -369,7 +374,7 @@ return baseclass.extend({
 		},
 
 		setDateFilter(entriesArray) {
-			let fPattern = document.getElementById('timeFilter').value;
+			let fPattern = this.timeFilter.value;
 			if(!fPattern) {
 				return entriesArray;
 			};
@@ -414,7 +419,7 @@ return baseclass.extend({
 		},
 
 		setMsgFilter(entriesArray) {
-			let fPattern = document.getElementById('msgFilter').value;
+			let fPattern = this.msgFilter.value;
 			if(!fPattern) {
 				return entriesArray;
 			};
@@ -434,7 +439,7 @@ return baseclass.extend({
 		},
 
 		downloadLog(ev) {
-			let formElems = Array.from(document.forms.logForm.elements);
+			let formElems = Array.from(this.logForm.elements);
 			formElems.forEach(e => e.disabled = true);
 
 			return this.getLogData(0).then(logdata => {
@@ -454,8 +459,7 @@ return baseclass.extend({
 			});
 		},
 
-		load() {
-			// Restoring settings from localStorage
+		restoreSettings() {
 			let tailValueLocal = localStorage.getItem(`luci-app-${this.viewName}-tailValue`);
 			if(tailValueLocal) {
 				this.tailValue = Number(tailValueLocal);
@@ -464,16 +468,142 @@ return baseclass.extend({
 			if(logSortingLocal) {
 				this.logSortingValue = logSortingLocal;
 			};
+		},
+
+		saveSettings(tailValue, logSortingValue) {
+			if(this.tailValue != tailValue) {
+				this.tailValue = (/^[0-9]+$/.test(tailValue)) ? tailValue : 0;
+				localStorage.setItem(
+					`luci-app-${this.viewName}-tailValue`, String(this.tailValue));
+			};
+			if(this.logSortingValue != logSortingValue) {
+				this.logSortingValue = logSortingValue;
+				localStorage.setItem(
+					`luci-app-${this.viewName}-logSorting`, this.logSortingValue);
+			};
+		},
+
+		onSubmitForm(tail) {
+			let formElems = Array.from(this.logForm.elements);
+			formElems.forEach(e => e.disabled = true);
+			this.logDownloadBtn.disabled = true;
+			tail = (tail && tail > 0) ? tail : 0;
+			this.logSortingValue = this.logSorting.value;
+
+			return this.getLogData(tail).then(logdata => {
+				logdata = logdata || '';
+				this.logWrapper.innerHTML = '';
+				this.logWrapper.append(
+					this.makeLogArea(
+						this.setMsgFilter(
+							this.setFacilityFilter(
+								this.setLevelFilter(
+									this.setHostFilter(
+										this.setDateFilter(
+											this.parseLogData(logdata, tail)
+										)
+									)
+								)
+							)
+						)
+					)
+				);
+
+				if(logdata && logdata !== '') {
+					if(this.isFacilities && !this.logFacilitiesDropdown) {
+						this.logFacilitiesDropdownElem = this.makeLogFacilitiesDropdownSection();
+					};
+					if(this.isLevels && !this.logLevelsDropdown) {
+						this.logLevelsDropdownElem = this.makeLogLevelsDropdownSection();
+					};
+					if(this.isHosts && !this.logHostsDropdown) {
+						this.logHostsDropdownElem = this.makeLogHostsDropdownSection();
+					};
+				};
+			}).finally(() => {
+				formElems.forEach(e => e.disabled = false);
+				this.logDownloadBtn.disabled = false;
+				this.fastTailValue           = this.totalLogLines;
+				ui.hideModal();
+			});
+		},
+
+		filterSettingsModal() {
+			return ui.showModal(_('Filter settings'), [
+				E('div', { 'class': 'cbi-map' }, [
+					E('div', { 'class': 'cbi-section' }, [
+						E('div', { 'class': 'cbi-section-node' }, [
+							E('div', { 'class': 'cbi-value' }, [
+								E('label', {
+									'class': 'cbi-value-title',
+									'for'  : 'tailInput',
+								}, _('Last entries')),
+								E('div', { 'class': 'cbi-value-field' },
+									this.tailInput
+								),
+							]),
+							E('div', { 'class': 'cbi-value' }, [
+								E('label', {
+									'class': 'cbi-value-title',
+									'for'  : 'timeFilter',
+								}, _('Timestamp filter')),
+								E('div', { 'class': 'cbi-value-field' }, this.timeFilter),
+							]),
+
+							this.logHostsDropdownElem,
+							this.logFacilitiesDropdownElem,
+							this.logLevelsDropdownElem,
+
+							E('div', { 'class': 'cbi-value' }, [
+								E('label', {
+									'class': 'cbi-value-title',
+									'for'  : 'msgFilter',
+								}, _('Message filter')),
+								E('div', { 'class': 'cbi-value-field' }, this.msgFilter),
+							]),
+
+							E('div', { 'class': 'cbi-value' }, [
+								E('label', {
+									'class': 'cbi-value-title',
+									'for'  : 'logSorting',
+								}, _('Sorting entries')),
+								E('div', { 'class': 'cbi-value-field' }, this.logSorting),
+							]),
+						]),
+					]),
+				]),
+				E('div', { 'class': 'right' }, [
+					this.logForm,
+					E('input', {
+						'type' : 'submit',
+						'form' : 'logForm',
+						'class': 'btn cbi-button-positive important',
+						'value': _('Apply'),
+					}),
+					' ',
+					E('button', {
+						'class': 'btn',
+						'click': ui.hideModal,
+					}, _('Close')),
+				]),
+			], 'cbi-modal');
+		},
+
+		load() {
+			// Restoring settings from localStorage
+			this.restoreSettings();
 			return this.getLogData(this.tailValue);
 		},
 
 		render(logdata) {
-			let logWrapper = E('div', {
+			this.logWrapper = E('div', {
 				'id'   : 'logWrapper',
 				'style': 'width:100%; min-height:20em'
 			}, this.makeLogArea(this.parseLogData(logdata, this.tailValue)));
 
-			let tailInput = E('input', {
+			this.fastTailValue = this.totalLogLines;
+
+			this.tailInput = E('input', {
 				'id'       : 'tailInput',
 				'name'     : 'tailInput',
 				'type'     : 'text',
@@ -482,36 +612,23 @@ return baseclass.extend({
 				'style'    : 'width:4em !important; min-width:4em !important',
 				'maxlength': 5,
 			});
-			tailInput.value = (this.tailValue === 0) ? null : this.tailValue;
-			ui.addValidator(tailInput, 'uinteger', true);
+			this.tailInput.value = (this.tailValue === 0) ? null : this.tailValue;
+			ui.addValidator(this.tailInput, 'uinteger', true);
 
-			let tailReset = E('input', {
-				'type' : 'button',
-				'form' : 'logForm',
-				'class': 'cbi-button btn',
-				'value': '×',
-				'click': ev => {
-					tailInput.value = null;
-					logFormSubmitBtn.click();
-					ev.target.blur();
-				},
-				'style': 'max-width:4em !important',
-			});
-
-			let logHostsDropdownElem      = '';
-			let logFacilitiesDropdownElem = '';
-			let logLevelsDropdownElem     = '';
+			this.logHostsDropdownElem      = '';
+			this.logFacilitiesDropdownElem = '';
+			this.logLevelsDropdownElem     = '';
 			if(this.isLevels) {
-				logLevelsDropdownElem = this.makeLogLevelsDropdownSection();
+				this.logLevelsDropdownElem = this.makeLogLevelsDropdownSection();
 			};
 			if(this.isFacilities) {
-				logFacilitiesDropdownElem = this.makeLogFacilitiesDropdownSection();
+				this.logFacilitiesDropdownElem = this.makeLogFacilitiesDropdownSection();
 			};
 			if(this.isHosts) {
-				logHostsDropdownElem = this.makeLogHostsDropdownSection();
+				this.logHostsDropdownElem = this.makeLogHostsDropdownSection();
 			};
 
-			let timeFilter = E('input', {
+			this.timeFilter = E('input', {
 				'id'         : 'timeFilter',
 				'name'       : 'timeFilter',
 				'type'       : 'text',
@@ -520,7 +637,7 @@ return baseclass.extend({
 				'placeholder': _('Type an expression...'),
 			});
 
-			let msgFilter = E('input', {
+			this.msgFilter = E('input', {
 				'id'         : 'msgFilter',
 				'name'       : 'msgFilter',
 				'type'       : 'text',
@@ -529,16 +646,7 @@ return baseclass.extend({
 				'placeholder': _('Type an expression...'),
 			});
 
-			let logFormSubmitBtn = E('input', {
-				'type' : 'submit',
-				'form' : 'logForm',
-				'class': 'cbi-button btn cbi-button-action',
-				'value': _('Apply'),
-				'click': ev => ev.target.blur(),
-				'style': 'margin-right: 1em',
-			});
-
-			let logSorting = E('select', {
+			this.logSorting = E('select', {
 				'id'   : 'logSorting',
 				'name' : 'logSorting',
 				'form' : 'logForm',
@@ -547,87 +655,87 @@ return baseclass.extend({
 				E('option', { 'value': 'asc' }, _('ascending')),
 				E('option', { 'value': 'desc' }, _('descending')),
 			]);
-			logSorting.value = this.logSortingValue;
+			this.logSorting.value = this.logSortingValue;
 
-			let logDownloadBtn = E('button', {
+			this.logDownloadBtn = E('button', {
 				'id'   : 'logDownloadBtn',
 				'name' : 'logDownloadBtn',
 				'class': 'cbi-button btn',
 				'click': ui.createHandlerFn(this, this.downloadLog),
 			}, _('Download log'));
 
-			let onSubmitForm = () => {
-				let formElems = Array.from(document.forms.logForm.elements);
-				formElems.forEach(e => e.disabled = true);
-				logDownloadBtn.disabled = true;
-
-				// Saving settings to localStorage
-				if(this.tailValue != tailInput.value) {
-					this.tailValue = (/^[0-9]+$/.test(tailInput.value)) ? tailInput.value : 0;
-					localStorage.setItem(
-						`luci-app-${this.viewName}-tailValue`, String(this.tailValue));
-				};
-				if(this.logSortingValue != logSorting.value) {
-					this.logSortingValue = logSorting.value;
-					localStorage.setItem(
-						`luci-app-${this.viewName}-logSorting`, this.logSortingValue);
-				};
-
-				let tail = (tailInput.value && tailInput.value > 0) ? tailInput.value : 0
-				return this.getLogData(tail).then(logdata => {
-					logdata = logdata || '';
-					logWrapper.innerHTML = '';
-					logWrapper.append(
-						this.makeLogArea(
-							this.setMsgFilter(
-								this.setFacilityFilter(
-									this.setLevelFilter(
-										this.setHostFilter(
-											this.setDateFilter(
-												this.parseLogData(logdata, tail)
-											)
-										)
-									)
-								)
-							)
-						)
-					);
-
-					if(logdata) {
-						let timeFilterSection = document.getElementById('timeFilterSection');
-						if(this.isFacilities && !this.logFacilitiesDropdown) {
-							timeFilterSection.after(this.makeLogFacilitiesDropdownSection());
-						};
-						if(this.isLevels && !this.logLevelsDropdown) {
-							timeFilterSection.after(this.makeLogLevelsDropdownSection());
-						};
-						if(this.isHosts && !this.logHostsDropdown) {
-							timeFilterSection.after(this.makeLogHostsDropdownSection());
-						};
-					};
-				}).finally(() => {
-					formElems.forEach(e => e.disabled = false);
-					logDownloadBtn.disabled = false;
-				});
-			};
+			this.logForm = E('form', {
+				'id'    : 'logForm',
+				'name'  : 'logForm',
+				'style' : 'display:inline-block; margin-top:0.5em',
+				'submit': ui.createHandlerFn(this, function(ev) {
+					ev.preventDefault();
+					// Saving settings to localStorage
+					this.saveSettings(this.tailInput.value, this.logSorting.value);
+					return this.onSubmitForm(Number(this.tailInput.value));
+				}),
+			}, E('span', {}, '&#160;'));
 
 			document.body.append(
 				E('div', {
-					'class': 'log-scroll-block',
-					'style': 'right:1px; top:' + (window.innerHeight / 4 * 3) + 'px',
+					'align': 'right',
+					'class': 'log-side-block',
+					'style': `right:1px; top:${window.innerHeight / 2 - 60}px`,
 				}, [
 					E('button', {
-						'class': 'btn log-scroll-btn',
+						'title': _('Refresh log'),
+						'class': 'btn log-side-btn',
+						'click': ui.createHandlerFn(this, function(ev) {
+							ev.target.blur();
+							return this.onSubmitForm(
+								Math.max(Number(this.tailValue), this.fastTailValue));
+						}),
+					}, '&#128472;'),
+					E('button', {
+						'title': _('Get more entries'),
+						'class': 'btn log-side-btn',
+						'style': 'margin-top:1px !important',
+						'click': ui.createHandlerFn(this, function(ev) {
+							ev.target.blur();
+							if(this.fastTailValue === null) {
+								this.fastTailValue = Number(this.tailValue);
+							};
+							this.fastTailValue += this.fastTailIncrement;
+							return this.onSubmitForm(this.fastTailValue);
+						}),
+					}, `+${this.fastTailIncrement}`),
+					E('button', {
+						'title': _('Get all entries'),
+						'class': 'btn log-side-btn',
+						'style': 'margin-top:1px !important',
+						'click': ui.createHandlerFn(this, function(ev) {
+							ev.target.blur();
+							return this.onSubmitForm(0);
+						}),
+					}, '&#119652;'),
+					E('button', {
+						'title': _('Filter settings'),
+						'class': 'btn log-side-btn',
+						'style': 'margin-top:10px !important',
+						'click': ev => {
+							ev.target.blur();
+							this.filterSettingsModal();
+						},
+					}, '&#128468;'),
+
+					E('button', {
+						'class': 'btn log-side-btn',
+						'style': 'margin-top:10px !important',
 						'click': ev => {
 							document.getElementById('logTitle').scrollIntoView(true);
 							ev.target.blur();
 						},
 					}, '&#8593;'),
 					E('button', {
-						'class': 'btn log-scroll-btn',
+						'class': 'btn log-side-btn',
 						'style': 'margin-top:1px !important',
 						'click': ev => {
-							logWrapper.scrollIntoView(false);
+							this.logWrapper.scrollIntoView(false);
 							ev.target.blur();
 						},
 					}, '&#8595;'),
@@ -639,79 +747,38 @@ return baseclass.extend({
 				E('div', { 'class': 'cbi-section-descr fade-in' }),
 				E('div', { 'class': 'cbi-section fade-in' },
 					E('div', { 'class': 'cbi-section-node' }, [
-
 						E('div', { 'class': 'cbi-value' }, [
 							E('label', {
 								'class': 'cbi-value-title',
-								'for'  : 'tailInput',
-							}, _('Last entries')),
+								'for'  : 'filterSettings',
+							}, _('Filter settings')),
 							E('div', { 'class': 'cbi-value-field' }, [
-								tailInput,
-								tailReset,
-							]),
-						]),
-
-						E('div', { 'id': 'timeFilterSection', 'class': 'cbi-value' }, [
-							E('label', {
-								'class': 'cbi-value-title',
-								'for'  : 'timeFilter',
-							}, _('Timestamp filter')),
-							E('div', { 'class': 'cbi-value-field' }, timeFilter),
-						]),
-
-						logHostsDropdownElem,
-						logFacilitiesDropdownElem,
-						logLevelsDropdownElem,
-
-						E('div', { 'class': 'cbi-value' }, [
-							E('label', {
-								'class': 'cbi-value-title',
-								'for'  : 'msgFilter',
-							}, _('Message filter')),
-							E('div', { 'class': 'cbi-value-field' }, msgFilter),
-						]),
-
-						E('div', { 'class': 'cbi-value' }, [
-							E('label', {
-								'class': 'cbi-value-title',
-								'for'  : 'logSorting',
-							}, _('Sorting entries')),
-							E('div', { 'class': 'cbi-value-field' }, logSorting,),
-						]),
-
-						E('div', { 'class': 'cbi-value' }, [
-							E('label', {
-								'class': 'cbi-value-title',
-								'for'  : 'logFormSubmitBtn',
-							}, _('Refresh log')),
-							E('div', { 'class': 'cbi-value-field' }, [
-								logFormSubmitBtn,
+								E('div', {},
+									E('button', {
+										'class': 'cbi-button btn cbi-button-action',
+										'click': L.bind(this.filterSettingsModal, this),
+									}, _('Edit'))
+								),
 								E('input', {
-									'id'  : 'logFormSubmitBtn',
+									'id'  : 'filterSettings',
 									'type': 'hidden',
 								}),
-								E('form', {
-									'id'    : 'logForm',
-									'name'  : 'logForm',
-									'style' : 'display:inline-block; margin-top:0.5em',
-									'submit': ui.createHandlerFn(this, function(ev) {
-										ev.preventDefault();
-										return onSubmitForm();
-									}),
-								}, E('span', {}, '&#160;')),
 							]),
 						]),
 					])
 				),
 				E('div', { 'class': 'cbi-section fade-in' },
 					E('div', { 'class': 'cbi-section-node' },
-						logWrapper
+						this.logWrapper
 					)
 				),
 				E('div', { 'class': 'cbi-section fade-in' },
 					E('div', { 'class': 'cbi-section-node' },
 						E('div', { 'class': 'cbi-value' },
-							E('div', { 'style': 'width:100%; text-align:right !important' }, logDownloadBtn)
+							E('div', {
+								'align': 'left',
+								'style': 'width:100%',
+							}, this.logDownloadBtn)
 						),
 					)
 				),

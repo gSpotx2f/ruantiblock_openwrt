@@ -70,6 +70,9 @@ msgstr "Изменения сохранены."
 msgid "Clean up nftsets before updating blacklist"
 msgstr "Очищать nft-сеты перед обновлением блэклиста"
 
+msgid "Close"
+msgstr "Закрыть"
+
 msgid "Command failed"
 msgstr "Команда не выполнена"
 
@@ -169,6 +172,15 @@ msgstr "Категории"
 
 msgid "Failed to get %s init status: %s"
 msgstr "Не удалось получить статус инициализации %s: %s"
+
+msgid "Filter settings"
+msgstr "Настройки фильтра"
+
+msgid "Get all entries"
+msgstr "Все записи"
+
+msgid "Get more entries"
+msgstr "Больше записей"
 
 msgid "HTML/XML error"
 msgstr "Ошибка HTML/XML"

@@ -55,6 +55,9 @@ msgstr ""
 msgid "Clean up nftsets before updating blacklist"
 msgstr ""
 
+msgid "Close"
+msgstr ""
+
 msgid "Command failed"
 msgstr ""
 
@@ -152,6 +155,15 @@ msgid "Facilities"
 msgstr ""
 
 msgid "Failed to get %s init status: %s"
+msgstr ""
+
+msgid "Filter settings"
+msgstr ""
+
+msgid "Get all entries"
+msgstr ""
+
+msgid "Get more entries"
 msgstr ""
 
 msgid "HTML/XML error"
