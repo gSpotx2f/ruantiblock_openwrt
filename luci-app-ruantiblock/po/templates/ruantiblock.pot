@@ -22,10 +22,16 @@ msgstr ""
 msgid "All traffic of the specified hosts passes through the proxy, without a blacklist"
 msgstr ""
 
+msgid "An error occurred while trying to get the log size!"
+msgstr ""
+
 msgid "Apply"
 msgstr ""
 
 msgid "Apply proxy rules to router application traffic"
+msgstr ""
+
+msgid "Auto refresh"
 msgstr ""
 
 msgid "Blacklist module"

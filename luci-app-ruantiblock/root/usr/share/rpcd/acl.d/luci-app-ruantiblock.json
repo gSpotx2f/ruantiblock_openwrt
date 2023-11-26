@@ -18,7 +18,8 @@
 			},
 			"uci": [ "network", "ruantiblock" ],
 			"ubus": {
-				"luci": [ "getInitList", "setInitAction" ]
+				"luci": [ "getInitList", "setInitAction" ],
+				"luci.ruantiblock": [ "getLogSize" ]
 			}
 		},
 		"write": {

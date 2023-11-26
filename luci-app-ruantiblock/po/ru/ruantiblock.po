@@ -37,11 +37,17 @@ msgstr "Весь трафик указанных хостов проходит �
 msgid "Allows you to limit the hosts that are allowed to bypass blocking"
 msgstr "Позволяет ограничить хосты, которым разрешено обходить блокировки"
 
+msgid "An error occurred while trying to get the log size!"
+msgstr "Произошла ошибка при попытке получить размер лога!"
+
 msgid "Apply"
 msgstr "Применить"
 
 msgid "Apply proxy rules to router application traffic"
 msgstr "Применять правила прокси к трафику приложений роутера"
+
+msgid "Auto refresh"
+msgstr "Автообновление"
 
 msgid "Blacklist module"
 msgstr "Модуль блэклиста"
@@ -114,7 +120,7 @@ msgid "Download error"
 msgstr "Ошибка загрузки"
 
 msgid "Download log"
-msgstr "Скачать лог"
+msgstr "Скачать журнал"
 
 msgid "Downloading a blacklist via proxy"
 msgstr "Скачивать блэклист через прокси"

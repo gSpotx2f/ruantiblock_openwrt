@@ -1,4 +1,5 @@
 'use strict';
+'require poll';
 'require baseclass';
 'require ui';
 'require view';
@@ -161,6 +162,8 @@ return baseclass.extend({
 		*/
 		title            : null,
 
+		pollInterval     : L.env.pollinterval,
+
 		logFacilities    : {
 			'kern'    : E('span', { 'class': 'zonebadge log-facility-dropdown-item' }, E('strong', 'kern')),
 			'user'    : E('span', { 'class': 'zonebadge log-facility-dropdown-item' }, E('strong', 'user')),
@@ -203,7 +206,19 @@ return baseclass.extend({
 
 		fastTailValue        : null,
 
+		timeFilterValue      : null,
+
+		hostFilterValue      : [],
+
+		facilityFilterValue  : [],
+
+		levelFilterValue     : [],
+
+		msgFilterValue       : null,
+
 		logSortingValue      : 'asc',
+
+		autoRefreshValue     : true,
 
 		isHosts              : false,
 
@@ -223,6 +238,10 @@ return baseclass.extend({
 
 		totalLogLines        : 0,
 
+		lastBytes            : null,
+
+		actionButtons        : [],
+
 		htmlEntities(str) {
 			return String(str).replace(
 				/&/g, '&#38;').replace(
@@ -230,6 +249,10 @@ return baseclass.extend({
 				/>/g, '&#62;').replace(
 				/"/g, '&#34;').replace(
 				/'/g, '&#39;');
+		},
+
+		checkZeroValue(value) {
+			return (/^[0-9]+$/.test(value)) ? value : 0
 		},
 
 		makeLogHostsDropdownItem(host) {
@@ -263,7 +286,7 @@ return baseclass.extend({
 			);
 		},
 
-		makeLogFacilitiesDropdownSection(){
+		makeLogFacilitiesDropdownSection() {
 			this.logFacilitiesDropdown = new ui.Dropdown(
 				null,
 				this.logFacilities,
@@ -287,7 +310,7 @@ return baseclass.extend({
 			);
 		},
 
-		makeLogLevelsDropdownSection(){
+		makeLogLevelsDropdownSection() {
 			this.logLevelsDropdown = new ui.Dropdown(
 				null,
 				this.logLevels,
@@ -309,6 +332,47 @@ return baseclass.extend({
 					),
 				]
 			);
+		},
+
+		setFilterSettings() {
+			this.tailValue       = this.checkZeroValue(this.tailInput.value);
+			this.timeFilterValue = this.timeFilter.value;
+			if(this.isHosts) {
+				this.hostFilterValue = this.logHostsDropdown.getValue();
+			};
+			if(this.isFacilities) {
+				this.facilityFilterValue = this.logFacilitiesDropdown.getValue();
+			};
+			if(this.isLevels) {
+				this.levelFilterValue = this.logLevelsDropdown.getValue();
+			};
+			this.msgFilterValue      = this.msgFilter.value;
+			this.logSortingValue     = this.logSorting.value;
+			this.autoRefreshValue    = this.autoRefresh.checked;
+			if(this.autoRefreshValue) {
+				poll.add(this.pollFuncWrapper, this.pollInterval);
+				this.refreshBtn.style.visibility = 'hidden';
+			} else {
+				poll.remove(this.pollFuncWrapper);
+				this.refreshBtn.style.visibility = 'visible';
+			};
+		},
+
+		resetFormValues() {
+			this.tailInput.value  = this.tailValue;
+			this.timeFilter.value = this.timeFilterValue;
+			if(this.isHosts) {
+				this.logHostsDropdown.setValue(this.hostFilterValue);
+			};
+			if(this.isFacilities) {
+				this.logFacilitiesDropdown.setValue(this.facilityFilterValue);
+			};
+			if(this.isLevels) {
+				this.logLevelsDropdown.setValue(this.levelFilterValue);
+			};
+			this.msgFilter.value     = this.msgFilterValue;
+			this.logSorting.value    = this.logSortingValue;
+			this.autoRefresh.checked = this.autoRefreshValue;
 		},
 
 		/**
@@ -374,7 +438,7 @@ return baseclass.extend({
 		},
 
 		setDateFilter(entriesArray) {
-			let fPattern = this.timeFilter.value;
+			let fPattern = this.timeFilterValue;
 			if(!fPattern) {
 				return entriesArray;
 			};
@@ -384,12 +448,11 @@ return baseclass.extend({
 		setHostFilter(entriesArray) {
 			let logHostsKeys = Object.keys(this.logHosts);
 			if(logHostsKeys.length > 0 && this.logHostsDropdown) {
-				let selectedHosts = this.logHostsDropdown.getValue();
 				this.logHostsDropdown.addChoices(logHostsKeys, this.logHosts);
-				if(selectedHosts.length === 0 || logHostsKeys.length === selectedHosts.length) {
+				if(this.hostFilterValue.length === 0 || logHostsKeys.length === this.hostFilterValue.length) {
 					return entriesArray;
 				};
-				return entriesArray.filter(e => selectedHosts.includes(e[2]));
+				return entriesArray.filter(e => this.hostFilterValue.includes(e[2]));
 			};
 			return entriesArray;
 		},
@@ -397,11 +460,10 @@ return baseclass.extend({
 		setFacilityFilter(entriesArray) {
 			let logFacilitiesKeys = Object.keys(this.logFacilities);
 			if(logFacilitiesKeys.length > 0 && this.logFacilitiesDropdown) {
-				let selectedFacilities = this.logFacilitiesDropdown.getValue();
-				if(selectedFacilities.length === 0 || logFacilitiesKeys.length === selectedFacilities.length) {
+				if(this.facilityFilterValue.length === 0 || logFacilitiesKeys.length === this.facilityFilterValue.length) {
 					return entriesArray;
 				};
-				return entriesArray.filter(e => selectedFacilities.includes(e[3]));
+				return entriesArray.filter(e => this.facilityFilterValue.includes(e[3]));
 			};
 			return entriesArray;
 		},
@@ -409,17 +471,16 @@ return baseclass.extend({
 		setLevelFilter(entriesArray) {
 			let logLevelsKeys = Object.keys(this.logLevels);
 			if(logLevelsKeys.length > 0 && this.logLevelsDropdown) {
-				let selectedLevels = this.logLevelsDropdown.getValue();
-				if(selectedLevels.length === 0 || logLevelsKeys.length === selectedLevels.length) {
+				if(this.levelFilterValue.length === 0 || logLevelsKeys.length === this.levelFilterValue.length) {
 					return entriesArray;
 				};
-				return entriesArray.filter(e => selectedLevels.includes(e[4]));
+				return entriesArray.filter(e => this.levelFilterValue.includes(e[4]));
 			};
 			return entriesArray;
 		},
 
 		setMsgFilter(entriesArray) {
-			let fPattern = this.msgFilter.value;
+			let fPattern = this.msgFilterValue;
 			if(!fPattern) {
 				return entriesArray;
 			};
@@ -438,10 +499,22 @@ return baseclass.extend({
 			throw new Error('makeLogArea must be overridden by a subclass');
 		},
 
-		downloadLog(ev) {
-			let formElems = Array.from(this.logForm.elements);
-			formElems.forEach(e => e.disabled = true);
+		disableFormElems() {
+			Array.from(this.logFilterForm.elements).forEach(
+				e => e.disabled = true
+			);
+			this.actionButtons.forEach(e => e.disabled = true);
+		},
 
+		enableFormElems() {
+			Array.from(this.logFilterForm.elements).forEach(
+				e => e.disabled = false
+			);
+			this.actionButtons.forEach(e => e.disabled = false);
+		},
+
+		downloadLog(ev) {
+			this.disableFormElems();
 			return this.getLogData(0).then(logdata => {
 				logdata = logdata || '';
 				let link = E('a', {
@@ -455,41 +528,47 @@ return baseclass.extend({
 				ui.addNotification(null,
 					E('p', {}, _('Download error') + ': ' + err.message));
 			}).finally(() => {
-				formElems.forEach(e => e.disabled = false);
+				this.enableFormElems();
 			});
 		},
 
-		restoreSettings() {
+		restoreSettingsFromLocalStorage() {
 			let tailValueLocal = localStorage.getItem(`luci-app-${this.viewName}-tailValue`);
 			if(tailValueLocal) {
 				this.tailValue = Number(tailValueLocal);
 			};
-			let logSortingLocal = localStorage.getItem(`luci-app-${this.viewName}-logSorting`);
+			let logSortingLocal = localStorage.getItem(`luci-app-${this.viewName}-logSortingValue`);
 			if(logSortingLocal) {
 				this.logSortingValue = logSortingLocal;
 			};
+			let autoRefreshLocal = localStorage.getItem(`luci-app-${this.viewName}-autoRefreshValue`);
+			if(autoRefreshLocal) {
+				this.autoRefreshValue = Boolean(Number(autoRefreshLocal));
+			};
 		},
 
-		saveSettings(tailValue, logSortingValue) {
+		saveSettingsToLocalStorage(tailValue, logSortingValue, autoRefreshValue) {
+			tailValue = this.checkZeroValue(tailValue);
 			if(this.tailValue != tailValue) {
-				this.tailValue = (/^[0-9]+$/.test(tailValue)) ? tailValue : 0;
 				localStorage.setItem(
-					`luci-app-${this.viewName}-tailValue`, String(this.tailValue));
+					`luci-app-${this.viewName}-tailValue`, String(tailValue));
 			};
 			if(this.logSortingValue != logSortingValue) {
-				this.logSortingValue = logSortingValue;
 				localStorage.setItem(
-					`luci-app-${this.viewName}-logSorting`, this.logSortingValue);
+					`luci-app-${this.viewName}-logSortingValue`, logSortingValue);
+			};
+			if(this.autoRefreshValue != autoRefreshValue) {
+				localStorage.setItem(
+					`luci-app-${this.viewName}-autoRefreshValue`, String(Number(autoRefreshValue)));
 			};
 		},
 
-		onSubmitForm(tail) {
-			let formElems = Array.from(this.logForm.elements);
-			formElems.forEach(e => e.disabled = true);
-			this.logDownloadBtn.disabled = true;
+		reloadLog(tail, modal=false, autorefresh=false) {
 			tail = (tail && tail > 0) ? tail : 0;
-			this.logSortingValue = this.logSorting.value;
-
+			if(!autorefresh) {
+				this.disableFormElems();
+				poll.stop();
+			};
 			return this.getLogData(tail).then(logdata => {
 				logdata = logdata || '';
 				this.logWrapper.innerHTML = '';
@@ -508,7 +587,6 @@ return baseclass.extend({
 						)
 					)
 				);
-
 				if(logdata && logdata !== '') {
 					if(this.isFacilities && !this.logFacilitiesDropdown) {
 						this.logFacilitiesDropdownElem = this.makeLogFacilitiesDropdownSection();
@@ -521,10 +599,13 @@ return baseclass.extend({
 					};
 				};
 			}).finally(() => {
-				formElems.forEach(e => e.disabled = false);
-				this.logDownloadBtn.disabled = false;
-				this.fastTailValue           = this.totalLogLines;
-				ui.hideModal();
+				if(modal) {
+					ui.hideModal();
+				};
+				if(!autorefresh) {
+					this.enableFormElems();
+					poll.start();
+				};
 			});
 		},
 
@@ -549,11 +630,9 @@ return baseclass.extend({
 								}, _('Timestamp filter')),
 								E('div', { 'class': 'cbi-value-field' }, this.timeFilter),
 							]),
-
 							this.logHostsDropdownElem,
 							this.logFacilitiesDropdownElem,
 							this.logLevelsDropdownElem,
-
 							E('div', { 'class': 'cbi-value' }, [
 								E('label', {
 									'class': 'cbi-value-title',
@@ -569,50 +648,106 @@ return baseclass.extend({
 								}, _('Sorting entries')),
 								E('div', { 'class': 'cbi-value-field' }, this.logSorting),
 							]),
+
+							E('div', { 'class': 'cbi-value' }, [
+								E('label', {
+									'class': 'cbi-value-title',
+									'for'  : 'autoRefresh',
+								}, _('Auto refresh')),
+								E('div', { 'class': 'cbi-value-field' },
+									E('div', { 'class': 'cbi-checkbox' }, [
+										this.autoRefresh,
+										E('label', {})
+									])
+								),
+							]),
 						]),
 					]),
 				]),
 				E('div', { 'class': 'right' }, [
-					this.logForm,
-					E('input', {
-						'type' : 'submit',
-						'form' : 'logForm',
-						'class': 'btn cbi-button-positive important',
-						'value': _('Apply'),
-					}),
-					' ',
+					this.logFilterForm,
 					E('button', {
 						'class': 'btn',
-						'click': ui.hideModal,
-					}, _('Close')),
+						'click': ev => {
+							ev.target.blur();
+							ui.hideModal();
+							this.resetFormValues();
+						},
+					}, _('Dismiss')),
+					' ',
+					E('button', {
+						'type' : 'submit',
+						'form' : 'logFilterForm',
+						'class': 'btn cbi-button-positive important',
+						'click': ui.createHandlerFn(this, function(ev) {
+							ev.target.blur();
+							ev.preventDefault();
+							return this.onSubmitFilter();
+						}),
+					}, _('Apply')),
 				]),
 			], 'cbi-modal');
 		},
 
+		updateLog(autorefresh=false) {
+			let tail = (Number(this.tailValue) == 0 || Number(this.fastTailValue) == 0)
+				? 0 : Math.max(Number(this.tailValue), this.fastTailValue)
+			return this.reloadLog(tail, false, autorefresh);
+		},
+
+		/**
+		* Creates a promise for the RPC request.
+		* Abstract method, must be overridden by a subclass!
+		*
+		* @returns {Promise}
+		* Returns a promise that returns the size of the log in bytes.
+		*/
+		getLogSize() {
+			throw new Error('getLogSize must be overridden by a subclass');
+		},
+
+		async pollFunc() {
+			await this.getLogSize().then(async bytes => {
+				if(this.lastBytes != bytes) {
+					this.lastBytes = bytes;
+					return await this.updateLog(true);
+				};
+			});
+		},
+
+		onSubmitFilter() {
+			this.saveSettingsToLocalStorage(
+				this.tailInput.value, this.logSorting.value, this.autoRefresh.checked);
+			this.setFilterSettings();
+			this.fastTailValue = Number(this.tailValue);
+			return this.reloadLog(Number(this.tailValue), true);
+		},
+
 		load() {
-			// Restoring settings from localStorage
-			this.restoreSettings();
+			this.restoreSettingsFromLocalStorage();
 			return this.getLogData(this.tailValue);
 		},
 
 		render(logdata) {
+			this.pollFuncWrapper = L.bind(this.pollFunc, this);
+
 			this.logWrapper = E('div', {
 				'id'   : 'logWrapper',
 				'style': 'width:100%; min-height:20em'
 			}, this.makeLogArea(this.parseLogData(logdata, this.tailValue)));
 
-			this.fastTailValue = this.totalLogLines;
+			this.fastTailValue = this.tailValue
 
 			this.tailInput = E('input', {
 				'id'       : 'tailInput',
 				'name'     : 'tailInput',
 				'type'     : 'text',
-				'form'     : 'logForm',
+				'form'     : 'logFilterForm',
 				'class'    : 'cbi-input-text',
 				'style'    : 'width:4em !important; min-width:4em !important',
 				'maxlength': 5,
 			});
-			this.tailInput.value = (this.tailValue === 0) ? null : this.tailValue;
+			this.tailInput.value = this.tailValue;
 			ui.addValidator(this.tailInput, 'uinteger', true);
 
 			this.logHostsDropdownElem      = '';
@@ -632,7 +767,7 @@ return baseclass.extend({
 				'id'         : 'timeFilter',
 				'name'       : 'timeFilter',
 				'type'       : 'text',
-				'form'       : 'logForm',
+				'form'       : 'logFilterForm',
 				'class'      : 'cbi-input-text',
 				'placeholder': _('Type an expression...'),
 			});
@@ -641,7 +776,7 @@ return baseclass.extend({
 				'id'         : 'msgFilter',
 				'name'       : 'msgFilter',
 				'type'       : 'text',
-				'form'       : 'logForm',
+				'form'       : 'logFilterForm',
 				'class'      : 'cbi-input-text',
 				'placeholder': _('Type an expression...'),
 			});
@@ -649,13 +784,35 @@ return baseclass.extend({
 			this.logSorting = E('select', {
 				'id'   : 'logSorting',
 				'name' : 'logSorting',
-				'form' : 'logForm',
+				'form' : 'logFilterForm',
 				'class': "cbi-input-select",
 			}, [
 				E('option', { 'value': 'asc' }, _('ascending')),
 				E('option', { 'value': 'desc' }, _('descending')),
 			]);
 			this.logSorting.value = this.logSortingValue;
+
+			this.autoRefresh = E('input', {
+				'id'   : 'autoRefresh',
+				'name' : 'autoRefresh',
+				'type' : 'checkbox',
+				'form' : 'logFilterForm',
+			});
+			this.autoRefresh.checked = this.autoRefreshValue;
+
+			this.filterEditsBtn = E('button', {
+				'class': 'cbi-button btn cbi-button-action',
+				'click': L.bind(this.filterSettingsModal, this),
+			}, _('Edit'));
+
+			this.logFilterForm = E('form', {
+				'id'    : 'logFilterForm',
+				'name'  : 'logFilterForm',
+				'submit': ev => {
+					ev.preventDefault();
+					return this.onSubmitFilter();
+				},
+			});
 
 			this.logDownloadBtn = E('button', {
 				'id'   : 'logDownloadBtn',
@@ -664,17 +821,56 @@ return baseclass.extend({
 				'click': ui.createHandlerFn(this, this.downloadLog),
 			}, _('Download log'));
 
-			this.logForm = E('form', {
-				'id'    : 'logForm',
-				'name'  : 'logForm',
-				'style' : 'display:inline-block; margin-top:0.5em',
-				'submit': ui.createHandlerFn(this, function(ev) {
-					ev.preventDefault();
-					// Saving settings to localStorage
-					this.saveSettings(this.tailInput.value, this.logSorting.value);
-					return this.onSubmitForm(Number(this.tailInput.value));
+			this.refreshBtn = E('button', {
+				'title'   : _('Refresh log'),
+				'class'   : 'btn log-side-btn',
+				'style'   : `visibility:${(this.autoRefreshValue) ? 'hidden' : 'visible'}`,
+				'click'   : ui.createHandlerFn(this, function(ev) {
+					ev.target.blur();
+					return this.updateLog();
 				}),
-			}, E('span', {}, '&#160;'));
+			}, '&#10227;');
+
+			this.moreEntriesBtn = E('button', {
+				'title': _('Get more entries'),
+				'class': 'btn log-side-btn',
+				'style': 'margin-top:1px !important',
+				'click': ui.createHandlerFn(this, function(ev) {
+					ev.target.blur();
+					if(this.fastTailValue === null) {
+						this.fastTailValue = Number(this.tailValue);
+					}
+					if(this.fastTailValue > 0) {
+						this.fastTailValue += this.fastTailIncrement;
+					};
+					return this.reloadLog(this.fastTailValue);
+				}),
+			}, `+${this.fastTailIncrement}`);
+
+			this.allEntriesBtn = E('button', {
+				'title': _('Get all entries'),
+				'class': 'btn log-side-btn',
+				'style': 'margin-top:1px !important',
+				'click': ui.createHandlerFn(this, function(ev) {
+					ev.target.blur();
+					this.fastTailValue = 0;
+					return this.reloadLog(0);
+				}),
+			}, _('All'));
+
+			this.filterModalBtn = E('button', {
+				'title': _('Filter settings'),
+				'class': 'btn log-side-btn',
+				'style': 'margin-top:10px !important',
+				'click': ev => {
+					ev.target.blur();
+					this.filterSettingsModal();
+				},
+			}, '&#9634;');
+
+			this.actionButtons.push(this.filterEditsBtn, this.logDownloadBtn,
+									this.refreshBtn,this.moreEntriesBtn,
+									this.allEntriesBtn, this.filterModalBtn);
 
 			document.body.append(
 				E('div', {
@@ -682,47 +878,10 @@ return baseclass.extend({
 					'class': 'log-side-block',
 					'style': `right:1px; top:${window.innerHeight / 2 - 60}px`,
 				}, [
-					E('button', {
-						'title': _('Refresh log'),
-						'class': 'btn log-side-btn',
-						'click': ui.createHandlerFn(this, function(ev) {
-							ev.target.blur();
-							return this.onSubmitForm(
-								Math.max(Number(this.tailValue), this.fastTailValue));
-						}),
-					}, '&#128472;'),
-					E('button', {
-						'title': _('Get more entries'),
-						'class': 'btn log-side-btn',
-						'style': 'margin-top:1px !important',
-						'click': ui.createHandlerFn(this, function(ev) {
-							ev.target.blur();
-							if(this.fastTailValue === null) {
-								this.fastTailValue = Number(this.tailValue);
-							};
-							this.fastTailValue += this.fastTailIncrement;
-							return this.onSubmitForm(this.fastTailValue);
-						}),
-					}, `+${this.fastTailIncrement}`),
-					E('button', {
-						'title': _('Get all entries'),
-						'class': 'btn log-side-btn',
-						'style': 'margin-top:1px !important',
-						'click': ui.createHandlerFn(this, function(ev) {
-							ev.target.blur();
-							return this.onSubmitForm(0);
-						}),
-					}, '&#119652;'),
-					E('button', {
-						'title': _('Filter settings'),
-						'class': 'btn log-side-btn',
-						'style': 'margin-top:10px !important',
-						'click': ev => {
-							ev.target.blur();
-							this.filterSettingsModal();
-						},
-					}, '&#128468;'),
-
+					this.refreshBtn,
+					this.moreEntriesBtn,
+					this.allEntriesBtn,
+					this.filterModalBtn,
 					E('button', {
 						'class': 'btn log-side-btn',
 						'style': 'margin-top:10px !important',
@@ -742,6 +901,10 @@ return baseclass.extend({
 				])
 			);
 
+			if(this.autoRefreshValue) {
+				poll.add(this.pollFuncWrapper, this.pollInterval);
+			};
+
 			return E([
 				E('h2', { 'id': 'logTitle', 'class': 'fade-in' }, this.title),
 				E('div', { 'class': 'cbi-section-descr fade-in' }),
@@ -753,12 +916,7 @@ return baseclass.extend({
 								'for'  : 'filterSettings',
 							}, _('Filter settings')),
 							E('div', { 'class': 'cbi-value-field' }, [
-								E('div', {},
-									E('button', {
-										'class': 'cbi-button btn cbi-button-action',
-										'click': L.bind(this.filterSettingsModal, this),
-									}, _('Edit'))
-								),
+								E('div', {}, this.filterEditsBtn),
 								E('input', {
 									'id'  : 'filterSettings',
 									'type': 'hidden',
