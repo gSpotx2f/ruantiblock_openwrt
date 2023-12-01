@@ -244,6 +244,9 @@ msgstr ""
 msgid "Logging levels"
 msgstr ""
 
+msgid "Logread not found"
+msgstr ""
+
 msgid "Main settings"
 msgstr ""
 

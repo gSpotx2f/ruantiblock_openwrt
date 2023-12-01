@@ -152,14 +152,16 @@ return baseclass.extend({
 	view: view.extend({
 		/**
 		 * View name (for local storage and downloads).
-		 * Must be overridden by a subclass!
-		*/
+		 *
+		 * @property {string} viewName
+		 */
 		viewName         : null,
 
 		/**
 		 * Page title.
-		 * Must be overridden by a subclass!
-		*/
+		 *
+		 * @property {string} title
+		 */
 		title            : null,
 
 		pollInterval     : L.env.pollinterval,
@@ -208,6 +210,8 @@ return baseclass.extend({
 
 		timeFilterValue      : null,
 
+		timeFilterReValue    : false,
+
 		hostFilterValue      : [],
 
 		facilityFilterValue  : [],
@@ -216,9 +220,13 @@ return baseclass.extend({
 
 		msgFilterValue       : null,
 
+		msgFilterReValue     : false,
+
 		logSortingValue      : 'asc',
 
 		autoRefreshValue     : true,
+
+		isAutorefresh        : true,
 
 		isHosts              : false,
 
@@ -238,7 +246,7 @@ return baseclass.extend({
 
 		totalLogLines        : 0,
 
-		lastBytes            : null,
+		lastHash            : null,
 
 		actionButtons        : [],
 
@@ -334,9 +342,32 @@ return baseclass.extend({
 			);
 		},
 
+		setRegexpValidator(elem, flag) {
+			ui.addValidator(
+				elem,
+				'string',
+				true,
+				v => {
+					if(!flag.checked) {
+						return true;
+					};
+					try {
+						new RegExp(v, 'giu');
+						return true;
+					} catch(err) {
+						return _('Invalid regular expression') + ':\n' + err.message;
+					};
+				},
+				'blur',
+				'focus',
+				'input'
+			);
+		},
+
 		setFilterSettings() {
-			this.tailValue       = this.checkZeroValue(this.tailInput.value);
-			this.timeFilterValue = this.timeFilter.value;
+			this.tailValue         = this.checkZeroValue(this.tailInput.value);
+			this.timeFilterValue   = this.timeFilter.value;
+			this.timeFilterReValue = this.timeFilterRe.checked;
 			if(this.isHosts) {
 				this.hostFilterValue = this.logHostsDropdown.getValue();
 			};
@@ -347,20 +378,24 @@ return baseclass.extend({
 				this.levelFilterValue = this.logLevelsDropdown.getValue();
 			};
 			this.msgFilterValue      = this.msgFilter.value;
+			this.msgFilterReValue    = this.msgFilterRe.checked;
 			this.logSortingValue     = this.logSorting.value;
 			this.autoRefreshValue    = this.autoRefresh.checked;
-			if(this.autoRefreshValue) {
-				poll.add(this.pollFuncWrapper, this.pollInterval);
-				this.refreshBtn.style.visibility = 'hidden';
-			} else {
-				poll.remove(this.pollFuncWrapper);
-				this.refreshBtn.style.visibility = 'visible';
+			if(this.isAutorefresh) {
+				if(this.autoRefreshValue) {
+					poll.add(this.pollFuncWrapper, this.pollInterval);
+					this.refreshBtn.style.visibility = 'hidden';
+				} else {
+					poll.remove(this.pollFuncWrapper);
+					this.refreshBtn.style.visibility = 'visible';
+				};
 			};
 		},
 
 		resetFormValues() {
-			this.tailInput.value  = this.tailValue;
-			this.timeFilter.value = this.timeFilterValue;
+			this.tailInput.value      = this.tailValue;
+			this.timeFilter.value     = this.timeFilterValue;
+			this.timeFilterRe.checked = this.timeFilterReValue;
 			if(this.isHosts) {
 				this.logHostsDropdown.setValue(this.hostFilterValue);
 			};
@@ -371,55 +406,78 @@ return baseclass.extend({
 				this.logLevelsDropdown.setValue(this.levelFilterValue);
 			};
 			this.msgFilter.value     = this.msgFilterValue;
+			this.msgFilterRe.checked = this.msgFilterReValue;
 			this.logSorting.value    = this.logSortingValue;
 			this.autoRefresh.checked = this.autoRefreshValue;
 		},
 
 		/**
-		* Receives raw log data.
-		* Abstract method, must be overridden by a subclass!
-		*
-		* @param {number} tail
-		* @returns {string}
-		* Returns the raw content of the log.
-		*/
+		 * Receives raw log data.
+		 * Abstract method, must be overridden by a subclass!
+		 *
+		 * @instance
+		 * @abstract
+		 *
+		 * @param {number} tail
+		 * @returns {string}
+		 * Returns the raw content of the log.
+		 */
 		getLogData(tail) {
 			throw new Error('getLogData must be overridden by a subclass');
 		},
 
 		/**
-		* Parses log data.
-		* Abstract method, must be overridden by a subclass!
-		*
-		* @param {string} logdata
-		* @param {number} tail
-		* @returns {Array<number, string|null, string|null, string|null, string|null, string|null>}
-		* Returns an array of values: [ #, Timestamp, Host, Level, Facility, Message ].
-		*/
+		 * Parses log data.
+		 * Abstract method, must be overridden by a subclass!
+		 *
+		 * @instance
+		 * @abstract
+		 *
+		 * @param {string} logdata
+		 * @param {number} tail
+		 * @returns {Array<number, string|null, string|null, string|null, string|null, string|null>}
+		 * Returns an array of values: [ #, Timestamp, Host, Level, Facility, Message ].
+		 */
 		parseLogData(logdata, tail) {
 			throw new Error('parseLogData must be overridden by a subclass');
 		},
 
 		/**
-		* Highlight the result of a regular expression.
-		* Abstract method, must be overridden by a subclass!
-		*
-		* @param {string} logdata
-		* @returns {string}
-		* Returns a string with the highlighted part.
-		*/
-		regexpFilterHighlightFunc(match) {
-			throw new Error('regexpFilterHighlightFunc must be overridden by a subclass');
+		 * Highlight the result of a regular expression.
+		 * Abstract method, must be overridden by a subclass!
+		 *
+		 * @instance
+		 * @abstract
+		 *
+		 * @param {string} logdata
+		 * @returns {string}
+		 * Returns a string with the highlighted part.
+		 */
+		filterHighlightFunc(match) {
+			throw new Error('filterHighlightFunc must be overridden by a subclass');
 		},
 
-		setRegexpFilter(entriesArray, fieldNum, pattern) {
+		setStringFilter(entriesArray, fieldNum, pattern) {
+			let fArr = [];
+			entriesArray.forEach((e, i) => {
+				if(e[fieldNum] !== null && e[fieldNum].includes(pattern)) {
+					if(this.filterHighlightFunc) {
+						e[fieldNum] = e[fieldNum].replace(pattern, this.filterHighlightFunc);
+					};
+					fArr.push(e);
+				};
+			});
+			return fArr;
+		},
+
+		setRegexpFilter(entriesArray, fieldNum, pattern, formElem) {
 			let fArr = [];
 			try {
 				let regExp = new RegExp(pattern, 'giu');
 				entriesArray.forEach((e, i) => {
 					if(e[fieldNum] !== null && regExp.test(e[fieldNum])) {
-						if(this.regexpFilterHighlightFunc) {
-							e[fieldNum] = e[fieldNum].replace(regExp, this.regexpFilterHighlightFunc);
+						if(this.filterHighlightFunc) {
+							e[fieldNum] = e[fieldNum].replace(regExp, this.filterHighlightFunc);
 						};
 						fArr.push(e);
 					};
@@ -437,12 +495,14 @@ return baseclass.extend({
 			return fArr;
 		},
 
-		setDateFilter(entriesArray) {
+		setTimeFilter(entriesArray) {
 			let fPattern = this.timeFilterValue;
 			if(!fPattern) {
 				return entriesArray;
 			};
-			return this.setRegexpFilter(entriesArray, 1, fPattern);
+			return (this.timeFilterReValue) ?
+				this.setRegexpFilter(entriesArray, 1, fPattern, this.timeFilter) :
+					this.setStringFilter(entriesArray, 1, fPattern);
 		},
 
 		setHostFilter(entriesArray) {
@@ -484,17 +544,22 @@ return baseclass.extend({
 			if(!fPattern) {
 				return entriesArray;
 			};
-			return this.setRegexpFilter(entriesArray, 5, fPattern);
+			return (this.msgFilterReValue) ?
+				this.setRegexpFilter(entriesArray, 5, fPattern, this.msgFilter) :
+					this.setStringFilter(entriesArray, 5, fPattern);
 		},
 
 		/**
-		* Creates the contents of the log area.
-		* Abstract method, must be overridden by a subclass!
-		*
-		* @param {Array<number, string|null, string|null, string|null, string|null, string|null>} logdataArray
-		* @returns {Node}
-		* Returns a DOM node containing the log area.
-		*/
+		 * Creates the contents of the log area.
+		 * Abstract method, must be overridden by a subclass!
+		 *
+		 * @instance
+		 * @abstract
+		 *
+		 * @param {Array<number, string|null, string|null, string|null, string|null, string|null>} logdataArray
+		 * @returns {Node}
+		 * Returns a DOM node containing the log area.
+		 */
 		makeLogArea(logdataArray) {
 			throw new Error('makeLogArea must be overridden by a subclass');
 		},
@@ -524,7 +589,7 @@ return baseclass.extend({
 				});
 				link.click();
 				URL.revokeObjectURL(link.href);
-			}).catch(() => {
+			}).catch(err => {
 				ui.addNotification(null,
 					E('p', {}, _('Download error') + ': ' + err.message));
 			}).finally(() => {
@@ -541,9 +606,11 @@ return baseclass.extend({
 			if(logSortingLocal) {
 				this.logSortingValue = logSortingLocal;
 			};
-			let autoRefreshLocal = localStorage.getItem(`luci-app-${this.viewName}-autoRefreshValue`);
-			if(autoRefreshLocal) {
-				this.autoRefreshValue = Boolean(Number(autoRefreshLocal));
+			if(this.isAutorefresh) {
+				let autoRefreshLocal = localStorage.getItem(`luci-app-${this.viewName}-autoRefreshValue`);
+				if(autoRefreshLocal) {
+					this.autoRefreshValue = Boolean(Number(autoRefreshLocal));
+				};
 			};
 		},
 
@@ -557,9 +624,11 @@ return baseclass.extend({
 				localStorage.setItem(
 					`luci-app-${this.viewName}-logSortingValue`, logSortingValue);
 			};
-			if(this.autoRefreshValue != autoRefreshValue) {
-				localStorage.setItem(
-					`luci-app-${this.viewName}-autoRefreshValue`, String(Number(autoRefreshValue)));
+			if(this.isAutorefresh) {
+				if(this.autoRefreshValue != autoRefreshValue) {
+					localStorage.setItem(
+						`luci-app-${this.viewName}-autoRefreshValue`, String(Number(autoRefreshValue)));
+				};
 			};
 		},
 
@@ -578,7 +647,7 @@ return baseclass.extend({
 							this.setFacilityFilter(
 								this.setLevelFilter(
 									this.setHostFilter(
-										this.setDateFilter(
+										this.setTimeFilter(
 											this.parseLogData(logdata, tail)
 										)
 									)
@@ -598,13 +667,16 @@ return baseclass.extend({
 						this.logHostsDropdownElem = this.makeLogHostsDropdownSection();
 					};
 				};
+
+				if(!autorefresh) {
+					poll.start();
+				};
 			}).finally(() => {
 				if(modal) {
 					ui.hideModal();
 				};
 				if(!autorefresh) {
 					this.enableFormElems();
-					poll.start();
 				};
 			});
 		},
@@ -619,16 +691,51 @@ return baseclass.extend({
 									'class': 'cbi-value-title',
 									'for'  : 'tailInput',
 								}, _('Last entries')),
-								E('div', { 'class': 'cbi-value-field' },
-									this.tailInput
-								),
+								E('div', { 'class': 'cbi-value-field' }, [
+									this.tailInput,
+									E('button', {
+										'class': 'cbi-button btn',
+										'click': L.bind(ev => {
+											ev.target.blur();
+											ev.preventDefault();
+											this.tailInput.value = 0;
+											this.tailInput.focus();
+										}, this),
+									}, '&#9003;'),
+								]),
 							]),
 							E('div', { 'class': 'cbi-value' }, [
 								E('label', {
 									'class': 'cbi-value-title',
 									'for'  : 'timeFilter',
 								}, _('Timestamp filter')),
-								E('div', { 'class': 'cbi-value-field' }, this.timeFilter),
+								E('div', { 'class': 'cbi-value-field' }, [
+									this.timeFilter,
+									E('button', {
+										'class': 'cbi-button btn',
+										'click': L.bind(ev => {
+											ev.target.blur();
+											ev.preventDefault();
+											this.timeFilter.value = null;
+											this.timeFilter.focus();
+										}, this),
+									}, '&#9003;'),
+								]),
+							]),
+							E('div', { 'class': 'cbi-value' }, [
+								E('label', {
+									'class': 'cbi-value-title',
+									'for'  : 'timeFilterRe',
+								}, _('Filter is regexp')),
+								E('div', { 'class': 'cbi-value-field' }, [
+									E('div', { 'class': 'cbi-checkbox' }, [
+										this.timeFilterRe,
+										E('label', {}),
+									]),
+									E('div', { 'class': 'cbi-value-description' },
+										_('Apply timestamp filter as regular expression')
+									),
+								]),
 							]),
 							this.logHostsDropdownElem,
 							this.logFacilitiesDropdownElem,
@@ -638,9 +745,34 @@ return baseclass.extend({
 									'class': 'cbi-value-title',
 									'for'  : 'msgFilter',
 								}, _('Message filter')),
-								E('div', { 'class': 'cbi-value-field' }, this.msgFilter),
+								E('div', { 'class': 'cbi-value-field' }, [
+									this.msgFilter,
+									E('button', {
+										'class': 'cbi-button btn',
+										'click': L.bind(ev => {
+											ev.target.blur();
+											ev.preventDefault();
+											this.msgFilter.value = null;
+											this.msgFilter.focus();
+										}, this),
+									}, '&#9003;'),
+								]),
 							]),
-
+							E('div', { 'class': 'cbi-value' }, [
+								E('label', {
+									'class': 'cbi-value-title',
+									'for'  : 'msgFilterRe',
+								}, _('Filter is regexp')),
+								E('div', { 'class': 'cbi-value-field' }, [
+									E('div', { 'class': 'cbi-checkbox' }, [
+										this.msgFilterRe,
+										E('label', {}),
+									]),
+									E('div', { 'class': 'cbi-value-description' },
+										_('Apply message filter as regular expression')
+									),
+								]),
+							]),
 							E('div', { 'class': 'cbi-value' }, [
 								E('label', {
 									'class': 'cbi-value-title',
@@ -648,19 +780,19 @@ return baseclass.extend({
 								}, _('Sorting entries')),
 								E('div', { 'class': 'cbi-value-field' }, this.logSorting),
 							]),
-
-							E('div', { 'class': 'cbi-value' }, [
-								E('label', {
-									'class': 'cbi-value-title',
-									'for'  : 'autoRefresh',
-								}, _('Auto refresh')),
-								E('div', { 'class': 'cbi-value-field' },
-									E('div', { 'class': 'cbi-checkbox' }, [
-										this.autoRefresh,
-										E('label', {})
-									])
-								),
-							]),
+							((this.isAutorefresh) ?
+								E('div', { 'class': 'cbi-value' }, [
+									E('label', {
+										'class': 'cbi-value-title',
+										'for'  : 'autoRefresh',
+									}, _('Auto refresh')),
+									E('div', { 'class': 'cbi-value-field' },
+										E('div', { 'class': 'cbi-checkbox' }, [
+											this.autoRefresh,
+											E('label', {}),
+										])
+									),
+								]) : ''),
 						]),
 					]),
 				]),
@@ -670,8 +802,10 @@ return baseclass.extend({
 						'class': 'btn',
 						'click': ev => {
 							ev.target.blur();
-							ui.hideModal();
 							this.resetFormValues();
+							this.timeFilter.focus();
+							this.msgFilter.focus();
+							ui.hideModal();
 						},
 					}, _('Dismiss')),
 					' ',
@@ -696,20 +830,27 @@ return baseclass.extend({
 		},
 
 		/**
-		* Creates a promise for the RPC request.
-		* Abstract method, must be overridden by a subclass!
-		*
-		* @returns {Promise}
-		* Returns a promise that returns the size of the log in bytes.
-		*/
-		getLogSize() {
-			throw new Error('getLogSize must be overridden by a subclass');
+		 * Creates a promise for the RPC request.
+		 * Abstract method, must be overridden by a subclass!
+		 *
+		 * To completely disable the auto log refresh option, views extending
+		 * this base class should overwrite the `getLogHash` function
+		 * with `null`.
+		 *
+		 * @instance
+		 * @abstract
+		 *
+		 * @returns {Promise}
+		 * Returns a promise that returns the unique value for the current log state.
+		 */
+		getLogHash() {
+			throw new Error('getLogHash must be overridden by a subclass');
 		},
 
 		async pollFunc() {
-			await this.getLogSize().then(async bytes => {
-				if(this.lastBytes != bytes) {
-					this.lastBytes = bytes;
+			await this.getLogHash().then(async hash => {
+				if(this.lastHash !== hash) {
+					this.lastHash = hash;
 					return await this.updateLog(true);
 				};
 			});
@@ -725,6 +866,10 @@ return baseclass.extend({
 
 		load() {
 			this.restoreSettingsFromLocalStorage();
+			if(typeof(this.getLogHash) != 'function') {
+				this.isAutorefresh    = false;
+				this.autoRefreshValue = false;
+			};
 			return this.getLogData(this.tailValue);
 		},
 
@@ -769,8 +914,18 @@ return baseclass.extend({
 				'type'       : 'text',
 				'form'       : 'logFilterForm',
 				'class'      : 'cbi-input-text',
-				'placeholder': _('Type an expression...'),
+				'placeholder': _('Type a search pattern...'),
 			});
+
+			this.timeFilterRe = E('input', {
+				'id'    : 'timeFilterRe',
+				'name'  : 'timeFilterRe',
+				'type'  : 'checkbox',
+				'form'  : 'logFilterForm',
+				'change': ev => this.timeFilter.focus(),
+			});
+
+			this.setRegexpValidator(this.timeFilter, this.timeFilterRe);
 
 			this.msgFilter = E('input', {
 				'id'         : 'msgFilter',
@@ -778,8 +933,18 @@ return baseclass.extend({
 				'type'       : 'text',
 				'form'       : 'logFilterForm',
 				'class'      : 'cbi-input-text',
-				'placeholder': _('Type an expression...'),
+				'placeholder': _('Type a search pattern...'),
 			});
+
+			this.msgFilterRe = E('input', {
+				'id'    : 'msgFilterRe',
+				'name'  : 'msgFilterRe',
+				'type'  : 'checkbox',
+				'form'  : 'logFilterForm',
+				'change': ev => this.msgFilter.focus(),
+			});
+
+			this.setRegexpValidator(this.msgFilter, this.msgFilterRe);
 
 			this.logSorting = E('select', {
 				'id'   : 'logSorting',
@@ -823,7 +988,7 @@ return baseclass.extend({
 
 			this.refreshBtn = E('button', {
 				'title'   : _('Refresh log'),
-				'class'   : 'btn log-side-btn',
+				'class'   : 'cbi-button btn log-side-btn',
 				'style'   : `visibility:${(this.autoRefreshValue) ? 'hidden' : 'visible'}`,
 				'click'   : ui.createHandlerFn(this, function(ev) {
 					ev.target.blur();
@@ -833,7 +998,7 @@ return baseclass.extend({
 
 			this.moreEntriesBtn = E('button', {
 				'title': _('Get more entries'),
-				'class': 'btn log-side-btn',
+				'class': 'cbi-button btn log-side-btn',
 				'style': 'margin-top:1px !important',
 				'click': ui.createHandlerFn(this, function(ev) {
 					ev.target.blur();
@@ -849,7 +1014,7 @@ return baseclass.extend({
 
 			this.allEntriesBtn = E('button', {
 				'title': _('Get all entries'),
-				'class': 'btn log-side-btn',
+				'class': 'cbi-button btn log-side-btn',
 				'style': 'margin-top:1px !important',
 				'click': ui.createHandlerFn(this, function(ev) {
 					ev.target.blur();
@@ -860,7 +1025,7 @@ return baseclass.extend({
 
 			this.filterModalBtn = E('button', {
 				'title': _('Filter settings'),
-				'class': 'btn log-side-btn',
+				'class': 'cbi-button btn log-side-btn',
 				'style': 'margin-top:10px !important',
 				'click': ev => {
 					ev.target.blur();
@@ -883,7 +1048,7 @@ return baseclass.extend({
 					this.allEntriesBtn,
 					this.filterModalBtn,
 					E('button', {
-						'class': 'btn log-side-btn',
+						'class': 'cbi-button btn log-side-btn',
 						'style': 'margin-top:10px !important',
 						'click': ev => {
 							document.getElementById('logTitle').scrollIntoView(true);
@@ -891,7 +1056,7 @@ return baseclass.extend({
 						},
 					}, '&#8593;'),
 					E('button', {
-						'class': 'btn log-side-btn',
+						'class': 'cbi-button btn log-side-btn',
 						'style': 'margin-top:1px !important',
 						'click': ev => {
 							this.logWrapper.scrollIntoView(false);
@@ -901,7 +1066,7 @@ return baseclass.extend({
 				])
 			);
 
-			if(this.autoRefreshValue) {
+			if(this.isAutorefresh && this.autoRefreshValue) {
 				poll.add(this.pollFuncWrapper, this.pollInterval);
 			};
 

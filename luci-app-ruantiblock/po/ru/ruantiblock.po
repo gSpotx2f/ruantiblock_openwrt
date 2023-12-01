@@ -263,6 +263,9 @@ msgstr "Записывать события в лог"
 msgid "Logging levels"
 msgstr "Уровни логирования"
 
+msgid "Logread not found"
+msgstr "Logread не найден"
+
 msgid "Main settings"
 msgstr "Основные настройки"
 

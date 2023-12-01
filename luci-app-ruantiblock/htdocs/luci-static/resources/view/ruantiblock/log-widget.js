@@ -38,7 +38,7 @@ document.head.append(E('style', {'type': 'text/css'},
 return baseclass.extend({
 	view: abc.view.extend({
 
-		regexpFilterHighlightFunc(match) {
+		filterHighlightFunc(match) {
 			return `<span class="log-highlight-item">${match}</span>`;
 		},
 
