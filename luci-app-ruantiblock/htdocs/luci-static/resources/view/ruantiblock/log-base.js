@@ -443,8 +443,12 @@ return baseclass.extend({
 		},
 
 		/**
-		 * Highlight the result of a regular expression.
+		 * Highlights the search result for a pattern.
 		 * Abstract method, must be overridden by a subclass!
+		 *
+		 * To disable the highlight option, views extending
+		 * this base class should overwrite the `filterHighlightFunc`
+		 * function with `null`.
 		 *
 		 * @instance
 		 * @abstract
@@ -461,7 +465,7 @@ return baseclass.extend({
 			let fArr = [];
 			entriesArray.forEach((e, i) => {
 				if(e[fieldNum] !== null && e[fieldNum].includes(pattern)) {
-					if(this.filterHighlightFunc) {
+					if(typeof(this.filterHighlightFunc) == 'function') {
 						e[fieldNum] = e[fieldNum].replace(pattern, this.filterHighlightFunc);
 					};
 					fArr.push(e);
