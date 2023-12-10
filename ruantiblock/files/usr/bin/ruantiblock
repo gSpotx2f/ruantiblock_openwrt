@@ -3,11 +3,12 @@
 ########################################################################
 #
 # Ruantiblock
-# (с) 2020 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+# (с) 2023 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 #
 ########################################################################
 
 export NAME="ruantiblock"
+export APP_EXEC="$0"
 export LANG="en_US.UTF-8"
 export LANGUAGE="en"
 
@@ -38,16 +39,20 @@ export NFTSET_CLEAR_SETS=0
 export ALLOWED_HOSTS_MODE=0
 ### Список IP адресов хостов для фильтра, через пробел (прим.: 192.168.0.10 192.168.0.15)
 export ALLOWED_HOSTS_LIST=""
-### VPN интерфейс для правил маршрутизации
-export IF_VPN="tun0"
 ### Порт прозрачного прокси Tor (параметр TransPort в torrc)
 export TOR_TRANS_PORT=9040
 ### DNS-сервер для резолвинга в домене .onion (Tor)
 export ONION_DNS_ADDR="127.0.0.1#9053"
-### метка для отбора пакетов в VPN туннель
+### VPN интерфейс для правил маршрутизации
+export IF_VPN="tun0"
+### Метка для отбора пакетов в VPN туннель
 export VPN_PKTS_MARK=8
+### Таблица маршрутизации для отправки пакетов в VPN туннель
+export VPN_ROUTE_TABLE_ID=99
 ### Приоритет правила отбора пакетов при маршрутизации в VPN-интерфейс
 export VPN_RULE_PRIO=1000
+### Способ добавления в таблицу маршрутизации правила для отправки пакетов в VPN туннель (0 - hotplug.d, 1 - скрипт ruab_route_check)
+export VPN_ROUTE_CHECK=0
 ### TCP порт прокси в режиме прозрачного прокси
 export T_PROXY_PORT_TCP=1100
 ### UDP порт прокси в режиме прозрачного прокси
@@ -208,6 +213,12 @@ if [ $? -ne 0 ]; then
     echo " Error! Nslookup doesn't exists" >&2
     exit 1
 fi
+export IP_CMD="ip"
+if [ $? -ne 0 ]; then
+    echo " Error! Iproute2 doesn't exists" >&2
+    exit 1
+fi
+ROUTE_CHECK_EXEC="${MODULES_DIR}/ruab_route_check"
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
 export NFT_TABLE="ip r"
 export NFT_TABLE_DNSMASQ="4#ip#r"
@@ -574,7 +585,7 @@ GetDataFiles() {
             ### STDOUT
             echo " Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]" >&2
             MakeLogRecord "err" "Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]"
-            _attempt=`expr $_attempt + 1`
+            _attempt=$(($_attempt + 1))
             [ $_attempt -gt $MODULE_RUN_ATTEMPTS ] && break
             sleep $MODULE_RUN_TIMEOUT
         done
@@ -687,6 +698,9 @@ Start() {
         PreStartCheck
         UpdateBllistSets
         _return_code=$?
+        if [ "$PROXY_MODE" = "2" -a "$VPN_ROUTE_CHECK" = "1" -a -x "$ROUTE_CHECK_EXEC" ]; then
+            $ROUTE_CHECK_EXEC start &> /dev/null &
+        fi
         ### Start-script
         [ -x "$START_SCRIPT" ] && $START_SCRIPT > /dev/null 2>&1 &
     fi
@@ -703,6 +717,9 @@ Stop() {
         MakeLogRecord "info" "${1}..."
         DropNetConfig &> /dev/null
         _return_code=$?
+        if [ -x "$ROUTE_CHECK_EXEC" ]; then
+            $ROUTE_CHECK_EXEC stop &> /dev/null
+        fi
         ### Stop-script
         [ -x "$STOP_SCRIPT" ] && $STOP_SCRIPT > /dev/null 2>&1 &
         MakeToken
@@ -720,7 +737,7 @@ Reload() {
         if [ $_i -ge $_attempts ]; then
             return 1
         fi
-        _i=`expr $_i + 1`
+        _i=$(($_i + 1))
         sleep 1
     done
     echo " ${NAME} reload..."

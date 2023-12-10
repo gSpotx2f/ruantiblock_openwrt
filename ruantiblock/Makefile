@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock
-PKG_VERSION:=1.3
-PKG_RELEASE:=1
+PKG_VERSION:=1.4
+PKG_RELEASE:=0
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
 include $(INCLUDE_DIR)/package.mk
@@ -55,6 +55,8 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/config_script $(1)/usr/share/ruantiblock/config_script
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/info_output $(1)/usr/share/ruantiblock/info_output
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/nft_functions $(1)/usr/share/ruantiblock/nft_functions
+	$(INSTALL_DIR) $(1)/usr/libexec/ruantiblock
+	$(INSTALL_BIN) ./files/usr/libexec/ruantiblock/ruab_route_check $(1)/usr/libexec/ruantiblock/ruab_route_check
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/usr/bin/ruantiblock $(1)/usr/bin/ruantiblock
 endef

@@ -1,11 +1,9 @@
-IP_CMD="ip"
 NFT_ALLOWED_HOSTS_CHAIN="allowed_hosts"
 NFT_BLLIST_CHAIN="blacklist"
 NFT_FPROXY_FILTER="fproxy_filter"
 NFT_DNSMASQ_TIMEOUT_UPDATE_CHAIN="dnsmasq_timeout_update"
 NFT_ACTION_CHAIN="action"
 NFT_LOCAL_CLIENTS_CHAIN="local_clients"
-VPN_ROUTE_TABLE_ID=99
 
 if [ "$PROXY_MODE" = "2" ]; then
     MAIN_CHAIN_TYPE="type filter hook prerouting priority ${NFT_PRIO_ROUTE}; policy accept;"
@@ -41,7 +39,7 @@ NftCmdWrapper() {
             _return_code=$?
             break
         fi
-        _i=`expr $_i + 1`
+        _i=$(($_i + 1))
     done
     return $_return_code
 }

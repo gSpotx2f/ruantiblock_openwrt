@@ -479,8 +479,11 @@ msgstr "UDP порт прозрачного прокси"
 msgid "Turn on if blacklist source is blocked"
 msgstr "Включите, если источник блэклиста заблокирован"
 
-msgid "Type an expression..."
-msgstr "Введите выражение..."
+msgid "Type a search pattern..."
+msgstr "Введите шаблон для поиска"
+
+msgid "Type of adding a VPN rule to the routing table"
+msgstr "Тип добавления правила VPN в таблицу маршрутизации"
 
 msgid "Unable to execute or read contents"
 msgstr "Невозможно выполнить или прочитать содержимое"
@@ -545,6 +548,9 @@ msgstr "отключен"
 msgid "e.g:"
 msgstr "прим:"
 
+msgid "hotplug.d - default option for many VPN applications that supported by OpenWrt."
+msgstr "hotplug.d - стандартная опция для многих VPN-приложений поддерживаемых в OpenWrt."
+
 msgid "net pattern"
 msgstr "шаблон сети"
 
@@ -556,6 +562,9 @@ msgstr "необходим установленный модуль блэкли�
 
 msgid "user entries only"
 msgstr "только записи пользователя"
+
+msgid "ruab_route_check - script that regularly checks an entry in the routing table."
+msgstr "ruab_route_check - скрипт, который регулярно проверяет запись в таблице маршрутизации."
 
 msgid "valid IP address"
 msgstr "верный IP-адрес"

@@ -132,7 +132,7 @@ return view.extend({
 
 		// PROXY_LOCAL_CLIENTS
 		let proxy_local_clients = s.taboption('main_settings', form.Flag, 'proxy_local_clients',
-			_("Apply proxy rules to router application traffic"));
+			_('Apply proxy rules to router application traffic'));
 		proxy_local_clients.rmempty = false;
 
 		// ENABLE_LOGGING
@@ -163,7 +163,7 @@ return view.extend({
 		// ALLOWED_HOSTS_LIST
 		o = s.taboption('main_settings', form.DynamicList, 'allowed_hosts_list',
 			_('IP addresses for host filter'));
-		o.datatype = "ip4addr";
+		o.datatype = 'ip4addr';
 
 		// ENABLE_FPROXY
 		o = s.taboption('main_settings', form.Flag, 'enable_fproxy',
@@ -174,7 +174,7 @@ return view.extend({
 		// FPROXY_LIST
 		o = s.taboption('main_settings', form.DynamicList, 'fproxy_list',
 			_('IP addresses for full proxy mode'));
-		o.datatype = "ip4addr";
+		o.datatype = 'ip4addr';
 
 
 		/* Tor tab */
@@ -185,7 +185,7 @@ return view.extend({
 		o = s.taboption('tor_settings', form.Value, 'tor_trans_port',
 			_('Transparent proxy port'));
 		o.rmempty  = false;
-		o.datatype = "port";
+		o.datatype = 'port';
 
 		// ONION_DNS_ADDR
 		o = s.taboption('tor_settings', form.Value, 'onion_dns_addr',
@@ -213,6 +213,15 @@ return view.extend({
 		o.rmempty   = false;
 		o.default   = 'tun0';
 
+		// VPN_ROUTE_CHECK
+		o = s.taboption('vpn_settings', form.ListValue, 'vpn_route_check',
+			_('Type of adding a VPN rule to the routing table'));
+		o.value('0', 'hotplug.d');
+		o.value('1', 'ruab_route_check');
+		o.description = _('hotplug.d - default option for many VPN applications that supported by OpenWrt.') +
+						'<br />' +
+						_('ruab_route_check - script that regularly checks an entry in the routing table.');
+
 
 		/* Proxy tab */
 
@@ -222,18 +231,18 @@ return view.extend({
 		o = s.taboption('proxy_settings', form.Value, 't_proxy_port_tcp',
 			_('Transparent proxy TCP port'));
 		o.rmempty  = false;
-		o.datatype = "port";
+		o.datatype = 'port';
 
-		//T_PROXY_ALLOW_UDP
+		// T_PROXY_ALLOW_UDP
 		o = s.taboption('proxy_settings', form.Flag, 't_proxy_allow_udp',
-			_("Send UDP traffic to transparent proxy"));
+			_('Send UDP traffic to transparent proxy'));
 		o.rmempty = false;
 
 		// T_PROXY_PORT_UDP
 		o = s.taboption('proxy_settings', form.Value, 't_proxy_port_udp',
 			_('Transparent proxy UDP port'));
 		o.rmempty  = false;
-		o.datatype = "port";
+		o.datatype = 'port';
 
 
 		/* Blacklist module tab */
@@ -243,7 +252,7 @@ return view.extend({
 		// BLLIST_PRESET
 		let bllist_preset = s.taboption('blacklist_tab', form.ListValue,
 			'bllist_preset', _('Blacklist update mode'));
-		bllist_preset.description = _("Blacklist sources") + ':';
+		bllist_preset.description = _('Blacklist sources') + ':';
 		bllist_preset.value('', _('user entries only'));
 		Object.entries(tools.blacklistPresets).forEach(e => {
 			bllist_preset.value(e[0], ((e[1][1]) ? `${e[1][0]} - ${e[1][1]}` : e[1][0]));
@@ -274,7 +283,7 @@ return view.extend({
 
 		// ADD_USER_ENTRIES
 		o = s.taboption('blacklist_tab', form.Flag, 'add_user_entries',
-			_('Enable user entries'), _("Add user entries to the blacklist when updating"));
+			_('Enable user entries'), _('Add user entries to the blacklist when updating'));
 		o.rmempty = false;
 		o.default = 0;
 		o.depends({ bllist_preset: '', '!reverse': true });
@@ -293,7 +302,7 @@ return view.extend({
 
 		// BYPASS_MODE
 		o = s.taboption('blacklist_tab', form.Flag, 'bypass_mode',
-			_('Enable exclusion list'), _("List of hosts that are excluded from block bypass (always available directly)"));
+			_('Enable exclusion list'), _('List of hosts that are excluded from block bypass (always available directly)'));
 		o.rmempty = false;
 		o.default = 0;
 
@@ -306,7 +315,7 @@ return view.extend({
 
 		// BYPASS_ENTRIES_DNS
 		o = s.taboption('blacklist_tab', form.Value, 'bypass_entries_dns',
-			_("DNS server that is used for the FQDN entries of exclusion list"), '<code>ipaddress[#port]</code>');
+			_('DNS server that is used for the FQDN entries of exclusion list'), '<code>ipaddress[#port]</code>');
 		o.validate = this.validateIpPort;
 
 		if(availableParsers) {
@@ -319,14 +328,14 @@ return view.extend({
 
 			// BLLIST_MIN_ENTRIES
 			o = s.taboption('parser_settings_tab', form.Value, 'bllist_min_entries',
-				_("Minimum allowed number of entries"));
+				_('Minimum allowed number of entries'));
 			o.description = _('If less than the specified number of entries are received from the source, then the lists are not updated');
 			o.rmempty     = false;
 			o.datatype    = 'uinteger';
 
 			// BLLIST_FQDN_FILTER
 			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_fqdn_filter',
-				_("Enable FQDN filter"));
+				_('Enable FQDN filter'));
 			o.description = _('Pick domains from blacklist by FQDN filter patterns');
 			o.rmempty     = false;
 
@@ -338,14 +347,14 @@ return view.extend({
 
 			// BLLIST_FQDN_FILTER_FILE edit dialog
 			o = s.taboption('parser_settings_tab', form.Button, '_fqdn_filter_btn',
-				_("FQDN filter"));
+				_('FQDN filter'));
 			o.onclick    = () => fqdn_filter_edit.show();
 			o.inputtitle = _('Edit');
 			o.inputstyle = 'edit btn';
 
 			// BLLIST_SD_LIMIT
 			o = s.taboption('parser_settings_tab', form.Value, 'bllist_sd_limit',
-				_("Subdomains limit"));
+				_('Subdomains limit'));
 			o.description = _('The number of subdomains in the domain, upon reaching which the entire 2nd level domain is added to the list');
 			o.rmempty     = false;
 			o.datatype    = 'uinteger';
@@ -355,11 +364,11 @@ return view.extend({
 				_('2nd level domains that are excluded from optimization'));
 			o.description = _('e.g:') + ' <code>livejournal.com</code>';
 			o.placeholder = _('e.g:') + ' livejournal.com';
-			o.datatype = "hostname";
+			o.datatype = 'hostname';
 
 			// BLLIST_ENABLE_IDN
 			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_enable_idn',
-				_("Convert cyrillic domains to punycode"));
+				_('Convert cyrillic domains to punycode'));
 			o.rmempty = false;
 
 			// BLLIST_ALT_NSLOOKUP
@@ -369,13 +378,13 @@ return view.extend({
 
 			// BLLIST_ALT_DNS_ADDR
 			o = s.taboption('parser_settings_tab', form.Value, 'bllist_alt_dns_addr',
-				_("Optional DNS resolver"), '<code>ipaddress[#port]</code>');
+				_('Optional DNS resolver'), '<code>ipaddress[#port]</code>');
 			o.rmempty  = false;
 			o.validate = this.validateIpPort;
 
 			// BLLIST_IP_FILTER
 			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_ip_filter',
-				_("Enable IP filter"));
+				_('Enable IP filter'));
 			o.description = _('Pick IP addresses from blacklist by IP filter patterns');
 			o.rmempty     = false;
 
@@ -387,13 +396,13 @@ return view.extend({
 
 			// BLLIST_IP_FILTER_FILE edit dialog
 			o = s.taboption('parser_settings_tab', form.Button, '_ip_filter_btn',
-				_("IP filter"));
+				_('IP filter'));
 			o.onclick    = () => ip_filter_edit.show();
 			o.inputtitle = _('Edit');
 			o.inputstyle = 'edit btn';
 
 			// BLLIST_IP_LIMIT
-			o = s.taboption('parser_settings_tab', form.Value, 'bllist_ip_limit', _("IP limit"));
+			o = s.taboption('parser_settings_tab', form.Value, 'bllist_ip_limit', _('IP limit'));
 			o.description = _("The number of IP addresses in the subnet, upon reaching which the entire '/24' subnet is added to the list");
 			o.rmempty     = false;
 			o.datatype    = 'uinteger';
@@ -410,7 +419,7 @@ return view.extend({
 
 			// BLLIST_SUMMARIZE_IP
 			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_summarize_ip',
-				_("Summarize IP ranges"));
+				_('Summarize IP ranges'));
 			o.rmempty = false;
 
 			// BLLIST_SUMMARIZE_CIDR

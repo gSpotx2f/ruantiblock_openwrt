@@ -444,8 +444,12 @@ msgstr ""
 msgid "Turn on if blacklist source is blocked"
 msgstr ""
 
-msgid "Type an expression..."
+msgid "Type a search pattern..."
 msgstr ""
+
+msgid "Type of adding a VPN rule to the routing table"
+msgstr ""
+
 msgid "Unable to execute or read contents"
 msgstr ""
 
@@ -508,6 +512,9 @@ msgstr ""
 msgid "e.g:"
 msgstr ""
 
+msgid "hotplug.d - default option for many VPN applications that supported by OpenWrt."
+msgstr ""
+
 msgid "net pattern"
 msgstr ""
 
@@ -515,6 +522,9 @@ msgid "none (user entries only)"
 msgstr ""
 
 msgid "requires installed blacklist module"
+msgstr ""
+
+msgid "ruab_route_check - script that regularly checks an entry in the routing table."
 msgstr ""
 
 msgid "user entries only"

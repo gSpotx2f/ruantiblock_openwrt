@@ -1,0 +1,60 @@
+#!/bin/sh
+
+PID_FILE="/var/run/`basename $0`.pid"
+
+VpnRouteStatus() {
+    [ -n "`$IP_CMD route show table $VPN_ROUTE_TABLE_ID 2> /dev/null`" ] && return 0
+    return 1
+}
+
+Main() {
+    while [ -e "$PID_FILE" ]
+    do
+        if ! VpnRouteStatus; then
+            if $IP_CMD link show $IF_VPN &> /dev/null; then
+                $APP_EXEC reload
+            fi
+        fi
+        sleep 10
+    done
+}
+
+TrapFunc() {
+    rm -f "$PID_FILE"
+    exit 0
+}
+
+Start() {
+    echo $$ > "$PID_FILE"
+    trap "TrapFunc" 2 3 15
+    Main
+}
+
+Stop() {
+    kill -s SIGKILL `cat "$PID_FILE"` 2> /dev/null
+    rm -f "$PID_FILE"
+}
+
+case "$1" in
+    start)
+        if [ -e "$PID_FILE" ]; then
+            echo "${PID_FILE} exists. Already running?" >&2
+            Stop
+        fi
+        Start
+    ;;
+    stop)
+        if [ -e "$PID_FILE" ]; then
+            Stop
+        else
+            echo "${PID_FILE} does not exists. Not running?" >&2
+            exit 1
+        fi
+    ;;
+    *)
+        echo "Usage: `basename $0` start|stop"
+        exit 1
+    ;;
+esac
+
+exit 0
