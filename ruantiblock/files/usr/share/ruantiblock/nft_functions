@@ -50,12 +50,17 @@ NftVpnRouteDelete() {
 }
 
 NftVpnRouteAdd() {
-    VPN_IP=`$IP_CMD addr list dev $IF_VPN 2> /dev/null | $AWK_CMD '/inet/{sub("/[0-9]{1,2}$", "", $2); print $2; exit}'`
-    if [ -n "$VPN_IP" ]; then
+    local _vpn_ip
+    if [ -n "$VPN_GW_IP" ]; then
+        _vpn_ip="$VPN_GW_IP"
+    else
+        _vpn_ip=`$IP_CMD addr list dev $IF_VPN 2> /dev/null | $AWK_CMD '/inet/{f=($3 == "peer") ? 4 : 2; sub("/[0-9]{1,2}$", "", $f); print $f; exit}'`
+    fi
+    if [ -n "$_vpn_ip" ]; then
         echo 0 > /proc/sys/net/ipv4/conf/$IF_VPN/rp_filter
         NftVpnRouteDelete 2> /dev/null
         $IP_CMD rule add fwmark $VPN_PKTS_MARK table $VPN_ROUTE_TABLE_ID priority $VPN_RULE_PRIO
-        $IP_CMD route add default via $VPN_IP table $VPN_ROUTE_TABLE_ID
+        $IP_CMD route add default via $_vpn_ip table $VPN_ROUTE_TABLE_ID
     fi
 }
 

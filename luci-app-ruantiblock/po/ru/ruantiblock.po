@@ -203,6 +203,9 @@ msgstr "Час"
 msgid "If less than the specified number of entries are received from the source, then the lists are not updated"
 msgstr "Если от источника получено меньше указанного количества записей, то списки не обновляются"
 
+msgid "If not specified, the VPN interface address is used (or peer address for PPP protocols)"
+msgstr "Если не задан, используется адрес VPN интерфейса (или адрес пира для протоколов PPP)"
+
 msgid "IP address"
 msgstr "IP-адрес"
 
@@ -523,6 +526,9 @@ msgstr "Использовать альтернативный  DNS резолв�
 
 msgid "User entries"
 msgstr "Записи пользователя"
+
+msgid "VPN gateway IP address"
+msgstr "IP адрес шлюза VPN"
 
 msgid "VPN interface"
 msgstr "VPN интерфейс"

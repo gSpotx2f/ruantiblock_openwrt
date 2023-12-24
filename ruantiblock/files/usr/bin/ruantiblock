@@ -9,6 +9,7 @@
 
 export NAME="ruantiblock"
 export APP_EXEC="$0"
+export APP_NAME="`basename $0`"
 export LANG="en_US.UTF-8"
 export LANGUAGE="en"
 
@@ -45,6 +46,8 @@ export TOR_TRANS_PORT=9040
 export ONION_DNS_ADDR="127.0.0.1#9053"
 ### VPN интерфейс для правил маршрутизации
 export IF_VPN="tun0"
+### IP адрес шлюза для VPN конфигурации. Если не задан, используется адрес VPN интерфейса (или адрес пира для протоколов PPP)
+export VPN_GW_IP=""
 ### Метка для отбора пакетов в VPN туннель
 export VPN_PKTS_MARK=8
 ### Таблица маршрутизации для отправки пакетов в VPN туннель
@@ -201,7 +204,7 @@ if [ $ENABLE_LOGGING = "1" -a $? -ne 0 ]; then
     echo " Logger doesn't exists" >&2
     ENABLE_LOGGING=0
 fi
-LOGGER_PARAMS="-t `basename $0`"
+LOGGER_PARAMS="-t ${APP_NAME}"
 WGET_CMD=`which wget`
 if [ $? -ne 0 ]; then
     echo " Error! Wget doesn't exists" >&2
@@ -265,7 +268,7 @@ fi
 
 Help() {
 cat << EOF
- Usage: `basename $0` start|force-start|stop|destroy|restart|reload|update|force-update|data-files|status|raw-status|html-info|help
+ Usage: ${APP_NAME} start|force-start|stop|destroy|restart|reload|update|force-update|data-files|status|raw-status|html-info|help
         start : Start
         force-start : Removing the PID-file before running
         stop : Stop
@@ -280,18 +283,18 @@ cat << EOF
         html-info : Return the html-info output
         -h|--help|help : This message
  Examples:
-        `basename $0` start
-        `basename $0` force-start
-        `basename $0` stop
-        `basename $0` destroy
-        `basename $0` restart
-        `basename $0` reload
-        `basename $0` update
-        `basename $0` force-update
-        `basename $0` data-files
-        `basename $0` status
-        `basename $0` raw-status
-        `basename $0` html-info
+        ${APP_NAME} start
+        ${APP_NAME} force-start
+        ${APP_NAME} stop
+        ${APP_NAME} destroy
+        ${APP_NAME} restart
+        ${APP_NAME} reload
+        ${APP_NAME} update
+        ${APP_NAME} force-update
+        ${APP_NAME} data-files
+        ${APP_NAME} status
+        ${APP_NAME} raw-status
+        ${APP_NAME} html-info
 EOF
 }
 

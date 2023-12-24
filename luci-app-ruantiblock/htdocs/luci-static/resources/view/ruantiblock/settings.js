@@ -213,6 +213,12 @@ return view.extend({
 		o.rmempty   = false;
 		o.default   = 'tun0';
 
+		// VPN_GW_IP
+		o = s.taboption('vpn_settings', form.Value, 'vpn_gw_ip',
+			_('VPN gateway IP address'),
+			_('If not specified, the VPN interface address is used (or peer address for PPP protocols)'));
+		o.datatype = 'ip4addr(1)';
+
 		// VPN_ROUTE_CHECK
 		o = s.taboption('vpn_settings', form.ListValue, 'vpn_route_check',
 			_('Type of adding a VPN rule to the routing table'));

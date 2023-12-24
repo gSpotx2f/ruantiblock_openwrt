@@ -187,6 +187,9 @@ msgstr ""
 msgid "If less than the specified number of entries are received from the source, then the lists are not updated"
 msgstr ""
 
+msgid "If not specified, the VPN interface address is used (or peer address for PPP protocols)"
+msgstr ""
+
 msgid "IP address"
 msgstr ""
 
@@ -486,6 +489,9 @@ msgstr ""
 msgid "Use optional DNS resolver"
 msgstr ""
 msgid "User entries"
+msgstr ""
+
+msgid "VPN gateway IP address"
 msgstr ""
 
 msgid "VPN interface"
