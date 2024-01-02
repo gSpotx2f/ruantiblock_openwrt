@@ -13,8 +13,5 @@ VPN_ROUTE_CHECK=`$UCI_CMD get ruantiblock.config.vpn_route_check`
 [ "$VPN_ROUTE_CHECK" != "0" ] && exit 0
 
 if [ "$ACTION" = "ifup" ] && [ "$PROXY_MODE" = "2" ] && [ "$DEVICE" = "$IF_VPN" ]; then
-	if [ `$RUAB_CMD raw-status` -ne 2 ]; then
-		sleep 5
-		$RUAB_CMD reload
-	fi
+	[ `$RUAB_CMD raw-status` -ne 2 ] && $RUAB_CMD reload
 fi
