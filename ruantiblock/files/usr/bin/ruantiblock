@@ -379,7 +379,7 @@ UpdateBllistProxySet() {
         if printf "$host" | $AWK_CMD '{exit ($0 ~ /^([0-9]{1,3}.){3}[0-9]{1,3}$/) ? 0 : 1}'; then
             _ip_string="${_ip_string}${host} "
         else
-            _ip_string="${_ip_string}`$NSLOOKUP_CMD $host | $AWK_CMD '/^Address: ([0-9]{1,3}.){3}[0-9]{1,3}$/ {printf $2" "}'`"
+            _ip_string="${_ip_string}`$NSLOOKUP_CMD $host 2> /dev/null | $AWK_CMD '/^Address: ([0-9]{1,3}.){3}[0-9]{1,3}$/ {printf $2" "}'`"
         fi
     done
     _ip_string=`FormatNftSetElemsList "$_ip_string"`
