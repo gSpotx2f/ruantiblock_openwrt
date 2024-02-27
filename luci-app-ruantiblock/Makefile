@@ -1,10 +1,10 @@
 #
-# (с) 2023 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+# (с) 2024 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 #
 
 include $(TOPDIR)/rules.mk
 
-PKG_VERSION:=1.4-1
+PKG_VERSION:=1.4-2
 LUCI_TITLE:=LuCI support for ruantiblock
 LUCI_DEPENDS:=+ruantiblock
 LUCI_PKGARCH:=all

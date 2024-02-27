@@ -9,40 +9,44 @@ return abc.view.extend({
 
 	title          : _('Ruantiblock') + ' - ' + _('Log'),
 
-	testRegexp     : new RegExp(/([0-9]{2}:){2}[0-9]{2}/),
+	logdRegexp     : new RegExp(/^([^\s]{3}\s+[^\s]{3}\s+\d{1,2}\s+\d{1,2}:\d{1,2}:\d{1,2}\s+\d{4})\s+([a-z]+)\.([a-z]+)\s+(.*)$/),
+
+	syslog_ngRegexp: new RegExp(/^([^\s]{3}\s+\d{1,2}\s+\d{1,2}:\d{1,2}:\d{1,2})\s+([^\s]+)\s+(.*)$/),
+
+	entryRegexp    : null,
 
 	isLoggerChecked: false,
 
 	entriesHandler : null,
 
+	logger         : null,
+
 	getLogHash     : null,
 
 	// logd
 	logdHandler(strArray, lineNum) {
-		let logLevel = strArray[5].split('.');
 		return [
-			lineNum,                                        // #         (Number)
-			strArray.slice(0, 5).join(' '),                 // Timestamp (String)
-			null,                                           // Host      (String)
-			logLevel[0],                                    // Facility  (String)
-			logLevel[1],                                    // Level     (String)
-			this.htmlEntities(strArray.slice(6).join(' ')), // Message   (String)
+			lineNum,                               // #         (Number)
+			strArray[1],                           // Timestamp (String)
+			null,                                  // Host      (String)
+			strArray[2],                           // Facility  (String)
+			strArray[3],                           // Level     (String)
+			this.htmlEntities(strArray[4]) || ' ', // Message   (String)
 		];
 	},
 
 	// syslog-ng
 	syslog_ngHandler(strArray, lineNum) {
-		if(!(strArray[3] in this.logHosts)) {
-			this.logHosts[strArray[3]] = this.makeLogHostsDropdownItem(strArray[3]);
+		if(!(strArray[2] in this.logHosts)) {
+			this.logHosts[strArray[2]] = this.makeLogHostsDropdownItem(strArray[2]);
 		};
-
 		return [
-			lineNum,                                        // #         (Number)
-			strArray.slice(0, 3).join(' '),                 // Timestamp (String)
-			strArray[3],                                    // Host      (String)
-			null,                                           // Facility  (String)
-			null,                                           // Level     (String)
-			this.htmlEntities(strArray.slice(4).join(' ')), // Message   (String)
+			lineNum,                               // #         (Number)
+			strArray[1],                           // Timestamp (String)
+			strArray[2],                           // Host      (String)
+			null,                                  // Facility  (String)
+			null,                                  // Level     (String)
+			this.htmlEntities(strArray[3]) || ' ', // Message   (String)
 		];
 	},
 
@@ -89,24 +93,16 @@ return abc.view.extend({
 		this.totalLogLines = strings.length;
 
 		let entriesArray   = strings.map((e, i) => {
-			let strArray   = e.split(/\s+/);
-
 			if(!this.isLoggerChecked) {
-				/**
-				 * Checking the fourth field of a line.
-				 * If it contains time then logd.
-				*/
-				if(this.testRegexp.test(strArray[3])) {
+				if(this.logdRegexp.test(e)) {
+					this.entryRegexp    = this.logdRegexp;
 					this.isFacilities   = true;
 					this.isLevels       = true;
 					this.logHosts       = {};
 					this.entriesHandler = this.logdHandler;
 				}
-				/**
-				 * Checking the third field of a line.
-				 * If it contains time then syslog-ng.
-				*/
-				else if(this.testRegexp.test(strArray[2])) {
+				else if(this.syslog_ngRegexp.test(e)) {
+					this.entryRegexp    = this.syslog_ngRegexp;
 					this.isHosts        = true;
 					this.logFacilities  = {};
 					this.logLevels      = {};
@@ -118,7 +114,13 @@ return abc.view.extend({
 				this.isLoggerChecked = true;
 			};
 
-			return this.entriesHandler(strArray, i + 1);
+			let strArray = e.match(this.entryRegexp);
+			if(strArray) {
+				return this.entriesHandler(strArray, i + 1);
+			} else {
+				unsupportedLog = true;
+				return;
+			};
 		});
 
 		if(unsupportedLog) {
@@ -127,7 +129,6 @@ return abc.view.extend({
 			if(this.logSortingValue === 'desc') {
 				entriesArray.reverse();
 			};
-
 			return entriesArray;
 		};
 	},

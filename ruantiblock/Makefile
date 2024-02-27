@@ -1,5 +1,5 @@
 #
-# (с) 2023 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+# (с) 2024 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 #
 
 include $(TOPDIR)/rules.mk

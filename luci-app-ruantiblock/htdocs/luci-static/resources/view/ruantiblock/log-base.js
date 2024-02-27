@@ -34,6 +34,11 @@ document.head.append(E('style', {'type': 'text/css'},
 	--app-log-debug: #5986b1;
 	--app-log-entries-count-border: #555;
 }
+#logWrapper {
+	overflow: auto !important;
+	width: 100%;
+	min-height: 20em';
+}
 .log-empty {
 }
 .log-emerg {
@@ -137,6 +142,8 @@ log-emerg td {
 	position: fixed;
 	z-index: 1 !important;
 	opacity: 0.7;
+	right: 1px;
+	top: 40vh;
 }
 .log-side-btn {
 	position: relative;
@@ -881,8 +888,7 @@ return baseclass.extend({
 			this.pollFuncWrapper = L.bind(this.pollFunc, this);
 
 			this.logWrapper = E('div', {
-				'id'   : 'logWrapper',
-				'style': 'width:100%; min-height:20em'
+				'id': 'logWrapper',
 			}, this.makeLogArea(this.parseLogData(logdata, this.tailValue)));
 
 			this.fastTailValue = this.tailValue
@@ -1045,7 +1051,6 @@ return baseclass.extend({
 				E('div', {
 					'align': 'right',
 					'class': 'log-side-block',
-					'style': `right:1px; top:${window.innerHeight / 2 - 60}px`,
 				}, [
 					this.refreshBtn,
 					this.moreEntriesBtn,
