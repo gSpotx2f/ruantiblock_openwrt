@@ -875,6 +875,14 @@ return baseclass.extend({
 			return this.reloadLog(Number(this.tailValue), true);
 		},
 
+		scrollToTop() {
+			this.logWrapper.scrollIntoView(true);
+		},
+
+		scrollToBottom() {
+			this.logWrapper.scrollIntoView(false);
+		},
+
 		load() {
 			this.restoreSettingsFromLocalStorage();
 			if(typeof(this.getLogHash) != 'function') {
@@ -997,10 +1005,10 @@ return baseclass.extend({
 			}, _('Download log'));
 
 			this.refreshBtn = E('button', {
-				'title'   : _('Refresh log'),
-				'class'   : 'cbi-button btn log-side-btn',
-				'style'   : `visibility:${(this.autoRefreshValue) ? 'hidden' : 'visible'}`,
-				'click'   : ui.createHandlerFn(this, function(ev) {
+				'title': _('Refresh log'),
+				'class': 'cbi-button btn log-side-btn',
+				'style': `visibility:${(this.autoRefreshValue) ? 'hidden' : 'visible'}`,
+				'click': ui.createHandlerFn(this, function(ev) {
 					ev.target.blur();
 					return this.updateLog();
 				}),
@@ -1018,7 +1026,13 @@ return baseclass.extend({
 					if(this.fastTailValue > 0) {
 						this.fastTailValue += this.fastTailIncrement;
 					};
-					return this.reloadLog(this.fastTailValue);
+					return this.reloadLog(this.fastTailValue)/*.then(() => {
+						if(this.logSortingValue == 'desc') {
+							this.scrollToBottom();
+						} else {
+							this.scrollToTop();
+						};
+					});*/
 				}),
 			}, `+${this.fastTailIncrement}`);
 
@@ -1060,7 +1074,7 @@ return baseclass.extend({
 						'class': 'cbi-button btn log-side-btn',
 						'style': 'margin-top:10px !important',
 						'click': ev => {
-							document.getElementById('logTitle').scrollIntoView(true);
+							this.scrollToTop();
 							ev.target.blur();
 						},
 					}, '&#8593;'),
@@ -1068,7 +1082,7 @@ return baseclass.extend({
 						'class': 'cbi-button btn log-side-btn',
 						'style': 'margin-top:1px !important',
 						'click': ev => {
-							this.logWrapper.scrollIntoView(false);
+							this.scrollToBottom();
 							ev.target.blur();
 						},
 					}, '&#8595;'),
