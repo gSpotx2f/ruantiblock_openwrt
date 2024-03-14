@@ -3,7 +3,7 @@
 ########################################################################
 #
 # Ruantiblock
-# (с) 2023 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+# (с) 2024 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 #
 ########################################################################
 
@@ -166,6 +166,7 @@ export BLLIST_ALT_DNS_ADDR="8.8.8.8"
 ### Источники блэклиста
 export RBL_ALL_URL="https://reestr.rublacklist.net/api/v3/snapshot/"
 export RBL_IP_URL="https://reestr.rublacklist.net/api/v3/ips/"
+export RBL_DPI_URL="https://reestr.rublacklist.net/api/v3/dpi/"
 export ZI_ALL_URL="https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv"
 export AF_IP_URL="https://antifilter.download/list/allyouneed.lst"
 export AF_FQDN_URL="https://antifilter.download/list/domains.lst"
