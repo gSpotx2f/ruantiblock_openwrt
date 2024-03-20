@@ -54,15 +54,17 @@ class Config:
         "ZI_ALL_URL",
         "AF_IP_URL",
         "AF_FQDN_URL",
-        "RA_IP_NFTSET_URL",
+        "FZ_URL",
+        "RA_IP_IPSET_URL",
         "RA_IP_DMASK_URL",
         "RA_IP_STAT_URL",
-        "RA_FQDN_NFTSET_URL",
+        "RA_FQDN_IPSET_URL",
         "RA_FQDN_DMASK_URL",
         "RA_FQDN_STAT_URL",
         "RBL_ENCODING",
         "ZI_ENCODING",
         "AF_ENCODING",
+        "FZ_ENCODING",
         "RA_ENCODING",
         "BLLIST_SUMMARIZE_IP",
         "BLLIST_SUMMARIZE_CIDR",
@@ -76,14 +78,31 @@ class Config:
         def normalize_string(string):
             return re.sub('"', '', string)
 
-        config_arrays = {
+        config_sets = {
             "BLLIST_GR_EXCLUDED_SLD",
             "BLLIST_GR_EXCLUDED_NETS",
         }
+        config_arrays = {
+            "RBL_ALL_URL",
+            "RBL_IP_URL",
+            "RBL_DPI_URL",
+            "ZI_ALL_URL",
+            "AF_IP_URL",
+            "AF_FQDN_URL",
+            "FZ_URL",
+            "RA_IP_IPSET_URL",
+            "RA_IP_DMASK_URL",
+            "RA_IP_STAT_URL",
+            "RA_FQDN_IPSET_URL",
+            "RA_FQDN_DMASK_URL",
+            "RA_FQDN_STAT_URL",
+        }
         try:
             for k, v in cfg_dict.items():
-                if k in config_arrays:
+                if k in config_sets:
                     value = {normalize_string(i) for i in v.split(" ")}
+                elif k in config_arrays:
+                    value = [normalize_string(i) for i in v.split(" ")]
                 else:
                     try:
                         value = int(v)
@@ -159,10 +178,11 @@ class BlackListParser(Config):
         self.proxies = None
         self.connect_timeout = None
         self.data_chunk = 2048
-        self.url = "http://127.0.0.1"
+        self.url = ["http://127.0.0.1"]
         self.records_separator = "\n"
         self.default_site_encoding = "utf-8"
         self.site_encoding = self.default_site_encoding
+        self.rest = bytes()
 
     @staticmethod
     def _compile_filter_patterns(filters_seq):
@@ -201,14 +221,14 @@ class BlackListParser(Config):
         try:
             yield (conn_object, http_code, received_headers)
         except Exception as exception_object:
-            raise ParserError(f"Parser error! {exception_object} ( {self.url} )")
+            raise ParserError(f"Parser error! {exception_object} ( {url} )")
         finally:
             if conn_object:
                 conn_object.close()
 
-    def _download_data(self):
+    def _download_data(self, url):
         with self._make_connection(
-            self.url,
+            url,
             send_headers_dict=self.send_headers_dict,
             timeout=self.connect_timeout
         ) as conn_params:
@@ -220,17 +240,16 @@ class BlackListParser(Config):
                     if not chunk:
                         break
 
-    def _align_chunk(self):
-        rest = bytes()
-        for chunk in self._download_data():
+    def _align_chunk(self, url):
+        for chunk in self._download_data(url):
             if chunk is None:
-                yield rest
+                yield self.rest
                 continue
-            data, _, rest = (rest + chunk).rpartition(self.records_separator)
+            data, _, self.rest = (self.rest + chunk).rpartition(self.records_separator)
             yield data
 
-    def _split_entries(self):
-        for chunk in self._align_chunk():
+    def _split_entries(self, url):
+        for chunk in self._align_chunk(url):
             for entry in chunk.split(self.records_separator):
                 try:
                     yield entry.decode(
@@ -331,6 +350,7 @@ class BlackListParser(Config):
             ret_value = 0
         else:
             ret_value = 2
+        self.rest = bytes()
         return ret_value
 
 
@@ -545,21 +565,22 @@ class RblFQDN(BlackListParser):
         self.ips_separator = ", "
 
     def parser_func(self):
-        for entry in self._split_entries():
-            res = re.search(r'"domains": \["?(.*?)"?\].*?"ips": \[([a-f0-9/.:", ]*)\]', entry)
-            if not res:
-                continue
-            ip_string = res.group(2).replace('"', "")
-            fqdn_string = res.group(1)
-            if fqdn_string:
-                try:
-                    self.fqdn_value_processing(fqdn_string)
-                except FieldValueError:
+        for url in self.url:
+            for entry in self._split_entries(url):
+                res = re.search(r'"domains": \["?(.*?)"?\].*?"ips": \[([a-f0-9/.:", ]*)\]', entry)
+                if not res:
+                    continue
+                ip_string = res.group(2).replace('"', "")
+                fqdn_string = res.group(1)
+                if fqdn_string:
+                    try:
+                        self.fqdn_value_processing(fqdn_string)
+                    except FieldValueError:
+                        for i in ip_string.split(self.ips_separator):
+                            self.ip_value_processing(i)
+                else:
                     for i in ip_string.split(self.ips_separator):
                         self.ip_value_processing(i)
-            else:
-                for i in ip_string.split(self.ips_separator):
-                    self.ip_value_processing(i)
 
 class RblDPI(BlackListParser):
     def __init__(self):
@@ -569,17 +590,18 @@ class RblDPI(BlackListParser):
         self.records_separator = '{"domains"'
 
     def parser_func(self):
-        for entry in self._split_entries():
-            res = re.search(r': \[(.*?)\]', entry)
-            if not res:
-                continue
-            fqdn_string = res.group(1)
-            if fqdn_string:
-                for i in fqdn_string.split(', "'):
-                    try:
-                        self.fqdn_value_processing(i.strip('"'))
-                    except FieldValueError:
-                        pass
+        for url in self.url:
+            for entry in self._split_entries(url):
+                res = re.search(r': \[(.*?)\]', entry)
+                if not res:
+                    continue
+                fqdn_string = res.group(1)
+                if fqdn_string:
+                    for i in fqdn_string.split(', "'):
+                        try:
+                            self.fqdn_value_processing(i.strip('"'))
+                        except FieldValueError:
+                            pass
 
 class RblIp(BlackListParser):
     def __init__(self):
@@ -588,8 +610,9 @@ class RblIp(BlackListParser):
         self.records_separator = ","
 
     def parser_func(self):
-        for entry in self._split_entries():
-            self.ip_value_processing(re.sub(r'[\[\]" ]', "", entry))
+        for url in self.url:
+            for entry in self._split_entries(url):
+                self.ip_value_processing(re.sub(r'[\[\]" ]', "", entry))
 
 
 class ZiFQDN(BlackListParser):
@@ -601,28 +624,30 @@ class ZiFQDN(BlackListParser):
         self.ips_separator = "|"
 
     def parser_func(self):
-        for entry in self._split_entries():
-            entry_list = entry.split(self.fields_separator)
-            try:
-                if entry_list[1]:
-                    try:
-                        self.fqdn_value_processing(entry_list[1])
-                    except FieldValueError:
+        for url in self.url:
+            for entry in self._split_entries(url):
+                entry_list = entry.split(self.fields_separator)
+                try:
+                    if entry_list[1]:
+                        try:
+                            self.fqdn_value_processing(entry_list[1])
+                        except FieldValueError:
+                            for i in entry_list[0].split(self.ips_separator):
+                                self.ip_value_processing(i)
+                    else:
                         for i in entry_list[0].split(self.ips_separator):
-                            self.ip_value_processing(i)
-                else:
-                    for i in entry_list[0].split(self.ips_separator):
-                            self.ip_value_processing(i)
-            except IndexError:
-                pass
+                                self.ip_value_processing(i)
+                except IndexError:
+                    pass
 
 
 class ZiIp(ZiFQDN):
     def parser_func(self):
-        for entry in self._split_entries():
-            entry_list = entry.split(self.fields_separator)
-            for i in entry_list[0].split(self.ips_separator):
-                self.ip_value_processing(i)
+        for url in self.url:
+            for entry in self._split_entries(url):
+                entry_list = entry.split(self.fields_separator)
+                for i in entry_list[0].split(self.ips_separator):
+                    self.ip_value_processing(i)
 
 
 class AfFQDN(BlackListParser):
@@ -631,11 +656,12 @@ class AfFQDN(BlackListParser):
         self.url = self.AF_FQDN_URL
 
     def parser_func(self):
-        for entry in self._split_entries():
-            try:
-                self.fqdn_value_processing(entry)
-            except FieldValueError:
-                self.ip_value_processing(entry)
+        for url in self.url:
+            for entry in self._split_entries(url):
+                try:
+                    self.fqdn_value_processing(entry)
+                except FieldValueError:
+                    self.ip_value_processing(entry)
 
 
 class AfIp(BlackListParser):
@@ -644,8 +670,50 @@ class AfIp(BlackListParser):
         self.url = self.AF_IP_URL
 
     def parser_func(self):
-        for entry in self._split_entries():
-            self.ip_value_processing(entry)
+        for url in self.url:
+            for entry in self._split_entries(url):
+                self.ip_value_processing(entry)
+
+
+class FzFQDN(BlackListParser):
+    def __init__(self):
+        super().__init__()
+        self.url = self.FZ_URL
+        self.site_encoding = self.FZ_ENCODING
+        self.records_separator = "</content>"
+        self.fqdn_value_regexp = re.compile(r"<domain><\!\[CDATA\[(.*?)\]\]></domain>", re.U)
+        self.ip_value_regexp = re.compile(r"<ip>(.*?)</ip>")
+        self.cidr_value_regexp = re.compile(r"<ipSubnet>(.*?)</ipSubnet>")
+
+    def parser_func(self):
+        for url in self.url:
+            for entry in self._split_entries(url):
+                res = self.fqdn_value_regexp.search(entry)
+                if res and res.group(1):
+                    try:
+                        self.fqdn_value_processing(res.group(1))
+                    except FieldValueError:
+                        pass
+                    else:
+                        continue
+                for i in self.ip_value_regexp.finditer(entry):
+                    if i.group(1):
+                        self.ip_value_processing(i.group(1))
+                for i in self.cidr_value_regexp.finditer(entry):
+                    if i.group(1):
+                        self.ip_value_processing(i.group(1))
+
+
+class FzIp(FzFQDN):
+    def parser_func(self):
+        for url in self.url:
+            for entry in self._split_entries(url):
+                for i in self.ip_value_regexp.finditer(entry):
+                    if i.group(1):
+                        self.ip_value_processing(i.group(1))
+                for i in self.cidr_value_regexp.finditer(entry):
+                    if i.group(1):
+                        self.ip_value_processing(i.group(1))
 
 
 class RaFQDN(BlackListParser):
@@ -657,7 +725,7 @@ class RaFQDN(BlackListParser):
         self.current_file_handler = None
 
     def parser_func(self):
-        for chunk in self._download_data():
+        for chunk in self._download_data(self.url[0]):
             if chunk:
                 self.current_file_handler.write(chunk)
 
@@ -686,8 +754,8 @@ if __name__ == "__main__":
     Config.load_fqdn_filter()
     Config.load_ip_filter()
     parsers_dict = {
-        "ip": {"rublacklist": [RblIp], "zapret-info": [ZiIp], "antifilter": [AfIp], "ruantiblock": [RaIp]},
-        "fqdn": {"rublacklist": [RblFQDN, RblDPI], "zapret-info": [ZiFQDN], "antifilter": [AfFQDN], "ruantiblock": [RaFQDN]},
+        "ip": {"rublacklist": [RblIp], "zapret-info": [ZiIp], "antifilter": [AfIp], "fz": [FzIp], "ruantiblock": [RaIp]},
+        "fqdn": {"rublacklist": [RblFQDN, RblDPI], "zapret-info": [ZiFQDN], "antifilter": [AfFQDN], "fz": [FzFQDN], "ruantiblock": [RaFQDN]},
     }
     try:
         parser_classes = parsers_dict[Config.BLLIST_MODE][Config.BLLIST_SOURCE]

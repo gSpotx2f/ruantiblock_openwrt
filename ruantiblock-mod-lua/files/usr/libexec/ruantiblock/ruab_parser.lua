@@ -70,15 +70,17 @@ local Config = Class(nil, {
         ["ZI_ALL_URL"] = true,
         ["AF_IP_URL"] = true,
         ["AF_FQDN_URL"] = true,
-        ["RA_IP_NFTSET_URL"] = true,
+        ["FZ_URL"] = true,
+        ["RA_IP_IPSET_URL"] = true,
         ["RA_IP_DMASK_URL"] = true,
         ["RA_IP_STAT_URL"] = true,
-        ["RA_FQDN_NFTSET_URL"] = true,
+        ["RA_FQDN_IPSET_URL"] = true,
         ["RA_FQDN_DMASK_URL"] = true,
         ["RA_FQDN_STAT_URL"] = true,
         ["RBL_ENCODING"] = true,
         ["ZI_ENCODING"] = true,
         ["AF_ENCODING"] = true,
+        ["FZ_ENCODING"] = true,
         ["RA_ENCODING"] = true,
         ["BLLIST_SUMMARIZE_IP"] = true,
         ["BLLIST_SUMMARIZE_CIDR"] = true,
@@ -101,15 +103,36 @@ Config.wget_user_agent = (Config.http_send_headers["User-Agent"]) and ' -U "' ..
 -- Loading external config
 
 function Config:load_config(t)
-    local config_arrays = {
+    local config_sets = {
         ["BLLIST_GR_EXCLUDED_SLD"] = true,
         ["BLLIST_GR_EXCLUDED_NETS"] = true,
     }
+    local config_arrays = {
+        ["RBL_ALL_URL"] = true,
+        ["RBL_IP_URL"] = true,
+        ["RBL_DPI_URL"] = true,
+        ["ZI_ALL_URL"] = true,
+        ["AF_IP_URL"] = true,
+        ["AF_FQDN_URL"] = true,
+        ["FZ_URL"] = true,
+        ["RA_IP_IPSET_URL"] = true,
+        ["RA_IP_DMASK_URL"] = true,
+        ["RA_IP_STAT_URL"] = true,
+        ["RA_FQDN_IPSET_URL"] = true,
+        ["RA_FQDN_DMASK_URL"] = true,
+        ["RA_FQDN_STAT_URL"] = true,
+    }
     for k, v in pairs(t) do
-        if config_arrays[k] then
+        if config_sets[k] then
             local value_table = {}
-            for v in v:gmatch('[^" ]+') do
-                value_table[v] = true
+            for i in v:gmatch('[^" ]+') do
+                value_table[i] = true
+            end
+            self[k] = value_table
+        elseif config_arrays[k] then
+            local value_table = {}
+            for i in v:gmatch('[^" ]+') do
+                value_table[#value_table + 1] = i
             end
             self[k] = value_table
         else
@@ -218,7 +241,7 @@ local BlackListParser = Class(Config, {
     ip_pattern = "%d%d?%d?%.%d%d?%d?%.%d%d?%d?%.%d%d?%d?",
     cidr_pattern = "%d%d?%d?%.%d%d?%d?%.%d%d?%d?%.%d%d?%d?/%d%d?",
     fqdn_pattern = "[a-z0-9_%.%-]-[a-z0-9_%-]+%.[a-z0-9%.%-]+",
-    url = "http://127.0.0.1",
+    url = {[1] = "http://127.0.0.1"},
     records_separator = "\n",
 })
 
@@ -239,6 +262,7 @@ function BlackListParser:new(t)
     instance.fqdn_records_count = 0
     instance.fqdn_table = {}
     instance.iconv_handler = iconv and iconv.open(instance.encoding, instance.site_encoding) or nil
+    instance.buff = ""
     return instance
 end
 
@@ -331,7 +355,6 @@ function BlackListParser:parser_func()
 end
 
 function BlackListParser:chunk_buffer()
-    local buff = ""
     local ret_value = ""
     local last_chunk
     return function(chunk)
@@ -339,16 +362,16 @@ function BlackListParser:chunk_buffer()
             return nil
         end
         if chunk then
-            buff = buff .. chunk
-            local last_rs_position = select(2, buff:find("^.*" .. self.records_separator))
+            self.buff = self.buff .. chunk
+            local last_rs_position = select(2, self.buff:find("^.*" .. self.records_separator))
             if last_rs_position then
-                ret_value = buff:sub(1, last_rs_position)
-                buff = buff:sub((last_rs_position + 1), -1)
+                ret_value = self.buff:sub(1, last_rs_position)
+                self.buff = self.buff:sub((last_rs_position + 1), -1)
             else
                 ret_value = ""
             end
         else
-            ret_value = buff
+            ret_value = self.buff
             last_chunk = true
         end
         return (ret_value)
@@ -372,9 +395,24 @@ function BlackListParser:get_http_data(url)
     return (ret_val == 1) and true or false
 end
 
+function BlackListParser:download_files(url_list)
+    local ret_list = {}
+    for _, url in ipairs(url_list) do
+        ret_list[#ret_list + 1] = self:get_http_data(url)
+    end
+    local ret_val = true
+    for _, i in ipairs(ret_list) do
+        if not i then
+            ret_val = false
+            break
+        end
+    end
+    return ret_val
+end
+
 function BlackListParser:run()
     local return_code = 0
-    if self:get_http_data(self.url) then
+    if self:download_files(self.url) then
         if (self.fqdn_count + self.ip_count + self.cidr_count) > self.BLLIST_MIN_ENTRIES then
             return_code = 0
         else
@@ -383,6 +421,7 @@ function BlackListParser:run()
     else
         return_code = 1
     end
+    self.buff = ""
     return return_code
 end
 
@@ -766,7 +805,7 @@ local function ip_parser_func(self)
 end
 
 local function fqdn_parser_func(self, ip_str, fqdn_str)
-    if #fqdn_str > 0 and not fqdn_str:match("^" .. self.ip_pattern .. "$") then
+    if fqdn_str ~= nil and #fqdn_str > 0 and not fqdn_str:match("^" .. self.ip_pattern .. "$") then
         if self:fqdn_value_processing(fqdn_str) then
             return true
         end
@@ -865,6 +904,53 @@ local AfIp = Class(Af, {
     parser_func = ip_parser_func,
 })
 
+    -- fz139
+
+local Fz = Class(BlackListParser, {
+    url = Config.FZ_URL,
+    site_encoding = Config.FZ_ENCODING,
+    records_separator = "</content>",
+})
+
+function Fz:parser_func()
+    return function(chunk)
+        if chunk and chunk ~= "" then
+            for entry in chunk:gmatch("(.-)" .. self.records_separator) do
+                local fqdn_str = entry:match("<domain><%!%[CDATA%[(.-)%]%]></domain>")
+                if fqdn_str ~= nil and #fqdn_str > 0 and not fqdn_str:match("^" .. self.ip_pattern .. "$") and self:fqdn_value_processing(fqdn_str) then
+                else
+                    for ip_str in entry:gmatch("<ip>(.-)</ip>") do
+                        self:ip_value_processing(ip_str)
+                    end
+                    for ip_str in entry:gmatch("<ipSubnet>(.-)</ipSubnet>") do
+                        self:ip_value_processing(ip_str)
+                    end
+                end
+            end
+        end
+        return true
+    end
+end
+
+local FzIp = Class(Fz, {
+})
+
+function FzIp:parser_func()
+    return function(chunk)
+        if chunk and chunk ~= "" then
+            for entry in chunk:gmatch("(.-)" .. self.records_separator) do
+                for ip_str in entry:gmatch("<ip>(.-)</ip>") do
+                    self:ip_value_processing(ip_str)
+                end
+                for ip_str in entry:gmatch("<ipSubnet>(.-)</ipSubnet>") do
+                    self:ip_value_processing(ip_str)
+                end
+            end
+        end
+        return true
+    end
+end
+
     -- ruantiblock
 
 local Ra = Class(BlackListParser, {
@@ -876,7 +962,7 @@ local Ra = Class(BlackListParser, {
 function Ra:download_config(url, file)
     local ret_val = false
     self.current_file_handler = assert(io.open(file, "w"), "Could not open file")
-    if self:get_http_data(url) then
+    if self:download_files(url) then
         ret_val = true
     end
     self.current_file_handler:close()
@@ -919,8 +1005,8 @@ local RaIp = Class(Ra, {
 ----------------------------- Main section ------------------------------
 
 local parsers_table = {
-    ["ip"] = {["rublacklist"] = {RblIp}, ["zapret-info"] = {ZiIp}, ["antifilter"] = {AfIp}, ["ruantiblock"] = {RaIp}},
-    ["fqdn"] = {["rublacklist"] = {Rbl, RblDPI}, ["zapret-info"] = {Zi}, ["antifilter"] = {Af}, ["ruantiblock"] = {Ra}},
+    ["ip"] = {["rublacklist"] = {RblIp}, ["zapret-info"] = {ZiIp}, ["antifilter"] = {AfIp}, ["fz"] = {FzIp}, ["ruantiblock"] = {RaIp}},
+    ["fqdn"] = {["rublacklist"] = {Rbl, RblDPI}, ["zapret-info"] = {Zi}, ["antifilter"] = {Af}, ["fz"] = {Fz}, ["ruantiblock"] = {Ra}},
 }
 
 local ret_list = {}
@@ -933,7 +1019,7 @@ if parser_classes then
     for _, i in ipairs(parser_instances) do
         ret_list[i:run()] = true
     end
-    return_sum = 0
+    local return_sum = 0
     for i, _ in pairs(ret_list) do
         return_sum = return_sum + i
     end
