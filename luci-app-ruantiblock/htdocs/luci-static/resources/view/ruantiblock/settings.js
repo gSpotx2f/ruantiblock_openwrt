@@ -290,7 +290,6 @@ return view.extend({
 			_('Downloading a blacklist via proxy'), _('Turn on if blacklist source is blocked'));
 		o.rmempty = false;
 		o.default = 0;
-		o.depends({ bllist_preset: '', '!reverse': true });
 
 		// ENABLE_TMP_DOWNLOADS
 		o = s.taboption('blacklist_tab', form.Flag, 'enable_tmp_downloads',
