@@ -2,15 +2,38 @@ Info() {
     local _update_status
     if [ -f "$UPDATE_STATUS_FILE" ]; then
         _update_status=`$AWK_CMD '{
-            if(NF < 4)
+            if(NF < 4) {
                 printf "{\"status\":false}";
-            else
+            } else {
                 printf "{\"status\":true,\"date\":\""$4"\",\"cidr\":\""$1"\",\"ip\":\""$2"\",\"fqdn\":\""$3"\"}";
+            };
         }' "$UPDATE_STATUS_FILE"`
     else
         _update_status="{\"status\":false}"
     fi
-    NftListBllistChainJson 2> /dev/null | $AWK_CMD -v UPDATE_STATUS="$_update_status" '
+    if [ -f "$USER_ENTRIES_STATUS_FILE" ]; then
+        _user_entries_status=`$AWK_CMD '
+        BEGIN {
+            items = 0;
+            printf "[";
+        }
+        {
+            if(NF == 4) {
+                gsub("/", "\134\134/", $4);
+                if(items >= 1) {
+                    printf ",";
+                };
+                printf "{\"id\":\""$4"\",\"cidr\":\""$1"\",\"ip\":\""$2"\",\"fqdn\":\""$3"\"}";
+                items++;
+            };
+        }
+        END {
+            printf "]";
+        }' "$USER_ENTRIES_STATUS_FILE"`
+    else
+        _user_entries_status="[]"
+    fi
+    NftListBllistChainJson 2> /dev/null | $AWK_CMD -v UPDATE_STATUS="$_update_status" -v USER_ENTRIES_STATUS="$_user_entries_status" '
         BEGIN {
             rules_str = "";
         }
@@ -22,7 +45,7 @@ Info() {
                 printf "{\"status\": \"disabled\"}";
                 exit 1;
             } else {
-                printf "{\"status\":\"enabled\",\"last_blacklist_update\":%s,\"rules\":%s", UPDATE_STATUS, rules_str;
+                printf "{\"status\":\"enabled\",\"last_blacklist_update\":%s,\"user_entries\":%s,\"rules\":%s", UPDATE_STATUS, USER_ENTRIES_STATUS, rules_str;
                 exit 0;
             };
         }'

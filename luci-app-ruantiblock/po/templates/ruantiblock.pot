@@ -353,6 +353,9 @@ msgstr ""
 msgid "Run at startup"
 msgstr ""
 
+msgid "Safe blacklist update"
+msgstr ""
+
 msgid "Save"
 msgstr ""
 
@@ -394,6 +397,11 @@ msgid "Summarize '/24' networks"
 msgstr ""
 
 msgid "Summarize IP ranges"
+msgstr ""
+
+msgid ""
+"If update fails, the old blacklist configuration will be retained. "
+"Temporary files are used, when updating the blacklist (increases memory consumption)."
 msgstr ""
 
 msgid ""
@@ -486,6 +494,9 @@ msgstr ""
 msgid "Updating"
 msgstr ""
 
+msgid "URLs of remote user entries file"
+""
+
 msgid "Use optional DNS resolver"
 msgstr ""
 msgid "User entries"
@@ -540,4 +551,7 @@ msgid "valid IP address"
 msgstr ""
 
 msgid "valid address#port"
+msgstr ""
+
+msgid "valid URL"
 msgstr ""

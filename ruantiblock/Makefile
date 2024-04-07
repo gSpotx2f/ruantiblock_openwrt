@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock
-PKG_VERSION:=1.4
-PKG_RELEASE:=3
+PKG_VERSION:=1.5
+PKG_RELEASE:=0
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
 include $(INCLUDE_DIR)/package.mk
@@ -78,9 +78,10 @@ FILE_INIT_SCRIPT="/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="/usr/bin/ruantiblock"
 CRONTAB_FILE="/etc/crontabs/root"
 DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/02-ruantiblock.dnsmasq"
+DNSMASQ_DATA_FILE_TMP="${DNSMASQ_DATA_FILE}.tmp"
 DNSMASQ_DATA_FILE_BYPASS="/tmp/dnsmasq.d/01-ruantiblock_bypass.dnsmasq"
 
-rm -f $$DNSMASQ_DATA_FILE $$DNSMASQ_DATA_FILE_BYPASS
+rm -f $$DNSMASQ_DATA_FILE $$DNSMASQ_DATA_FILE_TMP $$DNSMASQ_DATA_FILE_BYPASS
 test -e "$$FILE_MAIN_SCRIPT" && $$FILE_MAIN_SCRIPT destroy
 
 test -e "$$FILE_INIT_SCRIPT" && $$FILE_INIT_SCRIPT disable

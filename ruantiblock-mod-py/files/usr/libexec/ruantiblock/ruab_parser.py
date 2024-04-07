@@ -158,8 +158,7 @@ class BlackListParser(Config):
         self.ip_pattern = re.compile(r"(([0-9]{1,3}[.]){3})[0-9]{1,3}")
         self.cidr_pattern = re.compile(r"([0-9]{1,3}[.]){3}[0-9]{1,3}/[0-9]{1,2}")
         self.fqdn_pattern = re.compile(
-            r"([а-яёa-z0-9_.*-]*?)([а-яёa-z0-9_-]+[.][а-яёa-z0-9-]+)",
-            re.U)
+            r"([а-яёa-z0-9_.*-]*?)([а-яёa-z0-9_-]+[.][а-яёa-z0-9-]+)", re.U)
         self.www_pattern = re.compile(r"^www[0-9]?[.]")
         self.cyr_pattern = re.compile(r"[а-яё]", re.U)
         self.cidr_set = set()
@@ -183,6 +182,7 @@ class BlackListParser(Config):
         self.default_site_encoding = "utf-8"
         self.site_encoding = self.default_site_encoding
         self.rest = bytes()
+        self.http_codes = set()
 
     @staticmethod
     def _compile_filter_patterns(filters_seq):
@@ -233,6 +233,7 @@ class BlackListParser(Config):
             timeout=self.connect_timeout
         ) as conn_params:
             conn_object, http_code, _ = conn_params
+            self.http_codes.add(http_code)
             if http_code == 200:
                 while True:
                     chunk = conn_object.read(self.data_chunk)
@@ -350,7 +351,12 @@ class BlackListParser(Config):
             ret_value = 0
         else:
             ret_value = 2
+        for i in self.http_codes:
+            if i != 200:
+                ret_value = 2
+                break
         self.rest = bytes()
+        self.http_codes = set()
         return ret_value
 
 
@@ -722,23 +728,34 @@ class RaFQDN(BlackListParser):
         self.url_ipset = self.RA_FQDN_IPSET_URL
         self.url_dnsmasq = self.RA_FQDN_DMASK_URL
         self.url_stat = self.RA_FQDN_STAT_URL
-        self.current_file_handler = None
-
-    def parser_func(self):
-        for chunk in self._download_data(self.url[0]):
-            if chunk:
-                self.current_file_handler.write(chunk)
 
     def download_config(self, url, cfg_file):
         self.url = url
-        with open(cfg_file, "wb", buffering=-1) as self.current_file_handler:
-            self.parser_func()
+        file_handler = None
+        for chunk in self._download_data(self.url[0]):
+            if chunk:
+                if not file_handler:
+                    try:
+                        file_handler = open(cfg_file, "wb", buffering=-1)
+                    except Exception:
+                        break
+                if file_handler:
+                    file_handler.write(chunk)
+        if file_handler:
+            file_handler.close()
+        file_handler = None
 
     def run(self):
+        ret_value = 0
         self.download_config(self.url_ipset, self.IP_DATA_FILE)
         self.download_config(self.url_dnsmasq, self.DNSMASQ_DATA_FILE)
         self.download_config(self.url_stat, self.UPDATE_STATUS_FILE)
-        return 0
+        for i in self.http_codes:
+           if i != 200:
+                ret_value = 2
+                break
+        self.http_codes = set()
+        return ret_value
 
 
 class RaIp(RaFQDN):

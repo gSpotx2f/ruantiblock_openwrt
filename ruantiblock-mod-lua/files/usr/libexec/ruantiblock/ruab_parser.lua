@@ -97,6 +97,7 @@ local Config = Class(nil, {
     http_send_headers = {
         ["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
     },
+    connect_timeout = nil,
 })
 Config.wget_user_agent = (Config.http_send_headers["User-Agent"]) and ' -U "' .. Config.http_send_headers["User-Agent"] .. '"' or ''
 
@@ -263,6 +264,7 @@ function BlackListParser:new(t)
     instance.fqdn_table = {}
     instance.iconv_handler = iconv and iconv.open(instance.encoding, instance.site_encoding) or nil
     instance.buff = ""
+    instance.http_codes = {}
     return instance
 end
 
@@ -382,9 +384,19 @@ function BlackListParser:get_http_data(url)
     local ret_val, ret_code, ret_headers
     local http_module = url:match("^https") and https or http
     if http_module then
-        local http_sink = ltn12.sink.chain(self:chunk_buffer(), self:parser_func())
-        ret_val, ret_code, ret_headers = http_module.request{url = url, sink = http_sink, headers = self.http_send_headers}
-        if not ret_val or ret_code ~= 200 then
+        if self.connect_timeout ~= nil then
+            http_module.TIMEOUT = self.connect_timeout
+        end
+        ret_val, ret_code, ret_headers = http_module.request{url = url, method="HEAD", headers = self.http_send_headers}
+        if ret_val and ret_code == 200 then
+            local http_sink = ltn12.sink.chain(self:chunk_buffer(), self:parser_func())
+            ret_val, ret_code, ret_headers = http_module.request{url = url, sink = http_sink, headers = self.http_send_headers}
+            self.http_codes[ret_code] = true
+            if not ret_val or ret_code ~= 200 then
+                ret_val = nil
+                print(string.format("Connection error! (%s) URL: %s", ret_code, url))
+            end
+        else
             ret_val = nil
             print(string.format("Connection error! (%s) URL: %s", ret_code, url))
         end
@@ -419,9 +431,16 @@ function BlackListParser:run()
             return_code = 2
         end
     else
-        return_code = 1
+        return_code = 2
+    end
+    for i in pairs(self.http_codes) do
+        if i ~= 200 then
+            return_code = 2
+            break
+        end
     end
     self.buff = ""
+    self.http_codes = {}
     return return_code
 end
 
@@ -961,11 +980,16 @@ local Ra = Class(BlackListParser, {
 
 function Ra:download_config(url, file)
     local ret_val = false
-    self.current_file_handler = assert(io.open(file, "w"), "Could not open file")
+    self.current_file = file
+    self.current_file_handler = nil
     if self:download_files(url) then
         ret_val = true
     end
-    self.current_file_handler:close()
+    if self.current_file_handler then
+        self.current_file_handler:close()
+    end
+    self.current_file_handler = nil
+    self.current_file = nil
     return ret_val
 end
 
@@ -978,7 +1002,12 @@ end
 function Ra:parser_func()
     return function(chunk)
         if chunk and chunk ~= "" then
-            self.current_file_handler:write(chunk)
+            if not self.current_file_handler and self.current_file then
+                self.current_file_handler = assert(io.open(self.current_file, "w"), "Could not open file")
+            end
+            if self.current_file_handler then
+                self.current_file_handler:write(chunk)
+            end
         end
         return true
     end
@@ -993,6 +1022,13 @@ function Ra:run()
             end
         end
     end
+    for i in pairs(self.http_codes) do
+        if i ~= 200 then
+            return_code = 2
+            break
+        end
+    end
+    self.http_codes = {}
     return return_code
 end
 

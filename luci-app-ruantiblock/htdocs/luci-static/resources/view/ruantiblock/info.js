@@ -219,6 +219,7 @@ return view.extend({
 		} catch(e) {};
 
 		let update_status = null,
+			user_entries  = null,
 			rules         = null,
 			dnsmasq       = null,
 			dnsmasqBypass = null;
@@ -263,6 +264,21 @@ return view.extend({
 							E('td', { 'class': 'td left' }, _('No data')),
 						])
 					);
+				};
+
+				if(data.user_entries && data.user_entries.length > 0) {
+					user_entries = E('table', { 'class': 'table' });
+					for(let i of data.user_entries) {
+						user_entries.append(
+							E('tr', { 'class': 'tr' }, [
+								E('td', { 'class': 'td left', 'style': 'min-width:33%' },
+									i.id),
+								E('td', { 'class': 'td left',
+											'id' : 'user_entries_' + i },
+									`CIDR: ${i.cidr}, IP: ${i.ip}, FQDN: ${i.fqdn}`),
+							])
+						);
+					};
 				};
 
 				let nft_data = this.formatNftJson(data);
@@ -346,8 +362,17 @@ return view.extend({
 			),
 		];
 
+		if(user_entries) {
+			layout.splice(3, 0,
+				E('div', { 'class': 'cbi-section fade-in' }, [
+					E('h3', {}, _('User entries')),
+					E('div', { 'class': 'cbi-section-node' }, user_entries),
+				])
+			);
+		}
+
 		if(dnsmasqBypass) {
-			layout.splice(4, 0,
+			layout.splice(5, 0,
 				E('div', { 'class': 'cbi-section fade-in' },
 					E('div', { 'class': 'cbi-section-node' }, dnsmasqBypass)
 				)
@@ -355,7 +380,7 @@ return view.extend({
 		};
 
 		if(dnsmasq) {
-			layout.splice(5, 0,
+			layout.splice(6, 0,
 				E('div', { 'class': 'cbi-section fade-in' },
 					E('div', { 'class': 'cbi-section-node' }, dnsmasq)
 				)

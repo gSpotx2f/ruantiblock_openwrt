@@ -25,6 +25,11 @@ return view.extend({
 			+ ` ${_('One of the following:')}\n - ${_('valid IP address')}\n - ${_('valid address#port')}\n`;
 	},
 
+	validateUrl: function(section, value) {
+		return (/^$|^https?:\/\/[\w.-]+(:[0-9]{2,5})?[\w\/~.&?+=-]*$/.test(value)) ? true : _('Expecting:')
+			+ ` ${_('valid URL')}\n`;
+	},
+
 	load: function() {
 		return Promise.all([
 			L.resolveDefault(fs.exec(tools.execPath, [ 'raw-status' ]), 1),
@@ -287,6 +292,13 @@ return view.extend({
 		o.default = 0;
 		o.depends({ bllist_preset: '', '!reverse': true });
 
+		// ENABLE_TMP_DOWNLOADS
+		o = s.taboption('blacklist_tab', form.Flag, 'enable_tmp_downloads',
+			_('Safe blacklist update'),
+			_('If update fails, the old blacklist configuration will be retained. Temporary files are used, when updating the blacklist (increases memory consumption).'));
+		o.rmempty = false;
+		o.default = 0;
+
 		// ADD_USER_ENTRIES
 		o = s.taboption('blacklist_tab', form.Flag, 'add_user_entries',
 			_('Enable user entries'), _('Add user entries to the blacklist when updating'));
@@ -300,6 +312,11 @@ return view.extend({
 		o.onclick    = () => user_entries_edit.show();
 		o.inputtitle = _('Edit');
 		o.inputstyle = 'edit btn';
+
+		// USER_ENTRIES_REMOTE
+		o = s.taboption('blacklist_tab', form.DynamicList, 'user_entries_remote',
+			_('URLs of remote user entries file'));
+		o.validate = this.validateUrl;
 
 		// USER_ENTRIES_DNS
 		o = s.taboption('blacklist_tab', form.Value, 'user_entries_dns',
