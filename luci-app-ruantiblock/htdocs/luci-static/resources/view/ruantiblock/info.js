@@ -89,13 +89,15 @@ return view.extend({
 		let lines   = `<tr class="tr"><td class="td center">${_('No entries available...')}</td></tr>`;
 		let ipTable = E('table', { 'id': 'ipTable', 'class': 'table' });
 
+		ipDataArray.sort((a, b) => a[1] - b[1]);
+
 		if(ipDataArray.length > 0) {
 			lines = [];
 			ipDataArray.forEach((e, i) => {
 				if(e) {
 					lines.push(
 						`<tr class="tr"><td class="td left" data-title="${_('IP address')}">${e[0]}</td>` +
-						`<td class="td left" data-title="${_('Timeout')}">${(e[1]) ? this.secToTimeString(e[1]) : ''}</td></tr>`
+						`<td class="td left" data-title="${_('Timeout')}">${this.secToTimeString(e[1] | 0)}</td></tr>`
 					);
 				};
 			});
@@ -104,7 +106,7 @@ return view.extend({
 			ipTable.append(
 				E('tr', { 'class': 'tr table-titles' }, [
 					E('th', { 'class': 'th left', 'style': 'min-width:33%' }, _('IP address')),
-					(ipDataArray[0][1]) ? E('th', { 'class': 'th left' }, _('Timeout')) : ''
+					E('th', { 'class': 'th left' }, _('Timeout')),
 				])
 			);
 		};

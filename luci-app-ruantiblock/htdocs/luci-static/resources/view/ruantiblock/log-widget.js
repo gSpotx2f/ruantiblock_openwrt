@@ -1,7 +1,7 @@
 'use strict';
 'require baseclass';
 'require ui';
-'require view.ruantiblock.log-base as abc';
+'require view.ruantiblock.log-base as base';
 
 document.head.append(E('style', {'type': 'text/css'},
 `
@@ -26,7 +26,7 @@ document.head.append(E('style', {'type': 'text/css'},
 `));
 
 return baseclass.extend({
-	view: abc.view.extend({
+	view: base.view.extend({
 
 		filterHighlightFunc(match) {
 			return `<span class="log-highlight-item">${match}</span>`;

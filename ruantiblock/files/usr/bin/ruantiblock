@@ -77,7 +77,7 @@ export NFTSET_POLICY_CIDR="memory"
 export NFTSET_POLICY_IP="memory"
 export NFTSET_POLICY_DNSMASQ="performance"
 ### Таймаут для записей в сете $NFTSET_DNSMASQ
-export NFTSET_DNSMASQ_TIMEOUT="3h"
+export NFTSET_DNSMASQ_TIMEOUT="150m"
 ### Динамическое обновление таймаута записей в сете $NFTSET_DNSMASQ (0 - выкл, 1 - вкл)
 export NFTSET_DNSMASQ_TIMEOUT_UPDATE=1
 ### Приоритет правила отбора пакетов nftables для конфигупации Tor или прозрачного прокси
