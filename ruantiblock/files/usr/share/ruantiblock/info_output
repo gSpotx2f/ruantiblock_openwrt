@@ -1,5 +1,5 @@
 Info() {
-    local _update_status
+    local _update_status _user_entries_status
     if [ -f "$UPDATE_STATUS_FILE" ]; then
         _update_status=`$AWK_CMD '{
             if(NF < 4) {
