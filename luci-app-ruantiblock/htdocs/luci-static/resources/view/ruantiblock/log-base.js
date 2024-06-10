@@ -140,7 +140,7 @@ log-emerg td {
 }
 .log-side-block {
 	position: fixed;
-	z-index: 1 !important;
+	z-index: 200 !important;
 	opacity: 0.7;
 	right: 1px;
 	top: 40vh;
