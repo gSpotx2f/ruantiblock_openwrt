@@ -5,7 +5,7 @@ paripartners
 marathon
 pm[-][0-9]
 fbmetrix
-[ck]?a[sz]ino?
+[ck]?a[sz]+ino?
 [vw]ul[ck]an
 slots?
 nar[ck]

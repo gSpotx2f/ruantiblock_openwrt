@@ -293,7 +293,7 @@ msgstr "Настройки модуля"
 msgid "Name"
 msgstr "Имя"
 
-msgid "No Shedule"
+msgid "No Sсhedule"
 msgstr "Нет расписания"
 
 msgid "No changes to save."

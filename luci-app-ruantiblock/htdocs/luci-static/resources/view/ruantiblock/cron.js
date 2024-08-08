@@ -15,7 +15,7 @@ return view.extend({
 	},
 
 	cronStatusString: function(s) {
-		return s || _('No Shedule');
+		return s || _('No Sсhedule');
 	},
 
 	stringifyRuabTasks: function(str_array) {

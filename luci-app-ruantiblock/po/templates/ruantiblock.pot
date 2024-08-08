@@ -274,7 +274,7 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
-msgid "No Shedule"
+msgid "No Sсhedule"
 msgstr ""
 
 msgid "No changes to save."
