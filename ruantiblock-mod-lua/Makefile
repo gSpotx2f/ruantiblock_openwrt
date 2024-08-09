@@ -6,7 +6,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock-mod-lua
 PKG_VERSION:=1.5.0
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
 include $(INCLUDE_DIR)/package.mk
@@ -32,6 +32,8 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/libexec/ruantiblock
 	$(INSTALL_BIN) ./files/usr/libexec/ruantiblock/ruab_parser.lua $(1)/usr/libexec/ruantiblock/ruab_parser.lua
+	$(INSTALL_DIR) $(1)/usr/lib/lua
+	$(INSTALL_DATA) ./files/usr/lib/lua/iptool.lua $(1)/usr/lib/lua/iptool.lua
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DATA) ./files/etc/uci-defaults/ruantiblock-mod-lua $(1)/etc/uci-defaults/ruantiblock-mod-lua
 endef

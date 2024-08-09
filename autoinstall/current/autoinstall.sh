@@ -10,7 +10,7 @@ LUCI_APP=1
 
 OWRT_VERSION="current"
 RUAB_VERSION="1.5.0-2"
-RUAB_MOD_LUA_VERSION="1.5.0-1"
+RUAB_MOD_LUA_VERSION="1.5.0-2"
 RUAB_LUCI_APP_VERSION="1.5.0-r2"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
@@ -29,7 +29,7 @@ URL_LUCI_APP_RU_PKG="${BASE_URL}/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB
 ### tor
 URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/tor/etc/tor/torrc"
 ### ruantiblock-mod-lua
-URL_LUA_IPTOOL="https://raw.githubusercontent.com/gSpotx2f/iptool-lua/master/5.1/iptool.lua"
+#URL_LUA_IPTOOL="https://raw.githubusercontent.com/gSpotx2f/iptool-lua/master/5.1/iptool.lua"
 URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
 
 ### Local files
@@ -54,7 +54,7 @@ FILE_MAIN_SCRIPT="${EXEC_DIR}/ruantiblock"
 ### tor
 FILE_TORRC="${PREFIX}/etc/tor/torrc"
 ### ruantiblock-mod-lua
-FILE_LUA_IPTOOL="${PREFIX}/usr/lib/lua/iptool.lua"
+#FILE_LUA_IPTOOL="${PREFIX}/usr/lib/lua/iptool.lua"
 FILE_LUA_IDN="${PREFIX}/usr/lib/lua/idn.lua"
 
 AWK_CMD="awk"
@@ -224,7 +224,7 @@ InstallLuaModule() {
     InstallPackages "lua" "luasocket" "luasec" "luabitop"
     RemoveFile "$FILE_MOD_LUA_PKG" > /dev/null
     DlFile "$URL_MOD_LUA_PKG" "$FILE_MOD_LUA_PKG" && $OPKG_CMD install "$FILE_MOD_LUA_PKG"
-    FileExists "$FILE_LUA_IPTOOL" || DlFile "$URL_LUA_IPTOOL" "$FILE_LUA_IPTOOL"
+    #FileExists "$FILE_LUA_IPTOOL" || DlFile "$URL_LUA_IPTOOL" "$FILE_LUA_IPTOOL"
     FileExists "$FILE_LUA_IDN" || DlFile "$URL_LUA_IDN" "$FILE_LUA_IDN"
     $UCI_CMD set ruantiblock.config.bllist_module="/usr/libexec/ruantiblock/ruab_parser.lua"
     $UCI_CMD commit ruantiblock
