@@ -321,6 +321,19 @@ msgstr ""
 "сервер для разрешения данного домена (через пробел). Также, можно "
 "комментировать строки (<code>#</code> - первый символ строки).<br />Примеры:"
 
+msgid ""
+"One FQDN entry per line. You can also comment on lines "
+"(<code>#</code> is the first character of a line).<br />Examples:"
+msgstr "Одна запись FQDN на строку. Также, можно "
+"комментировать строки (<code>#</code> - первый символ строки).<br />Примеры:"
+
+msgid ""
+"One IP subnet pattern (/24) per line. You can also comment on lines "
+"(<code>#</code> is the first character of a line).<br />Examples:"
+msgstr ""
+"Один шаблон IP подсети (/24) на строку Также, можно комментировать "
+"строки (<code>#</code> - первый символ строки).<br />Примеры:"
+
 msgid "One of the following:"
 msgstr "Одно из следующих значений:"
 

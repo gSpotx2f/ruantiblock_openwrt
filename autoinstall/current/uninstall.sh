@@ -22,6 +22,8 @@ FILE_FQDN_FILTER="${RUAB_CFG_DIR}/fqdn_filter"
 FILE_IP_FILTER="${RUAB_CFG_DIR}/ip_filter"
 FILE_USER_ENTRIES="${RUAB_CFG_DIR}/user_entries"
 FILE_BYPASS_ENTRIES="${RUAB_CFG_DIR}/bypass_entries"
+FILE_GR_EXCLUDED_SLD="${RUAB_CFG_DIR}/gr_excluded_sld"
+FILE_GR_EXCLUDED_NETS="${RUAB_CFG_DIR}/gr_excluded_nets"
 FILE_UCI_CONFIG="${PREFIX}/etc/config/ruantiblock"
 FILE_INIT_SCRIPT="${PREFIX}/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="${EXEC_DIR}/ruantiblock"
@@ -57,7 +59,7 @@ RemoveFile() {
 BackupCurrentConfig() {
     local _file
     MakeDir "$BACKUP_DIR"
-    for _file in "$FILE_CONFIG" "$FILE_FQDN_FILTER" "$FILE_IP_FILTER" "$FILE_USER_ENTRIES" "$FILE_BYPASS_ENTRIES" "$FILE_UCI_CONFIG" "$FILE_TORRC"
+    for _file in "$FILE_CONFIG" "$FILE_FQDN_FILTER" "$FILE_IP_FILTER" "$FILE_USER_ENTRIES" "$FILE_BYPASS_ENTRIES" "$FILE_GR_EXCLUDED_NETS" "$FILE_GR_EXCLUDED_SLD" "$FILE_UCI_CONFIG" "$FILE_TORRC"
     do
         [ -e "$_file" ] && cp -f "$_file" "${BACKUP_DIR}/`basename ${_file}`"
     done
@@ -98,6 +100,8 @@ RemoveAppFiles() {
     RemoveFile "$FILE_IP_FILTER"
     RemoveFile "$FILE_USER_ENTRIES"
     RemoveFile "$FILE_BYPASS_ENTRIES"
+    RemoveFile "$FILE_GR_EXCLUDED_SLD"
+    RemoveFile "$FILE_GR_EXCLUDED_NETS"
     RemoveFile "${FILE_UCI_CONFIG}.opkg"
     RemoveFile "${FILE_CONFIG}.opkg"
     RemoveFile "${FILE_FQDN_FILTER}.opkg"

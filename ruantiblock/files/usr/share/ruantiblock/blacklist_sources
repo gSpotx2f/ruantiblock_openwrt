@@ -1,0 +1,73 @@
+### Blacklist sources
+## rublacklist
+export RBL_ALL_URL="https://reestr.rublacklist.net/api/v3/snapshot/"
+export RBL_IP_URL="https://reestr.rublacklist.net/api/v3/ips/"
+export RBL_DPI_URL="https://reestr.rublacklist.net/api/v3/dpi/"
+export RBL_ENCODING=""
+## zapret-info
+export ZI_ALL_URL="https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv"
+#export ZI_ALL_URL="https://app.assembla.com/spaces/z-i/git/source/master/dump.csv?_format=raw"
+export ZI_ENCODING="CP1251"
+## antifilter
+export AF_IP_URL="https://antifilter.download/list/allyouneed.lst"
+export AF_FQDN_URL="https://antifilter.download/list/domains.lst"
+export AF_ENCODING=""
+## fz
+export FZ_URL="https://raw.githubusercontent.com/fz139/vigruzki/main/dump.xml.00 https://raw.githubusercontent.com/fz139/vigruzki/main/dump.xml.01 https://raw.githubusercontent.com/fz139/vigruzki/main/dump.xml.02"
+export FZ_ENCODING="CP1251"
+
+### Blacklist presets
+case "$BLLIST_PRESET" in
+    zapret-info-ip)
+        ### Источник для обновления списка блокировок (zapret-info, rublacklist, antifilter, fz, ruantiblock)
+        export BLLIST_SOURCE="zapret-info"
+        ### Режим обхода блокировок: ip, fqdn
+        export BLLIST_MODE="ip"
+    ;;
+    zapret-info-fqdn)
+        export BLLIST_SOURCE="zapret-info"
+        export BLLIST_MODE="fqdn"
+    ;;
+    rublacklist-ip)
+        export BLLIST_SOURCE="rublacklist"
+        export BLLIST_MODE="ip"
+    ;;
+    rublacklist-fqdn)
+        export BLLIST_SOURCE="rublacklist"
+        export BLLIST_MODE="fqdn"
+    ;;
+    antifilter-ip)
+        export BLLIST_SOURCE="antifilter"
+        export BLLIST_MODE="ip"
+    ;;
+    fz-ip)
+        export BLLIST_SOURCE="fz"
+        export BLLIST_MODE="ip"
+    ;;
+    fz-fqdn)
+        export BLLIST_SOURCE="fz"
+        export BLLIST_MODE="fqdn"
+    ;;
+    ruantiblock-ip)
+        export BLLIST_SOURCE="ruantiblock"
+        export BLLIST_MODE="ip"
+        BLLIST_MODULE="DownloadNativeBlacklist"
+        # github
+        DL_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/ip/ruantiblock.ip"
+        DL_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/ip/ruantiblock.dnsmasq"
+        DL_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/ip/update_status"
+    ;;
+    ruantiblock-fqdn)
+        export BLLIST_SOURCE="ruantiblock"
+        export BLLIST_MODE="fqdn"
+        BLLIST_MODULE="DownloadNativeBlacklist"
+        # github
+        DL_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/fqdn/ruantiblock.ip"
+        DL_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/fqdn/ruantiblock.dnsmasq"
+        DL_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/fqdn/update_status"
+    ;;
+    *)
+        export BLLIST_SOURCE=""
+        export BLLIST_MODE=""
+    ;;
+esac

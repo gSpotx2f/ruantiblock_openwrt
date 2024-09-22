@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock
-PKG_VERSION:=1.5.0
-PKG_RELEASE:=2
+PKG_VERSION:=1.6.0
+PKG_RELEASE:=1
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 
 include $(INCLUDE_DIR)/package.mk
@@ -30,6 +30,8 @@ define Package/$(PKG_NAME)/conffiles
 /etc/ruantiblock/ip_filter
 /etc/ruantiblock/user_entries
 /etc/ruantiblock/bypass_entries
+/etc/ruantiblock/gr_excluded_nets
+/etc/ruantiblock/gr_excluded_sld
 endef
 
 define Build/Configure
@@ -51,10 +53,13 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_DATA) ./files/etc/ruantiblock/ip_filter $(1)/etc/ruantiblock/ip_filter
 	$(INSTALL_DATA) ./files/etc/ruantiblock/user_entries $(1)/etc/ruantiblock/user_entries
 	$(INSTALL_DATA) ./files/etc/ruantiblock/bypass_entries $(1)/etc/ruantiblock/bypass_entries
+	$(INSTALL_DATA) ./files/etc/ruantiblock/gr_excluded_nets $(1)/etc/ruantiblock/gr_excluded_nets
+	$(INSTALL_DATA) ./files/etc/ruantiblock/gr_excluded_sld $(1)/etc/ruantiblock/gr_excluded_sld
 	$(INSTALL_DIR) $(1)/usr/share/ruantiblock
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/config_script $(1)/usr/share/ruantiblock/config_script
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/info_output $(1)/usr/share/ruantiblock/info_output
 	$(INSTALL_DATA) ./files/usr/share/ruantiblock/nft_functions $(1)/usr/share/ruantiblock/nft_functions
+	$(INSTALL_DATA) ./files/usr/share/ruantiblock/blacklist_sources $(1)/usr/share/ruantiblock/blacklist_sources
 	$(INSTALL_DIR) $(1)/usr/libexec/ruantiblock
 	$(INSTALL_BIN) ./files/usr/libexec/ruantiblock/ruab_route_check $(1)/usr/libexec/ruantiblock/ruab_route_check
 	$(INSTALL_DIR) $(1)/usr/bin

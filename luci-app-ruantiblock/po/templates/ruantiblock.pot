@@ -299,6 +299,16 @@ msgid ""
 ">Examples:"
 msgstr ""
 
+msgid ""
+"One FQDN entry per line. You can also comment on lines "
+"(<code>#</code> is the first character of a line).<br />Examples:"
+msgstr ""
+
+msgid
+"One IP subnet pattern (/24) per line. You can also comment on lines "
+"(<code>#</code> is the first character of a line).<br />Examples:"
+msgstr ""
+
 msgid "One of the following:"
 msgstr ""
 

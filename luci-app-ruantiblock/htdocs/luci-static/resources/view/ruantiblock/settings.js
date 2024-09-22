@@ -115,6 +115,20 @@ return view.extend({
 			}
 		);
 
+		let gr_excluded_nets_edit = new tools.fileEditDialog(
+			tools.grExcludedNetsFile,
+			_('IP subnet patterns (/24) that are excluded from optimization'),
+			_('One IP subnet pattern (/24) per line. You can also comment on lines (<code>#</code> is the first character of a line).<br />Examples:') +
+				'<br /><code>#comment<br />74.125.131.<br />74.125.0.</code>'
+		);
+
+		let gr_excluded_sld_edit = new tools.fileEditDialog(
+			tools.grExcludedSldFile,
+			_('2nd level domains that are excluded from optimization'),
+			_('One FQDN entry per line. You can also comment on lines (<code>#</code> is the first character of a line).<br />Examples:') +
+				'<br /><code>#comment<br />domain.net<br />anotherdomain.com</code>'
+		);
+
 		let m, s, o;
 
 		m = new form.Map(tools.appName, _('Ruantiblock') + ' - ' + _('Settings'));
@@ -381,12 +395,13 @@ return view.extend({
 			o.rmempty     = false;
 			o.datatype    = 'uinteger';
 
-			// BLLIST_GR_EXCLUDED_SLD
-			o = s.taboption('parser_settings_tab', form.DynamicList, 'bllist_gr_excluded_sld',
+			// BLLIST_GR_EXCLUDED_SLD_FILE edit dialog
+			o = s.taboption('parser_settings_tab', form.Button, '_gr_excluded_sld_btn',
 				_('2nd level domains that are excluded from optimization'));
-			o.description = _('e.g:') + ' <code>livejournal.com</code>';
-			o.placeholder = _('e.g:') + ' livejournal.com';
-			o.datatype = 'hostname';
+			o.onclick     = () => gr_excluded_sld_edit.show();
+			o.inputtitle  = _('Edit');
+			o.inputstyle  = 'edit btn';
+			//o.description = _('e.g:') + ' <code>livejournal.com</code>';
 
 			// BLLIST_ENABLE_IDN
 			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_enable_idn',
@@ -429,15 +444,13 @@ return view.extend({
 			o.rmempty     = false;
 			o.datatype    = 'uinteger';
 
-			// BLLIST_GR_EXCLUDED_NETS
-			o = s.taboption('parser_settings_tab', form.DynamicList, 'bllist_gr_excluded_nets');
-			o.title       = _('IP subnet patterns (/24) that are excluded from optimization');
-			o.description = _('e.g:') + ' <code>192.168.1.</code>';
-			o.placeholder = _('e.g:') + ' 192.168.1.';
-			o.validate = (section, value) => {
-				return (/^$|^([0-9]{1,3}[.]){3}$/.test(value)) ? true : _('Expecting:')
-						+ ' ' + _('net pattern') + ' (' + _('e.g:') + ' 192.168.3.)\n';
-			};
+			// BLLIST_GR_EXCLUDED_NETS_FILE edit dialog
+			o = s.taboption('parser_settings_tab', form.Button, '_gr_excluded_nets_btn',
+				_('IP subnet patterns (/24) that are excluded from optimization'));
+			o.onclick     = () => gr_excluded_nets_edit.show();
+			o.inputtitle  = _('Edit');
+			o.inputstyle  = 'edit btn';
+			//o.description = _('e.g:') + ' <code>192.168.1.</code>';
 
 			// BLLIST_SUMMARIZE_IP
 			o = s.taboption('parser_settings_tab', form.Flag, 'bllist_summarize_ip',
