@@ -7,11 +7,12 @@ PROXY_MODE=1
 BLACKLIST=0
 LUA_MODULE=0
 LUCI_APP=1
+HTTPS_DNS_PROXY=1
 
-OWRT_VERSION="22.03"
-RUAB_VERSION="0.9.7-1"
-RUAB_MOD_LUA_VERSION="0.9.7-1"
-RUAB_LUCI_APP_VERSION="0.9.7-0"
+OWRT_VERSION="current"
+RUAB_VERSION="2.0.0-r1"
+RUAB_MOD_LUA_VERSION="2.0.0-r1"
+RUAB_LUCI_APP_VERSION="2.0.0-1"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
 
@@ -27,33 +28,36 @@ URL_MOD_LUA_PKG="${BASE_URL}/${OWRT_VERSION}/ruantiblock-mod-lua_${RUAB_MOD_LUA_
 URL_LUCI_APP_PKG="${BASE_URL}/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
 URL_LUCI_APP_RU_PKG="${BASE_URL}/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
 ### tor
-URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/0.9/tor/etc/tor/torrc"
+URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/tor/etc/tor/torrc"
 ### ruantiblock-mod-lua
-URL_LUA_IPTOOL="https://raw.githubusercontent.com/gSpotx2f/iptool-lua/master/5.1/iptool.lua"
 URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
 
 ### Local files
 
-RUAB_CFG_DIR="${PREFIX}/etc/ruantiblock"
+CONFIG_DIR="${PREFIX}/etc/ruantiblock"
+USER_LISTS_DIR="${CONFIG_DIR}/user_lists"
 EXEC_DIR="${PREFIX}/usr/bin"
-BACKUP_DIR="${RUAB_CFG_DIR}/autoinstall.bak.`date +%s`"
+BACKUP_DIR="${CONFIG_DIR}/autoinstall.bak.`date +%s`"
 ### packages
 FILE_RUAB_PKG="${PKG_DIR}/ruantiblock_${RUAB_VERSION}_all.ipk"
 FILE_MOD_LUA_PKG="${PKG_DIR}/ruantiblock-mod-lua_${RUAB_MOD_LUA_VERSION}_all.ipk"
 FILE_LUCI_APP_PKG="${PKG_DIR}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
 FILE_LUCI_APP_RU_PKG="${PKG_DIR}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
 ### ruantiblock
-FILE_CONFIG="${RUAB_CFG_DIR}/ruantiblock.conf"
-FILE_FQDN_FILTER="${RUAB_CFG_DIR}/fqdn_filter"
-FILE_IP_FILTER="${RUAB_CFG_DIR}/ip_filter"
-FILE_USER_ENTRIES="${RUAB_CFG_DIR}/user_entries"
+FILE_CONFIG="${CONFIG_DIR}/ruantiblock.conf"
+FILE_FQDN_FILTER="${CONFIG_DIR}/fqdn_filter"
+FILE_IP_FILTER="${CONFIG_DIR}/ip_filter"
+FILE_USER_ENTRIES="${CONFIG_DIR}/user_entries"
+FILE_BYPASS_ENTRIES="${CONFIG_DIR}/bypass_entries"
+FILE_GR_EXCLUDED_SLD="${CONFIG_DIR}/gr_excluded_sld"
+FILE_GR_EXCLUDED_NETS="${CONFIG_DIR}/gr_excluded_nets"
 FILE_UCI_CONFIG="${PREFIX}/etc/config/ruantiblock"
 FILE_INIT_SCRIPT="${PREFIX}/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="${EXEC_DIR}/ruantiblock"
 ### tor
 FILE_TORRC="${PREFIX}/etc/tor/torrc"
 ### ruantiblock-mod-lua
-FILE_LUA_IPTOOL="${PREFIX}/usr/lib/lua/iptool.lua"
+#FILE_LUA_IPTOOL="${PREFIX}/usr/lib/lua/iptool.lua"
 FILE_LUA_IDN="${PREFIX}/usr/lib/lua/idn.lua"
 
 AWK_CMD="awk"
@@ -121,9 +125,13 @@ BackupFile() {
 BackupCurrentConfig() {
     local _file
     MakeDir "$BACKUP_DIR"
-    for _file in "$FILE_CONFIG" "$FILE_FQDN_FILTER" "$FILE_IP_FILTER" "$FILE_USER_ENTRIES" "$FILE_UCI_CONFIG" "$FILE_TORRC"
+    for _file in `ls -1 "$CONFIG_DIR" | grep -v "$(basename $BACKUP_DIR)"`
     do
-        [ -e "$_file" ] && cp -f "$_file" "${BACKUP_DIR}/`basename ${_file}`"
+        cp -af "${CONFIG_DIR}/${_file}" "${BACKUP_DIR}/${_file}"
+    done
+    for _file in "$FILE_UCI_CONFIG" "$FILE_TORRC"
+    do
+        [ -e "$_file" ] && cp -af "$_file" "${BACKUP_DIR}/`basename ${_file}`"
     done
 }
 
@@ -136,11 +144,6 @@ AppStop() {
 }
 
 AppStart() {
-    modprobe ip_set > /dev/null
-    modprobe ip_set_hash_ip > /dev/null
-    modprobe ip_set_hash_net > /dev/null
-    modprobe ip_set_list_set > /dev/null
-    modprobe xt_set > /dev/null
     $FILE_INIT_SCRIPT start
 }
 
@@ -174,10 +177,11 @@ InstallPackages() {
 
 InstallBaseConfig() {
     _return_code=1
-    InstallPackages "ipset" "kmod-ipt-ipset" "dnsmasq-full"
+    InstallPackages "dnsmasq-full" "kmod-nft-tproxy"
     RemoveFile "$FILE_RUAB_PKG" > /dev/null
     DlFile "$URL_RUAB_PKG" "$FILE_RUAB_PKG" && $OPKG_CMD install "$FILE_RUAB_PKG" > /dev/null
     _return_code=$?
+    # костыль для остановки сервиса, который запускается автоматически после установки пакета!
     AppStop
     return $_return_code
 }
@@ -219,6 +223,7 @@ InstallTorConfig() {
     TorrcSettings
     $UCI_CMD set ruantiblock.config.proxy_mode="1"
     $UCI_CMD commit ruantiblock
+    # dnsmasq rebind protection
     $UCI_CMD set dhcp.@dnsmasq[0].rebind_domain='onion'
     $UCI_CMD commit dhcp
 }
@@ -227,7 +232,6 @@ InstallLuaModule() {
     InstallPackages "lua" "luasocket" "luasec" "luabitop"
     RemoveFile "$FILE_MOD_LUA_PKG" > /dev/null
     DlFile "$URL_MOD_LUA_PKG" "$FILE_MOD_LUA_PKG" && $OPKG_CMD install "$FILE_MOD_LUA_PKG"
-    FileExists "$FILE_LUA_IPTOOL" || DlFile "$URL_LUA_IPTOOL" "$FILE_LUA_IPTOOL"
     FileExists "$FILE_LUA_IDN" || DlFile "$URL_LUA_IDN" "$FILE_LUA_IDN"
     $UCI_CMD set ruantiblock.config.bllist_module="/usr/libexec/ruantiblock/ruab_parser.lua"
     $UCI_CMD commit ruantiblock
@@ -241,6 +245,10 @@ InstallLuciApp() {
     rm -f /tmp/luci-modulecache/* /tmp/luci-indexcache*
     /etc/init.d/rpcd restart
     /etc/init.d/uhttpd restart
+}
+
+InstallHttpsDnsProxy() {
+    InstallPackages "https-dns-proxy" "luci-app-https-dns-proxy" "luci-i18n-https-dns-proxy-ru"
 }
 
 PrintBold() {
@@ -279,7 +287,7 @@ ConfirmProxyMode() {
 
 ConfirmBlacklist() {
     local _reply
-    printf " Select blacklist [ 1: User entries only | 2: RKN blacklist ] (default: 1, quit: q) > "
+    printf " Select blacklist [ 1: User entries only | 2: Full blacklist ] (default: 1, quit: q) > "
     read _reply
     case $_reply in
         1|"")
@@ -343,6 +351,28 @@ ConfirmLuciApp() {
     esac
 }
 
+ConfirmHttpsDnsProxy() {
+    local _reply
+    printf " Would you like to install the https-dns-proxy? [ y | n ] (default: y, quit: q) > "
+    read _reply
+    case $_reply in
+        y|Y|"")
+            HTTPS_DNS_PROXY=1
+            break
+        ;;
+        n|N)
+            HTTPS_DNS_PROXY=0
+            break
+        ;;
+        q|Q)
+            printf "Bye...\n"; exit 0
+        ;;
+        *)
+            InputError ConfirmHttpsDnsProxy
+        ;;
+    esac
+}
+
 ConfirmProcessing() {
     local _reply
     printf " Next, the installation will begin... Continue? [ y | n ] (default: y, quit: q) > "
@@ -364,11 +394,13 @@ ConfirmProxyMode
 ConfirmBlacklist
 #ConfirmLuaModule
 ConfirmLuciApp
+ConfirmHttpsDnsProxy
 ConfirmProcessing
 AppStop
 PrintBold "Updating packages list..."
 UpdatePackagesList
 PrintBold "Saving current configuration..."
+#BackupCurrentConfig
 PrintBold "Installing basic configuration..."
 InstallBaseConfig
 if [ $? -eq 0 ]; then
@@ -388,7 +420,7 @@ if [ $? -eq 0 ]; then
     fi
 
     if [ $BLACKLIST = 2 ]; then
-        PrintBold "Set RKN blacklist..."
+        PrintBold "Set full blacklist..."
         EnableBlacklist
     fi
 
@@ -400,6 +432,11 @@ if [ $? -eq 0 ]; then
     if [ $LUCI_APP = 1 ]; then
         PrintBold "Installing luci app..."
         InstallLuciApp
+    fi
+
+    if [ $HTTPS_DNS_PROXY = 1 ]; then
+        PrintBold "Installing https-dns-proxy..."
+        InstallHttpsDnsProxy
     fi
 
     RunAtStartup

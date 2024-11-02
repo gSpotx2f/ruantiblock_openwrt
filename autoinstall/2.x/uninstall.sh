@@ -4,19 +4,27 @@ PREFIX=""
 
 ### Local files
 
-RUAB_CFG_DIR="${PREFIX}/etc/ruantiblock"
+CONFIG_DIR="${PREFIX}/etc/ruantiblock"
+USER_LISTS_DIR="${CONFIG_DIR}/user_lists"
 EXEC_DIR="${PREFIX}/usr/bin"
-BACKUP_DIR="${RUAB_CFG_DIR}/autoinstall.bak.`date +%s`"
+BACKUP_DIR="${CONFIG_DIR}/autoinstall.bak.`date +%s`"
 HTDOCS_VIEW="${PREFIX}/www/luci-static/resources/view"
 HTDOCS_RUAB="${HTDOCS_VIEW}/ruantiblock"
 CRONTAB_FILE="/etc/crontabs/root"
 DATA_DIR="/tmp/ruantiblock"
-DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/ruantiblock.dnsmasq"
+DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/02-ruantiblock.dnsmasq"
+DNSMASQ_DATA_FILE_TMP="${DNSMASQ_DATA_FILE}.tmp"
+DNSMASQ_DATA_FILE_BYPASS="/tmp/dnsmasq.d/01-ruantiblock_bypass.dnsmasq"
+SCRIPTS_DIR="/usr/share/ruantiblock"
+MODULES_DIR="/usr/libexec/ruantiblock"
 ### ruantiblock
-FILE_CONFIG="${RUAB_CFG_DIR}/ruantiblock.conf"
-FILE_FQDN_FILTER="${RUAB_CFG_DIR}/fqdn_filter"
-FILE_IP_FILTER="${RUAB_CFG_DIR}/ip_filter"
-FILE_USER_ENTRIES="${RUAB_CFG_DIR}/user_entries"
+FILE_CONFIG="${CONFIG_DIR}/ruantiblock.conf"
+FILE_FQDN_FILTER="${CONFIG_DIR}/fqdn_filter"
+FILE_IP_FILTER="${CONFIG_DIR}/ip_filter"
+FILE_USER_ENTRIES="${CONFIG_DIR}/user_entries"
+FILE_BYPASS_ENTRIES="${CONFIG_DIR}/bypass_entries"
+FILE_GR_EXCLUDED_SLD="${CONFIG_DIR}/gr_excluded_sld"
+FILE_GR_EXCLUDED_NETS="${CONFIG_DIR}/gr_excluded_nets"
 FILE_UCI_CONFIG="${PREFIX}/etc/config/ruantiblock"
 FILE_INIT_SCRIPT="${PREFIX}/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="${EXEC_DIR}/ruantiblock"
@@ -52,9 +60,13 @@ RemoveFile() {
 BackupCurrentConfig() {
     local _file
     MakeDir "$BACKUP_DIR"
-    for _file in "$FILE_CONFIG" "$FILE_FQDN_FILTER" "$FILE_IP_FILTER" "$FILE_USER_ENTRIES" "$FILE_UCI_CONFIG" "$FILE_TORRC"
+    for _file in `ls -1 "$CONFIG_DIR" | grep -v "$(basename $BACKUP_DIR)"`
     do
-        [ -e "$_file" ] && cp -f "$_file" "${BACKUP_DIR}/`basename ${_file}`"
+        cp -af "${CONFIG_DIR}/${_file}" "${BACKUP_DIR}/${_file}"
+    done
+    for _file in "$FILE_UCI_CONFIG" "$FILE_TORRC"
+    do
+        [ -e "$_file" ] && cp -af "$_file" "${BACKUP_DIR}/`basename ${_file}`"
     done
 }
 
@@ -67,10 +79,12 @@ DisableStartup() {
 }
 
 RemoveCronTask() {
-    $AWK_CMD -v FILE_MAIN_SCRIPT="$FILE_MAIN_SCRIPT" '$0 !~ FILE_MAIN_SCRIPT {
-        print $0;
-    }' "$CRONTAB_FILE" > "${CRONTAB_FILE}.tmp" && mv -f "${CRONTAB_FILE}.tmp" "$CRONTAB_FILE"
-    /etc/init.d/cron restart
+    if [ -e "$CRONTAB_FILE" ]; then
+        $AWK_CMD -v FILE_MAIN_SCRIPT="$FILE_MAIN_SCRIPT" '$0 !~ FILE_MAIN_SCRIPT {
+            print $0;
+        }' "$CRONTAB_FILE" > "${CRONTAB_FILE}.tmp" && mv -f "${CRONTAB_FILE}.tmp" "$CRONTAB_FILE"
+        /etc/init.d/cron restart
+    fi
 }
 
 RestoreTorConfig() {
@@ -85,9 +99,25 @@ RestoreTorConfig() {
 RemoveAppFiles() {
     RestoreTorConfig
     $OPKG_CMD remove ruantiblock-mod-py ruantiblock-mod-lua luci-i18n-ruantiblock-ru luci-app-ruantiblock ruantiblock
+    RemoveFile "$FILE_UCI_CONFIG"
+    RemoveFile "$FILE_CONFIG"
+    RemoveFile "$FILE_FQDN_FILTER"
+    RemoveFile "$FILE_IP_FILTER"
+    RemoveFile "$FILE_USER_ENTRIES"
+    RemoveFile "$FILE_BYPASS_ENTRIES"
+    RemoveFile "$FILE_GR_EXCLUDED_SLD"
+    RemoveFile "$FILE_GR_EXCLUDED_NETS"
+    RemoveFile "${FILE_UCI_CONFIG}.opkg"
+    RemoveFile "${FILE_CONFIG}.opkg"
+    RemoveFile "${FILE_FQDN_FILTER}.opkg"
+    RemoveFile "${FILE_IP_FILTER}.opkg"
+    RemoveFile "${FILE_USER_ENTRIES}.opkg"
+    RemoveFile "${FILE_BYPASS_ENTRIES}.opkg"
     rm -f "$DNSMASQ_DATA_FILE"
+    rm -f "$DNSMASQ_DATA_FILE_BYPASS"
     rm -rf "$DATA_DIR"/*
-    rmdir "${RUAB_CFG_DIR}/scripts" 2> /dev/null
+    rm -rf "$USER_LISTS_DIR"
+    rmdir "$SCRIPTS_DIR" "$MODULES_DIR" 2> /dev/null
     rmdir "$HTDOCS_RUAB" 2> /dev/null
     rm -f /tmp/luci-modulecache/* /tmp/luci-indexcache*
     /etc/init.d/rpcd restart
@@ -117,7 +147,7 @@ ConfirmRemove() {
 
 ConfirmRemove
 AppStop
-#BackupCurrentConfig
+BackupCurrentConfig
 DisableStartup
 RemoveCronTask
 RemoveAppFiles

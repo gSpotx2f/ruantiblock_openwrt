@@ -1,4 +1,5 @@
 'use strict';
+'require baseclass';
 'require fs';
 'require poll';
 'require uci';
@@ -15,7 +16,121 @@ const btn_style_warning  = 'btn cbi-button-negative important'
 return view.extend({
 	statusTokenValue: null,
 
-	disableButtons: function(bool, btn, elems=[]) {
+	dialogDestroy: baseclass.extend({
+		__init__(context) {
+			this.context = context;
+		},
+
+		currentDnsmasqCfgDir: null,
+
+		dnsmasqCfgDirsSelect: null,
+
+		cancelButton        : E('button', {
+			'id'   : 'btn_cancel',
+			'class': btn_style_neutral,
+			'click': ui.hideModal,
+		}, _('Cancel')),
+
+		load() {
+			return L.resolveDefault(fs.list(tools.dnsmasqCfgDirsRoot), null);
+		},
+
+		render(data) {
+			let section               = uci.get(tools.appName, 'config');
+			this.currentDnsmasqCfgDir = section.dnsmasq_cfg_dir;
+			let available_cfg_dirs    = [];
+
+			let dnsmasq_cfg_dirs_arr = data;
+			if(dnsmasq_cfg_dirs_arr) {
+				dnsmasq_cfg_dirs_arr.forEach(e => {
+					let fname = e.name;
+					if(fname.startsWith('dnsmasq')) {
+						available_cfg_dirs.push([ fname, tools.dnsmasqCfgDirsRoot + '/' + fname ]);
+					};
+				});
+			};
+
+			this.dnsmasqCfgDirsSelect = E('select', {
+				'id'   : 'dnsmasq_cfg_dirs_list',
+				'class': "cbi-input-select",
+			}),
+
+			available_cfg_dirs.forEach(e => {
+				this.dnsmasqCfgDirsSelect.append(
+					E('option', { 'value': e[1] }, e[0]));
+			});
+			this.dnsmasqCfgDirsSelect.value = this.currentDnsmasqCfgDir;
+
+			ui.showModal(this.title, [
+				E('h4', _('The service will be disabled and all blacklist data will be deleted. Continue?')),
+				E('div', { 'class': 'cbi-section' }, [
+					E('div', { 'class': 'cbi-value' }, [
+						E('label', { 'class': 'cbi-value-title' },
+							_('Dnsmasq config directory')),
+						E('div', { 'class': 'cbi-value-field' }, [
+							this.dnsmasqCfgDirsSelect,
+							E('div', { 'class': 'cbi-value-description' },
+								_('Change dnsmasq config directory')),
+						]),
+					]),
+				]),
+				E('div', { 'class': 'right' }, [
+					this.cancelButton,
+					' ',
+					E('button', {
+						'id'   : 'btn_apply',
+						'class': btn_style_warning,
+						'click': ui.createHandlerFn(this, this.handleApply),
+					}, _('Shutdown')),
+				]),
+			], 'cbi-modal');
+		},
+
+		handleApply(ev) {
+			this.cancelButton.disabled = true;
+			return this.context.appAction('destroy').then(() => {
+				if(this.dnsmasqCfgDirsSelect.value !== this.currentDnsmasqCfgDir) {
+					uci.set(tools.appName, 'config', 'dnsmasq_cfg_dir',
+							this.dnsmasqCfgDirsSelect.value);
+					uci.save();
+					uci.apply();
+				};
+			}).finally(() => {
+				this.cancelButton.disabled = false;
+				ui.hideModal();
+			});
+		},
+
+		error(e) {
+			ui.showModal(this.title, [
+				E('div', { 'class': 'cbi-section' },
+					E('p', {}, _('An error occurred')
+						+ ': %s'.format(e.message))
+				),
+				E('div', { 'class': 'right' },
+					E('button', {
+						'class': btn_style_neutral,
+						'click': ui.hideModal,
+					}, _('Dismiss'))
+				),
+			]);
+		},
+
+		show() {
+			ui.showModal(null,
+				E('p', { 'class': 'spinning' }, _('Loading'))
+			);
+			this.load().then(content => {
+				ui.hideModal();
+				return this.render(content);
+			}).catch(e => {
+				ui.hideModal();
+				return this.error(e);
+			})
+		},
+	}),
+
+	disableButtons(bool, btn, elems=[]) {
 		let btn_start   = elems[1] || document.getElementById("btn_start");
 		let btn_destroy = elems[4] || document.getElementById("btn_destroy");
 		let btn_enable  = elems[2] || document.getElementById("btn_enable");
@@ -31,7 +146,7 @@ return view.extend({
 		};
 	},
 
-	getAppStatus: function() {
+	getAppStatus() {
 		return Promise.all([
 			fs.exec(tools.execPath, [ 'raw-status' ]),
 			fs.exec(tools.execPath, [ 'vpn-route-status' ]),
@@ -46,7 +161,7 @@ return view.extend({
 		});
 	},
 
-	setAppStatus: function(status_array, elems=[], force_app_code) {
+	setAppStatus(status_array, elems=[], force_app_code) {
 		let section = uci.get(tools.appName, 'config');
 		if(!status_array || typeof(section) !== 'object') {
 			(elems[0] || document.getElementById("status")).innerHTML = tools.makeStatusString(1);
@@ -59,8 +174,7 @@ return view.extend({
 		let app_status_code       = (force_app_code) ? force_app_code : status_array[0].code;
 		let vpn_route_status_code = status_array[1].code;
 		let enabled_flag          = status_array[2];
-		let proxy_local_clients   = section.proxy_local_clients;
-		let proxy_mode            = section.proxy_mode;
+		let dnsmasq_cfg_dir       = section.dnsmasq_cfg_dir;
 		let bllist_preset         = section.bllist_preset;
 		let bllist_module         = section.bllist_module;
 
@@ -122,7 +236,6 @@ return view.extend({
 
 		(elems[0] || document.getElementById("status")).innerHTML = tools.makeStatusString(
 								app_status_code,
-								proxy_mode,
 								bllist_preset,
 								bllist_module,
 								vpn_route_status_code);
@@ -132,7 +245,7 @@ return view.extend({
 		};
 	},
 
-	serviceAction: function(action, button) {
+	serviceAction(action, button) {
 		if(button) {
 			let elem = document.getElementById(button);
 			this.disableButtons(true, elem);
@@ -149,7 +262,7 @@ return view.extend({
 		});
 	},
 
-	appAction: function(action, button) {
+	appAction(action, button) {
 		if(button) {
 			let elem = document.getElementById(button);
 			this.disableButtons(true, elem);
@@ -167,13 +280,12 @@ return view.extend({
 			return this.getAppStatus().then(
 				(status_array) => {
 					this.setAppStatus(status_array);
-					ui.hideModal();
 				}
 			);
 		});
 	},
 
-	statusPoll: function() {
+	statusPoll() {
 		return fs.read(tools.tokenFile).then(v => {
 			v = tools.normalizeValue(v);
 			if(v != this.statusTokenValue) {
@@ -187,47 +299,20 @@ return view.extend({
 		});
 	},
 
-	dialogDestroy: function(ev) {
-		ev.target.blur();
-		let cancel_button = E('button', {
-			'class': btn_style_neutral,
-			'click': ui.hideModal,
-		}, _('Cancel'));
-
-		let shutdown_btn = E('button', {
-			'class': btn_style_warning,
-		}, _('Shutdown'));
-		shutdown_btn.onclick = ui.createHandlerFn(this, () => {
-			cancel_button.disabled = true;
-			return this.appAction('destroy');
-		});
-
-		ui.showModal(_('Shutdown'), [
-			E('div', { 'class': 'cbi-section' }, [
-				E('p', _('The service will be disabled and all blacklist data will be deleted. Continue?')),
-			]),
-			E('div', { 'class': 'right' }, [
-				shutdown_btn,
-				' ',
-				cancel_button,
-			])
-		]);
-	},
-
-	load: function() {
+	load() {
 		return this.getAppStatus();
 	},
 
-	render: function(status_array) {
+	render(status_array) {
 		if(!status_array) {
 			return;
 		};
 
 		let section             = uci.get(tools.appName, 'config');
-		let proxy_local_clients = (typeof(section) === 'object') ?
-								section.proxy_local_clients : null;
 		this.statusTokenValue   = (Array.isArray(status_array)) ?
 								tools.normalizeValue(status_array[4]) : null;
+
+		let dialog_destroy = new this.dialogDestroy(this);
 
 		let status_string = E('div', {
 			'id'   : 'status',
@@ -281,7 +366,7 @@ return view.extend({
 			'name' : 'btn_destroy',
 			'class': btn_style_negative,
 		}, _('Shutdown'));
-		btn_destroy.onclick = L.bind(this.dialogDestroy, this);
+		btn_destroy.onclick = () => dialog_destroy.show();
 
 		layout_append(btn_destroy, _('Shutdown'),
 			_('Complete service shutdown, as well as deleting nftsets and blacklist data'));

@@ -1,17 +1,69 @@
 #!/bin/sh
 
 PID_FILE="/var/run/`basename $0`.pid"
+APP_EXEC="/usr/bin/ruantiblock"
 
-VpnRouteStatus() {
-    [ -n "`$IP_CMD route show table $VPN_ROUTE_TABLE_ID 2> /dev/null`" ] && return 0
+. "$USER_INSTANCES_COMMON"
+
+VPN_IFACES_STATUS=1
+
+CheckIfaceStatus() {
+    local _iface="$1" _ret_val=0
+    if [ -z "`$IP_CMD link show dev $_iface up 2> /dev/null`" ]; then
+        _ret_val=1
+
+        if [ $DEBUG -ge 1 ]; then
+            echo "  ruab_route_check.GetVpnRouteStatus: ${_iface} disabled" >&2
+            logger -p "user.debug" -t "ruantiblock" "ruab_route_check.GetVpnRouteStatus: iface ${_iface} disabled"
+        fi
+
+    fi
+    return $_ret_val
+}
+
+VpnRouteInstanceStatus() {
+    local _vpn_route_table_id=$1
+    [ -n "`$IP_CMD route show table $_vpn_route_table_id 2> /dev/null`" ] && return 0
     return 1
+}
+
+GetVpnRouteStatus() {
+    local _inst _i=1 _ret_val=0
+    for _inst in $USER_INSTANCES_VPN_FNAMES
+    do
+        IncludeUserInstanceVars "$_inst"
+        if ! CheckIfaceStatus $U_IF_VPN; then
+            VPN_IFACES_STATUS=0
+        fi
+        if ! VpnRouteInstanceStatus $(($VPN_ROUTE_TABLE_ID_START + $_i)); then
+            _ret_val=1
+            break
+        fi
+        _i=$(($_i + 1))
+        ClearUserInstanceVars
+    done
+    if [ $_ret_val -eq 0 -a "$PROXY_MODE" = "2" ]; then
+        if ! CheckIfaceStatus $IF_VPN; then
+            VPN_IFACES_STATUS=0
+        fi
+        if ! VpnRouteInstanceStatus $VPN_ROUTE_TABLE_ID_START; then
+            _ret_val=1
+        fi
+    fi
+    return $_ret_val
 }
 
 Main() {
     while [ -e "$PID_FILE" ]
     do
-        if ! VpnRouteStatus; then
-            if $IP_CMD link show $IF_VPN &> /dev/null; then
+        VPN_IFACES_STATUS=1
+        if ! GetVpnRouteStatus; then
+            if [ "$VPN_IFACES_STATUS" = "1" ]; then
+
+                if [ $DEBUG -ge 1 ]; then
+                    echo "  ruab_route_check.Main: ${APP_EXEC} reload" >&2
+                    logger -p "user.debug" -t "ruantiblock" "ruab_route_check.Main: ${APP_EXEC} reload"
+                fi
                 $APP_EXEC reload
             fi
         fi

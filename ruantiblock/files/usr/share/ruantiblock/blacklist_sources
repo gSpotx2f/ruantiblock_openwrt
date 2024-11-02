@@ -6,7 +6,6 @@ export RBL_DPI_URL="https://reestr.rublacklist.net/api/v3/dpi/"
 export RBL_ENCODING=""
 ## zapret-info
 export ZI_ALL_URL="https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv"
-#export ZI_ALL_URL="https://app.assembla.com/spaces/z-i/git/source/master/dump.csv?_format=raw"
 export ZI_ENCODING="CP1251"
 ## antifilter
 export AF_IP_URL="https://antifilter.download/list/allyouneed.lst"
@@ -52,7 +51,6 @@ case "$BLLIST_PRESET" in
         export BLLIST_SOURCE="ruantiblock"
         export BLLIST_MODE="ip"
         BLLIST_MODULE="DownloadNativeBlacklist"
-        # github
         DL_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/ip/ruantiblock.ip"
         DL_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/ip/ruantiblock.dnsmasq"
         DL_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/ip/update_status"
@@ -61,7 +59,6 @@ case "$BLLIST_PRESET" in
         export BLLIST_SOURCE="ruantiblock"
         export BLLIST_MODE="fqdn"
         BLLIST_MODULE="DownloadNativeBlacklist"
-        # github
         DL_IPSET_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/fqdn/ruantiblock.ip"
         DL_DMASK_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/fqdn/ruantiblock.dnsmasq"
         DL_STAT_URL="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_blacklist/master/blacklist-1.1/fqdn/update_status"

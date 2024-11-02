@@ -58,9 +58,8 @@ local Config = Class(nil, {
         ["NFTSET_CIDR"] = true,
         ["NFTSET_IP"] = true,
         ["NFTSET_DNSMASQ"] = true,
-        ["NFTSET_CIDR_CFG"] = true,
-        ["NFTSET_IP_CFG"] = true,
-        ["NFTSET_DNSMASQ"] = true,
+        ["NFTSET_CIDR_STRING_MAIN"] = true,
+        ["NFTSET_IP_STRING_MAIN"] = true,
         ["DNSMASQ_DATA_FILE"] = true,
         ["IP_DATA_FILE"] = true,
         ["UPDATE_STATUS_FILE"] = true,
@@ -788,7 +787,7 @@ function WriteConfigFiles:write_ipset_config(ip_table, cidr_table)
         file_handler:write(string.format("flush set %s %s\n", self.NFT_TABLE, v))
     end
     file_handler:write(
-        string.format("table %s {\n%s", self.NFT_TABLE, self.NFTSET_CIDR_CFG)
+        string.format("table %s {\n%s", self.NFT_TABLE, self.NFTSET_CIDR_STRING_MAIN)
     )
     local c = 0
     if next(cidr_table) then
@@ -801,7 +800,7 @@ function WriteConfigFiles:write_ipset_config(ip_table, cidr_table)
     end
     self.cidr_count = c
     file_handler:write(
-        string.format("}\n%s", self.NFTSET_IP_CFG)
+        string.format("}\n%s", self.NFTSET_IP_STRING_MAIN)
     )
     local i = 0
     if next(ip_table) then
@@ -1076,6 +1075,7 @@ if parser_classes then
     for _, i in ipairs(parser_instances) do
         ret_list[i:run()] = true
     end
+
     local return_sum = 0
     for i, _ in pairs(ret_list) do
         return_sum = return_sum + i

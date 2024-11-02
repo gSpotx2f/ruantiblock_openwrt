@@ -1,0 +1,75 @@
+
+if [ $USER_INSTANCES_MAX -gt 50 ]; then
+    USER_INSTANCES_MAX=50
+fi
+
+IncludeUserInstanceVars() {
+    local _inst="$1"
+    . "${USER_INSTANCES_DIR}/${_inst}"
+
+    if [ $DEBUG -ge 2 ]; then
+        echo "  user_instances_common.IncludeUserInstanceVars: _inst=${_inst} U_NAME=${U_NAME} U_PROXY_MODE=${U_PROXY_MODE}" >&2
+        MakeLogRecord "debug" "user_instances_common.IncludeUserInstanceVars: _inst=${_inst} U_NAME=${U_NAME} U_PROXY_MODE=${U_PROXY_MODE}"
+    fi
+}
+
+ClearUserInstanceVars() {
+    unset $USER_INSTANCE_VARS
+}
+
+ListUserInstances() {
+    ls -1 "$USER_INSTANCES_DIR"
+}
+
+[ -f "$CONFIG_SCRIPT_USER_INSTANCES" ] && . "$CONFIG_SCRIPT_USER_INSTANCES"
+
+GetUserInstances() {
+    local _type="$1" _fnames="$2" _i=0 _inst _instances=""
+    for _inst in `ListUserInstances`
+    do
+        IncludeUserInstanceVars "$_inst"
+        if [ $_i -lt $USER_INSTANCES_MAX -a -n "$U_NAME" -a "$U_ENABLED" != "0" ]; then
+            if [ "$_type" = "0" -o "$U_PROXY_MODE" = "$_type" ]; then
+                if [ "$_fnames" = "fnames" ]; then
+                    _instances="${_instances}${_inst} "
+                else
+                    _instances="${_instances}${U_NAME} "
+                fi
+            fi
+            _i=$(($_i + 1))
+        fi
+        ClearUserInstanceVars
+    done
+    printf "$_instances"
+}
+
+SetUserInstancesItems() {
+    local _i=0 _inst _instances_all="" _instances_all_fnames="" _instances_vpn="" _instances_vpn_fnames="" _instances_cfg=""  _instances_cfg_fnames=""
+    for _inst in `ListUserInstances`
+    do
+        IncludeUserInstanceVars "$_inst"
+        if [ $_i -lt $USER_INSTANCES_MAX -a -n "$U_NAME" -a "$U_ENABLED" != "0" ]; then
+            _instances_all="${_instances_all}${U_NAME} "
+            _instances_all_fnames="${_instances_all_fnames}${_inst} "
+            if [ "$U_PROXY_MODE" = "2" ]; then
+                _instances_vpn="${_instances_vpn}${U_NAME} "
+                _instances_vpn_fnames="${_instances_vpn_fnames}${_inst} "
+            fi
+            _i=$(($_i + 1))
+        fi
+        _instances_cfg="${_instances_cfg}${U_NAME} "
+        _instances_cfg_fnames="${_instances_cfg_fnames}${_inst} "
+        ClearUserInstanceVars
+    done
+    USER_INSTANCES_ALL="$_instances_all"
+    USER_INSTANCES_ALL_FNAMES="$_instances_all_fnames"
+    USER_INSTANCES_VPN="$_instances_vpn"
+    USER_INSTANCES_VPN_FNAMES="$_instances_vpn_fnames"
+    USER_INSTANCES_CFG="$_instances_cfg"
+    USER_INSTANCES_CFG_FNAMES="$_instances_cfg_fnames"
+
+    if [ $DEBUG -ge 2 ]; then
+        echo "  user_instances_common.SetUserInstancesItems: USER_INSTANCES_ALL=\"${USER_INSTANCES_ALL}\"; USER_INSTANCES_ALL_FNAMES=\"${USER_INSTANCES_ALL_FNAMES}\"; USER_INSTANCES_VPN=\"${USER_INSTANCES_VPN}\"; USER_INSTANCES_VPN_FNAMES=\"${USER_INSTANCES_VPN_FNAMES}\"" >&2
+        MakeLogRecord "debug" "user_instances_common.SetUserInstancesItems: USER_INSTANCES_ALL=\"${USER_INSTANCES_ALL}\"; USER_INSTANCES_ALL_FNAMES=\"${USER_INSTANCES_ALL_FNAMES}\"; USER_INSTANCES_VPN=\"${USER_INSTANCES_VPN}\"; USER_INSTANCES_VPN_FNAMES=\"${USER_INSTANCES_VPN_FNAMES}\""
+    fi
+}

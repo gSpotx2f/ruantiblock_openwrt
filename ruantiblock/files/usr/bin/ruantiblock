@@ -18,11 +18,11 @@ export LANGUAGE="en"
 CONFIG_DIR="/etc/${NAME}"
 CONFIG_FILE="${CONFIG_DIR}/${NAME}.conf"
 SCRIPTS_DIR="/usr/share/${NAME}"
-export DATA_DIR="${CONFIG_DIR}/var"
+export DATA_DIR="/var/${NAME}"
 export MODULES_DIR="/usr/libexec/${NAME}"
-### Дополнительный конфиг dnsmasq с FQDN записями блэклиста
-export DNSMASQ_DATA_FILE="/var/dnsmasq.d/02-${NAME}.dnsmasq"
-export DNSMASQ_DATA_FILE_BYPASS="/var/dnsmasq.d/01-${NAME}_bypass.dnsmasq"
+RUN_FILES_DIR="/var/run"
+### Директория доп. конфигов dnsmasq
+export DNSMASQ_CFG_DIR="/var/dnsmasq.d"
 ### Команда для перезапуска dnsmasq
 export DNSMASQ_RESTART_CMD="/etc/init.d/dnsmasq restart"
 ### Директория для html-страницы статуса (не используется в OpenWrt)
@@ -48,22 +48,30 @@ export ONION_DNS_ADDR="127.0.0.1#9053"
 export IF_VPN="tun0"
 ### IP адрес шлюза для VPN конфигурации. Если не задан, используется адрес VPN интерфейса (или адрес пира для протоколов PPP)
 export VPN_GW_IP=""
-### Метка для отбора пакетов в VPN туннель
-export VPN_PKTS_MARK=8
-### Таблица маршрутизации для отправки пакетов в VPN туннель
-export VPN_ROUTE_TABLE_ID=99
+### Начальный номер таблицы маршрутизации для отправки пакетов в VPN туннель
+export VPN_ROUTE_TABLE_ID_START=149
+### Начальный номер таблицы маршрутизации для отправки локальных пакетов в tproxy
+export TPROXY_ROUTE_TABLE_ID_START=201
 ### Приоритет правила отбора пакетов при маршрутизации в VPN-интерфейс
 export VPN_RULE_PRIO=1000
+### Приоритет правила отбора пакетов при маршрутизации в lo интерфейс
+export LO_RULE_PRIO=1000
 ### Способ добавления в таблицу маршрутизации правила для отправки пакетов в VPN туннель (0 - hotplug.d, 1 - скрипт ruab_route_check)
 export VPN_ROUTE_CHECK=0
+### Тип прозрачного прокси (0 - redirect, 1 - tproxy)
+export T_PROXY_TYPE=0
 ### TCP порт прокси в режиме прозрачного прокси
 export T_PROXY_PORT_TCP=1100
 ### UDP порт прокси в режиме прозрачного прокси
 export T_PROXY_PORT_UDP=1100
 ### Отправлять в прозрачный прокси UDP-трафик (0 - выкл, 1 - вкл)
 export T_PROXY_ALLOW_UDP=0
+### Начальное значение метки для отбора пакетов в фильтрах
+export PKTS_MARK_START=8
 ### Запись событий в syslog (0 - выкл, 1 - вкл)
 export ENABLE_LOGGING=1
+### Вывод дополнительных сообщений в лог (0 - выкл, 1, 2)
+export DEBUG=0
 ### Html-страница с инфо о текущем статусе (0 - выкл, 1 - вкл) (не используется в OpenWrt)
 export ENABLE_HTML_INFO=0
 ### Максимальное кол-во элементов списка nftables
@@ -81,28 +89,27 @@ export NFTSET_DNSMASQ_TIMEOUT="150m"
 ### Динамическое обновление таймаута записей в сете $NFTSET_DNSMASQ (0 - выкл, 1 - вкл)
 export NFTSET_DNSMASQ_TIMEOUT_UPDATE=1
 ### Приоритет правила отбора пакетов nftables для конфигупации Tor или прозрачного прокси
-export NFT_PRIO_NAT="dstnat - 10"
+export NFT_PRIO_NAT=-140          # dstnat - 10 (-110)
 ### Приоритет правила отбора пакетов nftables для трафика локальных клиентов в конфигупации Tor или прозрачного прокси
-export NFT_PRIO_NAT_LOCAL="filter - 10"
+export NFT_PRIO_NAT_LOCAL=-140    # dstnat - 10 (-110)
 ### Приоритет правила отбора пакетов nftables для VPN-конфигурации
-export NFT_PRIO_ROUTE="mangle + 10"
+export NFT_PRIO_ROUTE=-140        # mangle + 10
 ### Приоритет правила отбора пакетов nftables для трафика локальных клиентов в VPN-конфигурации
-export NFT_PRIO_ROUTE_LOCAL="mangle + 10"
-### Добавление в список блокировок пользовательских записей из файла $USER_ENTRIES_FILE (0 - выкл, 1 - вкл)
-###  В $CONFIG_DIR можно создать текстовый файл user_entries с записями IP, CIDR или FQDN (одна на строку). Эти записи будут добавлены в список блокировок
-###  В записях FQDN можно задать DNS-сервер для разрешения данного домена, через пробел (прим.: domain.com 8.8.8.8)
-###  Можно комментировать строки (#)
-export ADD_USER_ENTRIES=0
-### DNS-сервер для пользовательских записей (пустая строка - без DNS-сервера). Можно с портом: 8.8.8.8#53. Если в записи указан свой DNS-сервер - он имеет приоритет
-export USER_ENTRIES_DNS=""
-### Файл пользовательских записей
-export USER_ENTRIES_FILE="${CONFIG_DIR}/user_entries"
-### URL удаленных файлов записей пользователя, через пробел (прим.: http://server.lan/files/user_entries_1 http://server.lan/files/user_entries_2)
-export USER_ENTRIES_REMOTE=""
+export NFT_PRIO_ROUTE_LOCAL=-140  # mangle + 10
 ### Кол-во попыток скачивания удаленного файла записей пользователя (в случае неудачи)
 export USER_ENTRIES_REMOTE_DOWNLOAD_ATTEMPTS=3
 ### Таймаут между попытками скачивания
 export USER_ENTRIES_REMOTE_DOWNLOAD_TIMEOUT=60
+### Директория конфигов экземпляров записей пользователя
+export USER_INSTANCES_DIR="${CONFIG_DIR}/user_instances"
+### Директория списков записей пользователя
+export USER_LISTS_DIR="${CONFIG_DIR}/user_lists"
+### Переменные экземпляров записей пользователя
+export USER_INSTANCE_VARS="U_ENABLED U_NAME U_PROXY_MODE U_TOR_TRANS_PORT U_ONION_DNS_ADDR U_IF_VPN U_VPN_GW_IP U_T_PROXY_TYPE U_T_PROXY_PORT_TCP U_T_PROXY_PORT_UDP U_T_PROXY_ALLOW_UDP U_USER_ENTRIES_DNS U_USER_ENTRIES_REMOTE U_ENABLE_ENTRIES_REMOTE_PROXY U_ENABLE_FPROXY U_FPROXY_LIST U_SKIP_MARKED_PACKETS"
+### Кол-во экземпляров записей пользователя (не более 50!)
+export USER_INSTANCES_MAX=5
+### Пропускать мимо фильтра пакеты уже помеченные в записях пользователя (0 - выкл, 1 - вкл)
+export SKIP_MARKED_PACKETS=0
 ### Режим списка IP адресов исключаемых из обхода блокировок (0 - выкл, 1 - вкл)
 export BYPASS_MODE=0
 ### DNS-сервер для исключаемых записей (пустая строка - без DNS-сервера). Можно с портом: 8.8.8.8#53. Если в записи указан свой DNS-сервер - он имеет приоритет
@@ -185,12 +192,18 @@ export BLLIST_ALT_DNS_ADDR="8.8.8.8"
 [ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
 
 CONFIG_SCRIPT="${SCRIPTS_DIR}/config_script"
+export USER_INSTANCES_COMMON="${SCRIPTS_DIR}/user_instances_common"
+export CONFIG_SCRIPT_USER_INSTANCES="${SCRIPTS_DIR}/config_script_user_instances"
 START_SCRIPT="${SCRIPTS_DIR}/start_script"
 STOP_SCRIPT="${SCRIPTS_DIR}/stop_script"
 BLLIST_SOURCES_SCRIPT="${SCRIPTS_DIR}/blacklist_sources"
 
 ### Config script
 [ -f "$CONFIG_SCRIPT" ] && . "$CONFIG_SCRIPT"
+
+export DNSMASQ_DATA_FILE_BYPASS="${DNSMASQ_CFG_DIR}/00-${NAME}_bypass.dnsmasq"
+export DNSMASQ_DATA_FILE_USER_INSTANCES="${DNSMASQ_CFG_DIR}/01-${NAME}_user_instances.dnsmasq"
+export DNSMASQ_DATA_FILE="${DNSMASQ_CFG_DIR}/02-${NAME}.dnsmasq"
 
 ### Utilities
 AWK_CMD="awk"
@@ -223,6 +236,8 @@ if [ $? -ne 0 ]; then
 fi
 ROUTE_CHECK_EXEC="${MODULES_DIR}/ruab_route_check"
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
+export IP_DATA_FILE_BYPASS="${DATA_DIR}/${NAME}_bypass.ip"
+export IP_DATA_FILE_USER_INSTANCES="${DATA_DIR}/${NAME}_user_instances.ip"
 export NFT_TABLE="ip r"
 export NFT_TABLE_DNSMASQ="4#ip#r"
 export NFTSET_ALLOWED_HOSTS="allowed_ip"
@@ -235,6 +250,7 @@ export NFTSET_ONION="onion"
 export NFTSET_CIDR="c"
 export NFTSET_IP="i"
 export NFTSET_DNSMASQ="d"
+export NFTSET_MARK_SET="mark_set"
 export NFTSET_ALLOWED_HOSTS_TYPE="ipv4_addr"
 export NFTSET_BYPASS_IP_TYPE="ipv4_addr"
 export NFTSET_BYPASS_FQDN_TYPE="ipv4_addr"
@@ -244,28 +260,45 @@ export NFTSET_BLLIST_PROXY_TYPE="ipv4_addr"
 export NFTSET_CIDR_TYPE="ipv4_addr"
 export NFTSET_IP_TYPE="ipv4_addr"
 export NFTSET_DNSMASQ_TYPE="ipv4_addr"
-export NFTSET_CIDR_CFG="set ${NFTSET_CIDR} {type ${NFTSET_CIDR_TYPE};size ${NFTSET_MAXELEM_CIDR};policy ${NFTSET_POLICY_CIDR};flags interval;auto-merge;"
-export NFTSET_IP_CFG="set ${NFTSET_IP} {type ${NFTSET_IP_TYPE};size ${NFTSET_MAXELEM_IP};policy ${NFTSET_POLICY_IP};flags dynamic;"
-export NFTSET_BYPASS_IP_CFG="set ${NFTSET_BYPASS_IP} {type ${NFTSET_BYPASS_IP_TYPE};size ${NFTSET_MAXELEM_BYPASS_IP};policy ${NFTSET_POLICY_CIDR};flags interval;auto-merge;"
+export NFTSET_MARK_SET_TYPE="mark"
+export NFTSET_CIDR_PATTERN="set %s {type ${NFTSET_CIDR_TYPE};size ${NFTSET_MAXELEM_CIDR};policy ${NFTSET_POLICY_CIDR};flags interval;auto-merge;"
+export NFTSET_IP_PATTERN="set %s {type ${NFTSET_IP_TYPE};size ${NFTSET_MAXELEM_IP};policy ${NFTSET_POLICY_IP};flags dynamic;"
+export NFTSET_CIDR_STRING_MAIN=`printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}"`
+export NFTSET_IP_STRING_MAIN=`printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}"`
+export NFTSET_BYPASS_IP_STRING="set ${NFTSET_BYPASS_IP} {type ${NFTSET_BYPASS_IP_TYPE};size ${NFTSET_MAXELEM_BYPASS_IP};policy ${NFTSET_POLICY_CIDR};flags interval;auto-merge;"
 export UPDATE_STATUS_FILE="${DATA_DIR}/update_status"
 export USER_ENTRIES_STATUS_FILE="${DATA_DIR}/user_entries_status"
-U_PID_FILE="/var/run/${NAME}_update.pid"
-START_PID_FILE="/var/run/${NAME}_start.pid"
-TOKEN_FILE="/var/run/${NAME}.token"
+U_PID_FILE="${RUN_FILES_DIR}/${NAME}_update.pid"
+START_PID_FILE="${RUN_FILES_DIR}/${NAME}_start.pid"
+TOKEN_FILE="${RUN_FILES_DIR}/${NAME}.token"
 export HTML_OUTPUT="${HTML_DIR}/${NAME}.html"
 NFT_FUNCTIONS="${SCRIPTS_DIR}/nft_functions"
 INFO_OUTPUT_FUNCTION="${SCRIPTS_DIR}/info_output"
 export IP_DATA_FILE_TMP="${IP_DATA_FILE}.tmp"
+export IP_DATA_FILE_USER_INSTANCES_TMP="${IP_DATA_FILE_USER_INSTANCES}.tmp"
+export DNSMASQ_DATA_FILE_TMP="${DNSMASQ_DATA_FILE}.tmp"
+export DNSMASQ_DATA_FILE_USER_INSTANCES_TMP="${DNSMASQ_DATA_FILE_USER_INSTANCES}.tmp"
 export DNSMASQ_DATA_FILE_TMP="${DNSMASQ_DATA_FILE}.tmp"
 export UPDATE_STATUS_FILE_TMP="${UPDATE_STATUS_FILE}.tmp"
 export USER_ENTRIES_STATUS_FILE_TMP="${USER_ENTRIES_STATUS_FILE}.tmp"
+export USER_INSTANCES_ALL=""
+export USER_INSTANCES_ALL_FNAMES=""
+export USER_INSTANCES_VPN=""
+export USER_INSTANCES_VPN_FNAMES=""
+export USER_INSTANCES_CFG=""
+export USER_INSTANCES_CFG_FNAMES=""
+INSTANCES_CACHE="${RUN_FILES_DIR}/${NAME}.instances"
 DL_IPSET_URL=""
 DL_DMASK_URL=""
 DL_STAT_URL=""
+### for compatibility with v1.x parsers
+export NFTSET_CIDR_CFG="$NFTSET_CIDR_STRING_MAIN"
+export NFTSET_IP_CFG="$NFTSET_IP_STRING_MAIN"
 
 ######################### External functions ###########################
 
 . "$NFT_FUNCTIONS"
+. "$USER_INSTANCES_COMMON"
 if [ -f "$INFO_OUTPUT_FUNCTION" ]; then
     . "$INFO_OUTPUT_FUNCTION"
 else
@@ -276,7 +309,7 @@ fi
 
 Help() {
 cat << EOF
- Usage: ${APP_NAME} start|force-start|stop|destroy|restart|reload|update|force-update|data-files|status|raw-status|html-info|help
+ Usage: ${APP_NAME} start|force-start|stop|destroy|restart|reload|update|force-update|blacklist-files|status|raw-status|html-info|help
         start : Start
         force-start : Removing the PID-file before running
         stop : Stop
@@ -285,7 +318,7 @@ cat << EOF
         reload : Renew nftables configuration
         update : Update blacklist
         force-update : Force update blacklist
-        data-files : Create ${IP_DATA_FILE}, ${DNSMASQ_DATA_FILE}, ${DNSMASQ_DATA_FILE_BYPASS} (without network functions)
+        blacklist-files : Create ${IP_DATA_FILE}, ${DNSMASQ_DATA_FILE}, ${DNSMASQ_DATA_FILE_BYPASS} (without network functions)
         status : Status & some info
         raw-status : Return code: 0 - enabled, 1 - error, 2 - disabled, 3 - starting, 4 - updating
         html-info : Return the html-info output
@@ -299,7 +332,7 @@ cat << EOF
         ${APP_NAME} reload
         ${APP_NAME} update
         ${APP_NAME} force-update
-        ${APP_NAME} data-files
+        ${APP_NAME} blacklist-files
         ${APP_NAME} status
         ${APP_NAME} raw-status
         ${APP_NAME} html-info
@@ -307,12 +340,17 @@ EOF
 }
 
 MakeLogRecord() {
-    if [ $ENABLE_LOGGING = "1" ]; then
+    if [ "$ENABLE_LOGGING" = "1" ]; then
         $LOGGER_CMD $LOGGER_PARAMS -p "user.${1}" "$2"
     fi
 }
 
 Download() {
+    if [ $DEBUG -ge 1 ]; then
+        echo "  ruantiblock.Download ${1} ${2}" >&2
+        MakeLogRecord "debug" "ruantiblock.Download ${1} ${2}"
+    fi
+
     $WGET_CMD $WGET_PARAMS "$1" "$2"
     if [ $? -ne 0 ]; then
         echo " Downloading failed! Connection error (${2})" >&2
@@ -377,16 +415,35 @@ FlushNftSets() {
     done
 }
 
+FlushInstancesNftSets() {
+    local _arg="$1" _name
+    for _name in $USER_INSTANCES_ALL " "
+    do
+        if [ "$_name" = " " ]; then
+            _name=""
+        else
+            _name="-${_name}"
+        fi
+        case "$_arg" in
+            fqdn)
+                FlushNftSets "${NFTSET_DNSMASQ}${_name}" "${NFTSET_ONION}${_name}"
+            ;;
+            bllist)
+                FlushNftSets "${NFTSET_CIDR}${_name}" "${NFTSET_IP}${_name}" "${NFTSET_DNSMASQ}${_name}"
+            ;;
+            *)
+                FlushNftSets "${NFTSET_FPROXY}${_name}" "${NFTSET_BLLIST_PROXY}${_name}" "${NFTSET_CIDR}${_name}" "${NFTSET_IP}${_name}" "${NFTSET_DNSMASQ}${_name}" "${NFTSET_ONION}${_name}"
+            ;;
+        esac
+    done
+}
+
 FormatNftSetElemsList() {
     printf "$1" | $AWK_CMD '{gsub(/[ ]+/, ",", $0); printf $0;}'
 }
 
-AddNftSets() {
-    local _allowed_hosts _bypass_ips _fproxy_hosts _fproxy_private
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_CIDR" { type "$NFTSET_CIDR_TYPE"\; size $NFTSET_MAXELEM_CIDR\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_IP" { type "$NFTSET_IP_TYPE"\; size $NFTSET_MAXELEM_IP\; policy "$NFTSET_POLICY_IP"\; flags dynamic\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_DNSMASQ" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_ONION" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
+AddBaseNftSets() {
+    local _allowed_hosts _fproxy_private
     $NFT_CMD add set $NFT_TABLE "$NFTSET_ALLOWED_HOSTS" { type "$NFTSET_ALLOWED_HOSTS_TYPE"\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
     _allowed_hosts=`FormatNftSetElemsList "$ALLOWED_HOSTS_LIST"`
     if [ -n "$_allowed_hosts" ]; then
@@ -394,42 +451,103 @@ AddNftSets() {
     fi
     $NFT_CMD add set $NFT_TABLE "$NFTSET_BYPASS_IP" { type "$NFTSET_BYPASS_IP_TYPE"\; size $NFTSET_MAXELEM_BYPASS_IP\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
     $NFT_CMD add set $NFT_TABLE "$NFTSET_BYPASS_FQDN" { type "$NFTSET_BYPASS_FQDN_TYPE"\; size $NFTSET_MAXELEM_BYPASS_FQDN\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_FPROXY" { type "$NFTSET_FPROXY_TYPE"\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
-    _fproxy_hosts=`FormatNftSetElemsList "$FPROXY_LIST"`
-    if [ -n "$_fproxy_hosts" ]; then
-        $NFT_CMD add element $NFT_TABLE "$NFTSET_FPROXY" { "$_fproxy_hosts" }
-    fi
     $NFT_CMD add set $NFT_TABLE "$NFTSET_FPROXY_PRIVATE" { type "$NFTSET_FPROXY_PRIVATE_TYPE"\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
     _fproxy_private=`FormatNftSetElemsList "$FPROXY_PRIVATE_NETS"`
     if [ -n "$_fproxy_private" ]; then
         $NFT_CMD add element $NFT_TABLE "$NFTSET_FPROXY_PRIVATE" { "$_fproxy_private" }
     fi
-    $NFT_CMD add set $NFT_TABLE "$NFTSET_BLLIST_PROXY" { type "$NFTSET_BLLIST_PROXY_TYPE"\; policy "$NFTSET_POLICY_IP"\; flags dynamic\; }
+    $NFT_CMD add set $NFT_TABLE "$NFTSET_MARK_SET" { type "$NFTSET_MARK_SET_TYPE"\; }
+}
+
+MakeInstanceNftSets() {
+    local _name="$1" _fproxy_list="$2" _fproxy_hosts
+    if [ "$_name" = " " ]; then
+        _name=""
+    else
+        _name="-${_name}"
+    fi
+    $NFT_CMD add set $NFT_TABLE "${NFTSET_CIDR}${_name}" { type "$NFTSET_CIDR_TYPE"\; size $NFTSET_MAXELEM_CIDR\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
+    $NFT_CMD add set $NFT_TABLE "${NFTSET_IP}${_name}" { type "$NFTSET_IP_TYPE"\; size $NFTSET_MAXELEM_IP\; policy "$NFTSET_POLICY_IP"\; flags dynamic\; }
+    $NFT_CMD add set $NFT_TABLE "${NFTSET_DNSMASQ}${_name}" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
+    $NFT_CMD add set $NFT_TABLE "${NFTSET_ONION}${_name}" { type "$NFTSET_DNSMASQ_TYPE"\; size $NFTSET_MAXELEM_DNSMASQ\; policy "$NFTSET_POLICY_DNSMASQ"\; flags dynamic,timeout\; timeout "$NFTSET_DNSMASQ_TIMEOUT"\; }
+    $NFT_CMD add set $NFT_TABLE "${NFTSET_FPROXY}${_name}" { type "$NFTSET_FPROXY_TYPE"\; policy "$NFTSET_POLICY_CIDR"\; flags interval\; auto-merge\; }
+    _fproxy_hosts=`FormatNftSetElemsList "$_fproxy_list"`
+    if [ -n "$_fproxy_hosts" ]; then
+        $NFT_CMD add element $NFT_TABLE "${NFTSET_FPROXY}${_name}" { "$_fproxy_hosts" }
+    fi
+    $NFT_CMD add set $NFT_TABLE "${NFTSET_BLLIST_PROXY}${_name}" { type "$NFTSET_BLLIST_PROXY_TYPE"\; policy "$NFTSET_POLICY_IP"\; flags dynamic\; }
+}
+
+AddInstancesNftSets() {
+    local _inst
+    for _inst in $USER_INSTANCES_ALL_FNAMES
+    do
+        IncludeUserInstanceVars "$_inst"
+        MakeInstanceNftSets "$U_NAME" "$U_FPROXY_LIST"
+        ClearUserInstanceVars
+    done
+    MakeInstanceNftSets " " "$FPROXY_LIST"
 }
 
 UpdateBllistProxySet() {
-    local _ip_string=""
-    FlushNftSets "$NFTSET_BLLIST_PROXY"
-    for host in $BLLIST_HOSTS
+    local _name="$1" _urls="$2" _host _ip_string=""
+    if [ "$_name" = " " ]; then
+        _name=""
+    else
+        _name="-${_name}"
+    fi
+    FlushNftSets "${NFTSET_BLLIST_PROXY}${_name}"
+    for _host in `echo "$_urls" | $AWK_CMD '
+        BEGIN {
+            RS = " ";
+        }
+        {
+            gsub("\n", "", $0);
+            sub(/^https?:\/\//, "", $0);
+            sub(/\/.*$/, "", $0);
+            sub(/:[0-9]{2,5}$/, "", $0);
+            if($0 ~ /^([a-z0-9._-]+[.])+([a-z]{2,}|xn--[a-z0-9]+)$/ || $0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/) {
+                hosts_arr[$0];
+            };
+        }
+        END {
+            for(i in hosts_arr) {
+                printf i " ";
+            };
+        }'`
     do
-        if printf "$host" | $AWK_CMD '{exit ($0 ~ /^([0-9]{1,3}.){3}[0-9]{1,3}$/) ? 0 : 1}'; then
-            _ip_string="${_ip_string}${host} "
+        if printf "$_host" | $AWK_CMD '{exit ($0 ~ /^([0-9]{1,3}.){3}[0-9]{1,3}$/) ? 0 : 1}'; then
+            _ip_string="${_ip_string}${_host} "
         else
-            _ip_string="${_ip_string}`$NSLOOKUP_CMD $host 2> /dev/null | $AWK_CMD '/^Address: ([0-9]{1,3}.){3}[0-9]{1,3}$/ {printf $2" "}'`"
+            _ip_string="${_ip_string}`$NSLOOKUP_CMD $_host 2> /dev/null | $AWK_CMD '/^Address: ([0-9]{1,3}.){3}[0-9]{1,3}$/ {printf $2" "}'`"
         fi
     done
     _ip_string=`FormatNftSetElemsList "$_ip_string"`
+
+    if [ $DEBUG -ge 1 ]; then
+        echo "  ruantiblock.UpdateBllistProxySet()._ip_string=${_ip_string=}; _name=${_name}" >&2
+        MakeLogRecord "debug" "ruantiblock.UpdateBllistProxySet()._ip_string=${_ip_string=}; _name=${_name}"
+    fi
+
     if [ -n "$_ip_string" ]; then
-        $NFT_CMD add element $NFT_TABLE "$NFTSET_BLLIST_PROXY" { "$_ip_string" }
+        $NFT_CMD add element $NFT_TABLE "${NFTSET_BLLIST_PROXY}${_name}" { "$_ip_string" }
     fi
 }
 
 UpdateBllistSets() {
     local _return_code=0
-    if [ -f "$IP_DATA_FILE" ]; then
+    if [ -f "$IP_DATA_FILE" -a -f "$IP_DATA_FILE_USER_INSTANCES" -a -f "$IP_DATA_FILE_BYPASS" ]; then
         echo " Updating nft sets..."
-        $NFT_CMD -f "$IP_DATA_FILE"
+        $NFT_CMD -f "$IP_DATA_FILE_BYPASS"
         _return_code=$?
+        if [ $_return_code -eq 0 ]; then
+            $NFT_CMD -f "$IP_DATA_FILE_USER_INSTANCES"
+            _return_code=$?
+            if [ $_return_code -eq 0 ]; then
+                $NFT_CMD -f "$IP_DATA_FILE"
+                _return_code=$?
+            fi
+        fi
         if [ $_return_code -eq 0 ]; then
             echo " Ok"
         else
@@ -440,23 +558,94 @@ UpdateBllistSets() {
     return $_return_code
 }
 
+AddUserInstancesNftRules() {
+    local _prio_offset=0 _pkts_mark=$PKTS_MARK_START _chain_prio_first _chain_prio_local _inst _vpn_route_table_id=$VPN_ROUTE_TABLE_ID_START _tproxy_route_table_id=$TPROXY_ROUTE_TABLE_ID_START _route_table_id
+    for _inst in $USER_INSTANCES_ALL_FNAMES
+    do
+        IncludeUserInstanceVars "$_inst"
+        if [ "$U_PROXY_MODE" = "2" ]; then
+            _chain_prio_first=$(($NFT_PRIO_ROUTE + $USER_INSTANCES_MAX + $_prio_offset))
+            _chain_prio_local=$(($NFT_PRIO_ROUTE_LOCAL + $USER_INSTANCES_MAX + $_prio_offset))
+            _vpn_route_table_id=$(($_vpn_route_table_id + 1))
+            _route_table_id=$_vpn_route_table_id
+        else
+            _chain_prio_first=$(($NFT_PRIO_NAT + $USER_INSTANCES_MAX + $_prio_offset))
+            _chain_prio_local=$(($NFT_PRIO_NAT_LOCAL + $USER_INSTANCES_MAX + $_prio_offset))
+            if [ "$U_PROXY_MODE" = "3" -a "$U_T_PROXY_TYPE" = "1" ]; then
+                _tproxy_route_table_id=$(($_tproxy_route_table_id + 1))
+            fi
+            _route_table_id=$_tproxy_route_table_id
+        fi
+        _pkts_mark=$(($_pkts_mark + 1))
+        NftInstanceAdd "\"$U_NAME\"" $_pkts_mark $_chain_prio_first $_chain_prio_local $U_PROXY_MODE $U_TOR_TRANS_PORT $_route_table_id "\"$U_IF_VPN\"" $U_T_PROXY_TYPE $U_T_PROXY_PORT_TCP $U_T_PROXY_PORT_UDP $U_T_PROXY_ALLOW_UDP $U_ENABLE_ENTRIES_REMOTE_PROXY $U_ENABLE_FPROXY $U_SKIP_MARKED_PACKETS "\"$U_VPN_GW_IP\""
+        $NFT_CMD add element $NFT_TABLE "$NFTSET_MARK_SET" { $_pkts_mark }
+        ClearUserInstanceVars
+        _prio_offset=$(($_prio_offset - 1))
+    done
+}
+
+DeleteUserInstancesNftRules() {
+    local _inst _i=1 _j=1
+    for _inst in $USER_INSTANCES_CFG_FNAMES
+    do
+        IncludeUserInstanceVars "$_inst"
+        NftInstanceDelete "$U_NAME" 2> /dev/null
+        if [ "$U_PROXY_MODE" = "2" ]; then
+            NftRouteDelete $(($VPN_ROUTE_TABLE_ID_START + $_i)) 2> /dev/null
+            _i=$(($_i + 1))
+        elif [ "$U_PROXY_MODE" = "3" -a "$U_T_PROXY_TYPE" = "1" ]; then
+            NftRouteDelete $(($TPROXY_ROUTE_TABLE_ID_START + $_j)) 2> /dev/null
+            _j=$(($_j + 1))
+        fi
+        ClearUserInstanceVars
+    done
+}
+
 AddNftRules() {
-    NftMainAdd
+    local _chain_prio_first _chain_prio_local _route_table_id
+    if [ "$PROXY_MODE" = "2" ]; then
+        _chain_prio_first=$NFT_PRIO_ROUTE
+        _chain_prio_local=$NFT_PRIO_ROUTE_LOCAL
+        _chain_prio_sink=$(($NFT_PRIO_ROUTE + $USER_INSTANCES_MAX + 1))
+        _chain_prio_action=$(($NFT_PRIO_ROUTE + $USER_INSTANCES_MAX + 2))
+        _route_table_id=$VPN_ROUTE_TABLE_ID_START
+    else
+        _chain_prio_first=$NFT_PRIO_NAT
+        _chain_prio_local=$NFT_PRIO_NAT_LOCAL
+        _chain_prio_sink=$(($NFT_PRIO_NAT + $USER_INSTANCES_MAX + 1))
+        _chain_prio_action=$(($NFT_PRIO_NAT + $USER_INSTANCES_MAX + 2))
+        _route_table_id=$TPROXY_ROUTE_TABLE_ID_START
+    fi
+    NftAddActionChains $_chain_prio_action
+    NftAddSinkChains $_chain_prio_sink
+    AddUserInstancesNftRules
+    NftInstanceAdd "\" \"" $PKTS_MARK_START $_chain_prio_first $_chain_prio_local $PROXY_MODE $TOR_TRANS_PORT $_route_table_id "\"$IF_VPN\"" $T_PROXY_TYPE $T_PROXY_PORT_TCP $T_PROXY_PORT_UDP $T_PROXY_ALLOW_UDP $ENABLE_BLLIST_PROXY $ENABLE_FPROXY $SKIP_MARKED_PACKETS "\"$VPN_GW_IP\""
+    $NFT_CMD add element $NFT_TABLE "$NFTSET_MARK_SET" { $PKTS_MARK_START }
 }
 
 DeleteNftRules() {
-    NftMainDelete
+    NftInstanceDelete " "
+    DeleteUserInstancesNftRules
+    NftDeleteSinkChains
+    NftDeleteActionChains
+    if [ "$PROXY_MODE" = "2" ]; then
+        NftRouteDelete $VPN_ROUTE_TABLE_ID_START 2> /dev/null
+    elif [ "$PROXY_MODE" = "3" -a "$T_PROXY_TYPE" = "1" ]; then
+        NftRouteDelete $TPROXY_ROUTE_TABLE_ID_START 2> /dev/null
+    fi
 }
 
 SetNetConfig() {
     $NFT_CMD add table $NFT_TABLE
-    AddNftSets
+    AddBaseNftSets
+    AddInstancesNftSets
     AddNftRules
 }
 
 DropNetConfig() {
     DeleteNftRules
-    FlushNftSets "$NFTSET_ALLOWED_HOSTS" "$NFTSET_FPROXY" "$NFTSET_FPROXY_PRIVATE" "$NFTSET_BLLIST_PROXY" "$NFTSET_BYPASS_IP" "$NFTSET_BYPASS_FQDN" "$NFTSET_CIDR" "$NFTSET_IP" "$NFTSET_DNSMASQ" "$NFTSET_ONION"
+    FlushInstancesNftSets
+    FlushNftSets "$NFTSET_ALLOWED_HOSTS" "$NFTSET_FPROXY_PRIVATE" "$NFTSET_BLLIST_PROXY" "$NFTSET_BYPASS_IP" "$NFTSET_BYPASS_FQDN" "$NFTSET_MARK_SET"
 }
 
 DestroyNetConfig() {
@@ -464,19 +653,62 @@ DestroyNetConfig() {
     $NFT_CMD delete table $NFT_TABLE &> /dev/null
 }
 
-ClearDataFiles() {
-    if [ -d "$DATA_DIR" ]; then
-        printf "" > "$DNSMASQ_DATA_FILE"
-        printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
-        printf "" > "$IP_DATA_FILE"
-        printf "0 0 0" > "$UPDATE_STATUS_FILE"
-        printf "" > "$USER_ENTRIES_STATUS_FILE"
-    fi
+CheckStatus() {
+    NftReturnInstanceStatus " "
+    return $?
 }
 
-CheckStatus() {
-    NftReturnStatus
-    return $?
+GetVpnRouteStatus() {
+    local _inst _i=1 _ret_val=0
+    for _inst in $USER_INSTANCES_VPN_FNAMES
+
+    do
+        if ! NftRouteStatus $(($VPN_ROUTE_TABLE_ID_START + $_i)); then
+            _ret_val=1
+            break
+        fi
+        _i=$(($_i + 1))
+    done
+    if [ "$PROXY_MODE" = "2" ] && ! NftRouteStatus $VPN_ROUTE_TABLE_ID_START; then
+        _ret_val=1
+    fi
+    return $_ret_val
+}
+
+GetBllistChains() {
+    local _inst
+    for _inst in $USER_INSTANCES_ALL " "
+    do
+        NftListBllistChain "$_inst"
+    done
+}
+
+GetBllistChainsJson() {
+    local _inst
+    for _inst in $USER_INSTANCES_ALL " "
+    do
+        NftListBllistChainJson "$_inst"
+    done
+}
+
+ClearDataFiles() {
+    local _arg="$1"
+    if [ -d "$DATA_DIR" ]; then
+        if [ -z "$_arg" -o "$_arg" = "main_instance" ]; then
+            printf "" > "$IP_DATA_FILE"
+            printf "" > "$DNSMASQ_DATA_FILE"
+            printf "0 0 0" > "$UPDATE_STATUS_FILE"
+        fi
+        if [ -z "$_arg" -o "$_arg" = "user_instances" ]; then
+            printf "" > "$IP_DATA_FILE_USER_INSTANCES"
+            printf "" > "$DNSMASQ_DATA_FILE_USER_INSTANCES"
+            printf "" > "$USER_ENTRIES_STATUS_FILE"
+        fi
+        if [ -z "$_arg" ]; then
+            printf "" > "$IP_DATA_FILE_BYPASS"
+            printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
+        fi
+    fi
 }
 
 PreStartCheck() {
@@ -485,158 +717,15 @@ PreStartCheck() {
     ### Костыль для старта dnsmasq
     [ -e "$DNSMASQ_DATA_FILE" ] || printf "" > "$DNSMASQ_DATA_FILE"
     [ -e "$DNSMASQ_DATA_FILE_BYPASS" ] || printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
-}
-
-ParseUserEntries() {
-    $AWK_CMD -v IP_DATA_FILE="$1" -v DNSMASQ_DATA_FILE="$2" -v USER_ENTRIES_STATUS_FILE="$3" -v ID="$4" 'BEGIN {
-            null = "";
-            ip_array[0] = null;
-            cidr_array[0] = null;
-            fqdn_array[0] = null;
-        }
-        function writeIpList(array,  _str) {
-            _str = "";
-            for(i in array) {
-                _str = _str i ",";
-            };
-            return _str;
-        };
-        function writeDNSData(val, dns) {
-            if(length(dns) == 0 && length(ENVIRON["USER_ENTRIES_DNS"]) > 0) {
-                dns = ENVIRON["USER_ENTRIES_DNS"];
-            };
-            if(length(dns) > 0) {
-                printf "server=/%s/%s\n", val, dns >> DNSMASQ_DATA_FILE;
-            };
-            printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], ENVIRON["NFTSET_DNSMASQ"] >> DNSMASQ_DATA_FILE;
-        };
-        function writeFqdnEntries() {
-            delete fqdn_array[0];
-            for(i in fqdn_array) {
-                split(fqdn_array[i], a, " ");
-                writeDNSData(a[1], a[2]);
-            };
-        };
-        ($0 !~ /^([\040\011]*$|#)/) {
-            if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/) {
-                ip_array[$0] = null;
-            }
-            else if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/) {
-                cidr_array[$0] = null;
-            }
-            else if($0 ~ /^[a-z0-9.\052-]+[.]([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
-                fqdn_array[length(fqdn_array)] = $1 " " $2;
-            };
-        }
-        END {
-            ret_code = 0;
-            if($0 ~ /[0-9]+/) {
-                ret_code = $0;
-            };
-            delete cidr_array[0];
-            delete ip_array[0];
-            if(ret_code == 0 && (length(cidr_array) > 0 || length(ip_array) > 0)) {
-                printf "table %s {\n%s", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_CIDR_CFG"] >> IP_DATA_FILE;
-                if(length(cidr_array) > 0) {
-                    printf "elements={%s};", writeIpList(cidr_array) >> IP_DATA_FILE;
-                };
-                printf "}\n%s", ENVIRON["NFTSET_IP_CFG"] >> IP_DATA_FILE;
-
-                if(length(ip_array) > 0) {
-                    printf "elements={%s};", writeIpList(ip_array) >> IP_DATA_FILE;
-                };
-                printf "}\n}\n" >> IP_DATA_FILE;
-            };
-            writeFqdnEntries();
-            if(ret_code == 0) {
-                printf "%s %s %s %s\n", length(cidr_array), length(ip_array), length(fqdn_array), ID >> USER_ENTRIES_STATUS_FILE;
-            };
-            exit ret_code;
-        }' -
-}
-
-AddUserEntries() {
-    local _url _return_code=0 _attempt=1 _ip_data_file _dnsmasq_data_file _user_entries_status_file _str _update_string
-    if [ "$ADD_USER_ENTRIES" = "1" ]; then
-        if [ "$ENABLE_TMP_DOWNLOADS" = "1" ]; then
-            _ip_data_file="$IP_DATA_FILE_TMP"
-            _dnsmasq_data_file="$DNSMASQ_DATA_FILE_TMP"
-            _user_entries_status_file="$USER_ENTRIES_STATUS_FILE_TMP"
-            rm -f "$_ip_data_file" "$_dnsmasq_data_file" "$_user_entries_status_file"
-        else
-            _ip_data_file="$IP_DATA_FILE"
-            _dnsmasq_data_file="$DNSMASQ_DATA_FILE"
-            _user_entries_status_file="$USER_ENTRIES_STATUS_FILE"
-        fi
-        if [ "$1" = "flush" ]; then
-            if [ "$ENABLE_TMP_DOWNLOADS" != "1" ]; then
-                ClearDataFiles
-            fi
-            printf "flush set %s %s\nflush set %s %s\n" "$NFT_TABLE" "$NFTSET_CIDR" "$NFT_TABLE" "$NFTSET_IP" >> "$_ip_data_file"
-        else
-            printf "" > "$USER_ENTRIES_STATUS_FILE"
-        fi
-        if [ -f "$USER_ENTRIES_FILE" ]; then
-            { cat "$USER_ENTRIES_FILE"; echo 0; } | ParseUserEntries "$_ip_data_file" "$_dnsmasq_data_file" "$_user_entries_status_file" "local"
-        fi
-        if [ -n "$USER_ENTRIES_REMOTE" ]; then
-            for _url in $USER_ENTRIES_REMOTE
-            do
-                _attempt=1
-                while :
-                do
-                    if [ "$ENABLE_BLLIST_PROXY" = "1" ]; then
-                        UpdateBllistProxySet
-                    fi
-                    { Download - "$_url"; echo $?; } | ParseUserEntries "$_ip_data_file" "$_dnsmasq_data_file" "$_user_entries_status_file" "$_url"
-                    if [ $? -eq 0 ]; then
-                        break
-                    else
-                        _return_code=1
-                        ### STDOUT
-                        echo " User entries download attempt ${_attempt}: failed [${_url}]" >&2
-                        MakeLogRecord "err" "User entries download attempt ${_attempt}: failed [${_url}]"
-                        _attempt=$(($_attempt + 1))
-                        [ $_attempt -gt $USER_ENTRIES_REMOTE_DOWNLOAD_ATTEMPTS ] && break
-                        sleep $USER_ENTRIES_REMOTE_DOWNLOAD_TIMEOUT
-                    fi
-                done
-            done
-            if [ "$ENABLE_BLLIST_PROXY" = "1" ]; then
-                FlushNftSets "$NFTSET_BLLIST_PROXY"
-            fi
-        fi
-        if [ "$ENABLE_TMP_DOWNLOADS" = "1" ]; then
-            if [ $_return_code -eq 0 ]; then
-                if [ "$1" = "flush" ]; then
-                    ClearDataFiles
-                fi
-                cat "$_ip_data_file" >> "$IP_DATA_FILE"
-                cat "$_dnsmasq_data_file" >> "$DNSMASQ_DATA_FILE"
-                mv -f "$_user_entries_status_file" "$USER_ENTRIES_STATUS_FILE"
-            fi
-            rm -f "$_ip_data_file" "$_dnsmasq_data_file"  "$_user_entries_status_file"
-        fi
-        while read _str
-        do
-            _update_string=`printf "$_str" | $AWK_CMD '{
-                if(NF == 4) {
-                    printf "User entries (%s): CIDR: %s, IP: %s, FQDN: %s", $4, $1, $2, $3;
-                };
-            }'`
-            if [ -n "$_update_string" ]; then
-                ### STDOUT
-                echo " ${_update_string}"
-                MakeLogRecord "notice" "${_update_string}"
-            fi
-        done < "$USER_ENTRIES_STATUS_FILE"
-    else
-        printf "" > "$USER_ENTRIES_STATUS_FILE"
-    fi
+    [ -e "$DNSMASQ_DATA_FILE_USER_INSTANCES" ] || printf "" > "$DNSMASQ_DATA_FILE_USER_INSTANCES"
 }
 
 AddBypassEntries() {
-    [ -d "$DATA_DIR" ] && printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
+    if [ -d "$DATA_DIR" ]; then
+        printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
+        printf "" > "$IP_DATA_FILE_BYPASS"
+        printf "flush set %s %s\nflush set %s %s\n" "$NFT_TABLE" "$NFTSET_BYPASS_IP" "$NFT_TABLE" "$NFTSET_BYPASS_FQDN" >> "$IP_DATA_FILE_BYPASS"
+    fi
     FlushNftSets "$NFTSET_BYPASS_IP" "$NFTSET_BYPASS_FQDN"
     if [ "$BYPASS_MODE" = "1" ]; then
         if [ -f "$BYPASS_ENTRIES_FILE" ]; then
@@ -669,24 +758,207 @@ AddBypassEntries() {
                     };
                 };
                 ($0 !~ /^([\040\011]*$|#)/) {
+                    sub("\015", "", $0);
                     if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}([\057][0-9]{1,2})?$/) {
                         ip_array[$0] = null;
                     }
-                    else if($0 ~ /^[a-z0-9.\052-]+[.]([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
+                    else if($0 ~ /^([a-z0-9._-]+[.])*([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
                         fqdn_array[length(fqdn_array)] = $1 " " $2;
                     };
                 }
                 END {
-                    printf "table %s {\n%s", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_BYPASS_IP_CFG"] >> ENVIRON["IP_DATA_FILE"];
+                    printf "table %s {\n%s", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_BYPASS_IP_STRING"] >> ENVIRON["IP_DATA_FILE_BYPASS"];
                     delete ip_array[0];
                     if(length(ip_array) > 0) {
-                        printf "elements={%s};", writeIpList(ip_array) >> ENVIRON["IP_DATA_FILE"];
+                        printf "elements={%s};", writeIpList(ip_array) >> ENVIRON["IP_DATA_FILE_BYPASS"];
                     };
-                    printf "}\n}\n" >> ENVIRON["IP_DATA_FILE"];
+                    printf "}\n}\n" >> ENVIRON["IP_DATA_FILE_BYPASS"];
                     writeFqdnEntries();
                 }' "$BYPASS_ENTRIES_FILE"
         fi
     fi
+}
+
+ParseUserEntries() {
+    $AWK_CMD -v NFTSET_IP_STRING="$1" -v NFTSET_CIDR_STRING="$2" -v NFTSET_DNSMASQ="$3" \
+         -v IP_DATA_FILE="$4" -v DNSMASQ_DATA_FILE="$5" -v USER_ENTRIES_STATUS_FILE="$6" \
+         -v ID="$7" -v USER_ENTRIES_DNS="$8" '
+        BEGIN {
+            null = "";
+            ip_array[0] = null;
+            cidr_array[0] = null;
+            fqdn_array[0] = null;
+        }
+        function writeIpList(array,  _str) {
+            _str = "";
+            for(i in array) {
+                _str = _str i ",";
+            };
+            return _str;
+        };
+        function writeDNSData(val, dns) {
+            if(length(dns) == 0 && length(USER_ENTRIES_DNS) > 0) {
+                dns = USER_ENTRIES_DNS;
+            };
+            if(length(dns) > 0) {
+                printf "server=/%s/%s\n", val, dns >> DNSMASQ_DATA_FILE;
+            };
+            printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], NFTSET_DNSMASQ >> DNSMASQ_DATA_FILE;
+        };
+        function writeFqdnEntries() {
+            delete fqdn_array[0];
+            for(i in fqdn_array) {
+                split(fqdn_array[i], a, " ");
+                writeDNSData(a[1], a[2]);
+            };
+        };
+        ($0 !~ /^([\040\011]*$|#)/) {
+            sub("\015", "", $0);
+            if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/) {
+                ip_array[$0] = null;
+            }
+            else if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/) {
+                cidr_array[$0] = null;
+            }
+            else if($0 ~ /^([a-z0-9._-]+[.])*([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
+                fqdn_array[length(fqdn_array)] = $1 " " $2;
+            };
+        }
+        END {
+            ret_code = 0;
+            if($0 ~ /[0-9]+/) {
+                ret_code = $0;
+            };
+            delete cidr_array[0];
+            delete ip_array[0];
+            if(ret_code == 0 && (length(cidr_array) > 0 || length(ip_array) > 0)) {
+                printf "table %s {\n%s", ENVIRON["NFT_TABLE"], NFTSET_CIDR_STRING >> IP_DATA_FILE;
+                if(length(cidr_array) > 0) {
+                    printf "elements={%s};", writeIpList(cidr_array) >> IP_DATA_FILE;
+                };
+                printf "}\n%s", NFTSET_IP_STRING >> IP_DATA_FILE;
+
+                if(length(ip_array) > 0) {
+                    printf "elements={%s};", writeIpList(ip_array) >> IP_DATA_FILE;
+                };
+                printf "}\n}\n" >> IP_DATA_FILE;
+            };
+            writeFqdnEntries();
+            if(ret_code == 0) {
+                printf "%s %s %s %s\n", length(cidr_array), length(ip_array), length(fqdn_array), ID >> USER_ENTRIES_STATUS_FILE;
+            };
+            exit ret_code;
+        }' -
+}
+
+AddUserEntries() {
+    local _inst _url _return_code=0 _instance_return_code=0 _attempt=1 _instance_entries_file _ip_data_file_user_instances _dnsmasq_data_file_user_instances _user_entries_status_file _str _update_string
+
+    if [ "$ENABLE_TMP_DOWNLOADS" = "1" ]; then
+        _ip_data_file_user_instances="$IP_DATA_FILE_USER_INSTANCES_TMP"
+        _dnsmasq_data_file="$DNSMASQ_DATA_FILE_TMP"
+        _dnsmasq_data_file_user_instances="$DNSMASQ_DATA_FILE_USER_INSTANCES_TMP"
+        _user_entries_status_file="$USER_ENTRIES_STATUS_FILE_TMP"
+        rm -f "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file"
+    else
+        _ip_data_file_user_instances="$IP_DATA_FILE_USER_INSTANCES"
+        _dnsmasq_data_file_user_instances="$DNSMASQ_DATA_FILE_USER_INSTANCES"
+        _user_entries_status_file="$USER_ENTRIES_STATUS_FILE"
+    fi
+
+    if [ "$ENABLE_TMP_DOWNLOADS" != "1" ]; then
+        ClearDataFiles user_instances
+    fi
+
+    for _inst in $USER_INSTANCES_ALL
+    do
+        IncludeUserInstanceVars "$_inst"
+        _instance_entries_file="${USER_LISTS_DIR}/${_inst}"
+
+        if [ $DEBUG -ge 1 ]; then
+            echo "  ruantiblock.AddUserEntries._instance_entries_file=${_instance_entries_file}" >&2
+            MakeLogRecord "debug" "ruantiblock.AddUserEntries._instance_entries_file=${_instance_entries_file}"
+        fi
+
+        printf "flush set %s %s\nflush set %s %s\n" "$NFT_TABLE" "${NFTSET_CIDR}-${_inst}" "$NFT_TABLE" "${NFTSET_IP}-${_inst}" >> "$_ip_data_file_user_instances"
+
+        if [ "$U_PROXY_MODE" != "2" -a "$U_PROXY_MODE" != "3" ]; then
+            ### Запись для .onion
+            printf "server=/onion/%s\nnftset=/onion/%s#%s\n" "$U_ONION_DNS_ADDR" "$NFT_TABLE_DNSMASQ" "${NFTSET_ONION}-${_inst}" >> "$_dnsmasq_data_file_user_instances"
+        fi
+        if [ -f "$_instance_entries_file" ]; then
+            { cat "$_instance_entries_file"; printf "\n0\n"; } | ParseUserEntries "`printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}-${_inst}"`" "`printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}-${_inst}"`" "${NFTSET_DNSMASQ}-${_inst}" "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file" "${_inst}:local" "$U_ENTRIES_DNS"
+        fi
+        if [ -n "$U_ENTRIES_REMOTE" ]; then
+            for _url in $U_ENTRIES_REMOTE
+            do
+                _instance_return_code=0
+                _attempt=1
+                while :
+                do
+                    if [ "$U_ENABLE_ENTRIES_REMOTE_PROXY" = "1" ]; then
+                        UpdateBllistProxySet "$_inst" "$_url"
+                    fi
+                    { Download - "$_url"; printf "\n$?\n"; } | ParseUserEntries "`printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}-${_inst}"`" "`printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}-${_inst}"`" "${NFTSET_DNSMASQ}-${_inst}" "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file" "${_inst}:${_url}" "$U_ENTRIES_DNS"
+                    if [ $? -eq 0 ]; then
+                        _instance_return_code=0
+                        break
+                    else
+                        _instance_return_code=1
+                        ### STDOUT
+                        echo " User entries download attempt ${_attempt}: failed [${_inst}:${_url}]" >&2
+                        MakeLogRecord "err" "User entries download attempt ${_attempt}: failed [${_inst}:${_url}]"
+                        _attempt=$(($_attempt + 1))
+                        [ $_attempt -gt $USER_ENTRIES_REMOTE_DOWNLOAD_ATTEMPTS ] && break
+                        sleep $USER_ENTRIES_REMOTE_DOWNLOAD_TIMEOUT
+                    fi
+                done
+                if [ $_instance_return_code -ne 0 ]; then
+                    _return_code=$_instance_return_code
+                    if [ "$ENABLE_TMP_DOWNLOADS" = "1" ]; then
+                        break 2
+                    fi
+                fi
+            done
+            if [ "$U_ENABLE_ENTRIES_REMOTE_PROXY" = "1" ]; then
+                FlushNftSets "${NFTSET_BLLIST_PROXY}-${_inst}"
+            fi
+        fi
+        ClearUserInstanceVars
+    done
+
+    if [ "$ENABLE_TMP_DOWNLOADS" = "1" ]; then
+        if [ $_return_code -eq 0 ]; then
+            ClearDataFiles user_instances
+            if [ -e "$_ip_data_file_user_instances" ]; then
+                cat "$_ip_data_file_user_instances" >> "$IP_DATA_FILE_USER_INSTANCES"
+            fi
+            if [ -e "$_dnsmasq_data_file_user_instances" ]; then
+                cat "$_dnsmasq_data_file_user_instances" >> "$DNSMASQ_DATA_FILE_USER_INSTANCES"
+            fi
+            if [ -e "$_user_entries_status_file" ]; then
+                mv -f "$_user_entries_status_file" "$USER_ENTRIES_STATUS_FILE"
+            fi
+        fi
+        rm -f "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file"
+    fi
+    if [ "$ENABLE_TMP_DOWNLOADS" != "1" ] || [ "$ENABLE_TMP_DOWNLOADS" = "1" -a $_return_code -eq 0 ]; then
+        while read _str
+        do
+            _update_string=`printf "$_str" | $AWK_CMD '{
+                if(NF == 4) {
+                    printf "User entries (%s): CIDR: %s, IP: %s, FQDN: %s", $4, $1, $2, $3;
+                };
+            }'`
+            if [ -n "$_update_string" ]; then
+                ### STDOUT
+                echo " ${_update_string}"
+                MakeLogRecord "notice" "${_update_string}"
+            fi
+        done < "$USER_ENTRIES_STATUS_FILE"
+    fi
+
+    return $_return_code
 }
 
 ToggleUPIDFile() {
@@ -697,14 +969,14 @@ ToggleUPIDFile() {
     fi
 }
 
-GetDataFiles() {
+GetMainInstanceEntries() {
     local _return_code=1 _attempt=1 _update_string
     PreStartCheck
     if [ -n "$BLLIST_PRESET" -a -n "$BLLIST_MODULE" ]; then
         while :
         do
             if [ "$ENABLE_BLLIST_PROXY" = "1" ]; then
-                UpdateBllistProxySet
+                UpdateBllistProxySet " " "$BLLIST_HOSTS"
             fi
             $BLLIST_MODULE
             _return_code=$?
@@ -728,14 +1000,10 @@ GetDataFiles() {
             echo " ${_update_string}"
             MakeLogRecord "notice" "${_update_string}"
             printf " `date +%d.%m.%Y-%H:%M`\n" >> "$UPDATE_STATUS_FILE"
-            AddUserEntries
-            AddBypassEntries
         fi
     elif [ -z "$BLLIST_PRESET" -a -z "$BLLIST_MODULE" ]; then
-        ADD_USER_ENTRIES=1
-        AddUserEntries flush
-        AddBypassEntries
-        _return_code=0
+        ClearDataFiles main_instance
+        _return_code=3
     else
         _return_code=2
         return $_return_code
@@ -751,48 +1019,87 @@ GetDataFiles() {
     return $_return_code
 }
 
+GetBlacklistFiles() {
+    local _return_code=1 _user_entries_ret_code=1
+    AddBypassEntries
+    GetMainInstanceEntries
+    case $? in
+        0)
+            echo " Blacklist updated"
+            MakeLogRecord "notice" "Blacklist updated"
+        ;;
+        2)
+            echo " Error! Blacklist update error" >&2
+            MakeLogRecord "err" "Error! Blacklist update error"
+            _return_code=1
+        ;;
+        3)
+            :
+        ;;
+        *)
+            echo " Module error! [${BLLIST_MODULE}]" >&2
+            MakeLogRecord "err" "Module error! [${BLLIST_MODULE}]"
+            _return_code=1
+        ;;
+    esac
+    AddUserEntries
+    _user_entries_ret_code=$?
+    if [ $_return_code -eq 0 ]; then
+        _return_code=$_user_entries_ret_code
+    fi
+    return $_return_code
+}
+
+MakeInstancesCache() {
+    printf "USER_INSTANCES_ALL=\"${USER_INSTANCES_ALL}\"\nUSER_INSTANCES_ALL_FNAMES=\"${USER_INSTANCES_ALL_FNAMES}\"\nUSER_INSTANCES_VPN=\"${USER_INSTANCES_VPN}\"\nUSER_INSTANCES_VPN_FNAMES=\"${USER_INSTANCES_VPN_FNAMES}\"\nUSER_INSTANCES_CFG=\"${USER_INSTANCES_CFG}\"\nUSER_INSTANCES_CFG_FNAMES=\"${USER_INSTANCES_CFG_FNAMES}\"\n" > "$INSTANCES_CACHE"
+}
+
+DeleteInstancesCache() {
+    rm -f "$INSTANCES_CACHE"
+}
+
+Init() {
+    local _arg="$1"
+    . "$BLLIST_SOURCES_SCRIPT"
+    if [ -e "$INSTANCES_CACHE" ]; then
+        . "$INSTANCES_CACHE"
+
+        if [ $DEBUG -ge 2 ]; then
+            echo "  ruantiblock.Init(): read from INSTANCES_CACHE" >&2
+            MakeLogRecord "debug" "ruantiblock.Init(): read from INSTANCES_CACHE"
+        fi
+
+    else
+        SetUserInstancesItems
+    fi
+}
+
 MakeToken() {
     date +%s > "$TOKEN_FILE"
 }
 
 Update() {
-    local _return_code=0
+    local _arg="$1" _return_code=0
     if CheckStatus; then
         :
     else
-        echo " ${NAME} ${1} - Error! ${NAME} does not running or another error has occurred" >&2
+        echo " ${NAME} ${_arg} - Error! ${NAME} does not running or another error has occurred" >&2
         return 1
     fi
     MakeToken
-    if [ -e "$U_PID_FILE" ] && [ "$1" != "force-update" ]; then
-        echo " ${NAME} ${1} - Error! Another instance of update is already running" >&2
-        MakeLogRecord "err" "${1} - Error! Another instance of update is already running"
+    if [ -e "$U_PID_FILE" ] && [ "$_arg" != "force-update" ]; then
+        echo " ${NAME} ${_arg} - Error! Another instance of update is already running" >&2
+        MakeLogRecord "err" "${_arg} - Error! Another instance of update is already running"
         _return_code=2
     else
         ToggleUPIDFile add
-        echo " ${NAME} ${1}..."
-        MakeLogRecord "notice" "${1}..."
+        echo " ${NAME} ${_arg}..."
+        MakeLogRecord "notice" "${_arg}..."
         if [ "$NFTSET_CLEAR_SETS" = "1" ]; then
-            FlushNftSets "$NFTSET_CIDR" "$NFTSET_IP" "$NFTSET_DNSMASQ"
+            FlushInstancesNftSets bllist
         fi
-        GetDataFiles
-        case $? in
-            0)
-                echo " Blacklist updated"
-                MakeLogRecord "notice" "Blacklist updated"
-            ;;
-            2)
-                echo " Error! Blacklist update error" >&2
-                MakeLogRecord "err" "Error! Blacklist update error"
-                _return_code=1
-            ;;
-            *)
-                echo " Module error! [${BLLIST_MODULE}]" >&2
-                MakeLogRecord "err" "Module error! [${BLLIST_MODULE}]"
-                _return_code=1
-            ;;
-        esac
-        FlushNftSets "$NFTSET_DNSMASQ" "$NFTSET_ONION"
+        GetBlacklistFiles
+        FlushInstancesNftSets fqdn
         UpdateBllistSets
         _return_code=$?
         RestartDnsmasq
@@ -803,7 +1110,7 @@ Update() {
 }
 
 Start() {
-    local _return_code=1
+    local _arg="$1" _return_code=1
     if [ -e "$START_PID_FILE" ]; then
         echo " ${NAME} is currently starting..." >&2
         return 1
@@ -811,20 +1118,22 @@ Start() {
         echo "$$" > "$START_PID_FILE"
     fi
     MakeToken
+    Init
     if CheckStatus; then
         echo " ${NAME} is already running" >&2
         _return_code=1
     else
-        echo " ${NAME} ${1}..."
-        MakeLogRecord "info" "${1}..."
+        echo " ${NAME} ${_arg}..."
+        MakeLogRecord "info" "${_arg}..."
         DropNetConfig &> /dev/null
         SetNetConfig
         PreStartCheck
         UpdateBllistSets
         _return_code=$?
-        if [ "$PROXY_MODE" = "2" -a "$VPN_ROUTE_CHECK" = "1" -a -x "$ROUTE_CHECK_EXEC" ]; then
+        if [ "$VPN_ROUTE_CHECK" = "1" -a -x "$ROUTE_CHECK_EXEC" ] && [ "$PROXY_MODE" = "2" -o -n "$USER_INSTANCES_VPN" ]; then
             $ROUTE_CHECK_EXEC start &> /dev/null &
         fi
+        MakeInstancesCache
         ### Start-script
         [ -x "$START_SCRIPT" ] && $START_SCRIPT > /dev/null 2>&1 &
     fi
@@ -834,11 +1143,11 @@ Start() {
 }
 
 Stop() {
-    local _return_code=1
+    local _arg="$1" _return_code=1
     if CheckStatus; then
         MakeToken
-        echo " ${NAME} ${1}..."
-        MakeLogRecord "info" "${1}..."
+        echo " ${NAME} ${_arg}..."
+        MakeLogRecord "info" "${_arg}..."
         DropNetConfig &> /dev/null
         _return_code=$?
         if [ -x "$ROUTE_CHECK_EXEC" ]; then
@@ -850,6 +1159,7 @@ Stop() {
     else
         echo " ${NAME} does not running" >&2
     fi
+    DeleteInstancesCache
     return $_return_code
 }
 
@@ -862,8 +1172,20 @@ Reload() {
             return 1
         fi
         _i=$(($_i + 1))
+
+        if [ $DEBUG -ge 1 ]; then
+            echo "  ruantiblock.Reload._i=${_i}" >&2
+            MakeLogRecord "debug" "ruantiblock.Reload._i ${_i}"
+        fi
+
         sleep 1
     done
+
+    if [ $DEBUG -ge 1 ]; then
+        echo "  ruantiblock.Reload()" >&2
+        MakeLogRecord "debug" "ruantiblock.Reload()"
+    fi
+
     echo " ${NAME} reload..."
     DeleteNftRules &> /dev/null
     AddNftRules &> /dev/null
@@ -871,7 +1193,7 @@ Reload() {
 }
 
 Status() {
-    local _update_status _user_entries_status _vpn_error
+    local _inst _update_status _user_entries_status _vpn_error
     if [ -f "$UPDATE_STATUS_FILE" ]; then
         _update_status=`$AWK_CMD '{
             update_string=(NF < 4) ? "No data" : $4" (CIDR: "$1" | IP: "$2" | FQDN: "$3")";
@@ -889,30 +1211,32 @@ Status() {
         }' "$USER_ENTRIES_STATUS_FILE"`
     fi
 
-    if [ "$PROXY_MODE" = "2" ] && ! NftVpnRouteStatus; then
+    if ! GetVpnRouteStatus; then
         _vpn_error="\033[1;31mVPN ROUTING ERROR! (NEED THE RESTART)\033[m"
     fi
-    NftListBllistChain 2> /dev/null | $AWK_CMD -v UPDATE_STATUS="$_update_status" -v USER_ENTRIES_STATUS="$_user_entries_status" -v VPN_ERROR="$_vpn_error" '
+    NftListSinkChain 2> /dev/null | $AWK_CMD -v UPDATE_STATUS="$_update_status" -v USER_ENTRIES_STATUS="$_user_entries_status" -v VPN_ERROR="$_vpn_error" '
         BEGIN {
-            rules_str = "";
-            nftset = "";
-            bytes = "";
+             rules_str = "";
         }
-        /@/ {
-            if(match($0, /@[^ ]+/) != 0) {
-                nftset = substr($0, RSTART+1, RLENGTH-1);
-                if(match($0, /bytes [^ ]+/) != 0) {
-                    bytes = substr($0, RSTART+6, RLENGTH-6);
-                };
-                rules_str = rules_str "   Match-set:  " nftset "\n   Bytes:  " bytes "\n\n";
+        {
+            if($0 ~ /(table|chain|type|return|\{|\})/) {
+                next;
             };
+            instance = $NF;
+            if(instance == "\"") {
+                instance = "-main-";
+            };
+            gsub("\"", "", instance);
+            proto = ($3 ~ /(tcp|udp)/) ? $3 : "all";
+            bytes = (match($0, /bytes [^ ]+/) != 0) ? substr($0, RSTART+6, RLENGTH-6) : "";
+            rules_str = rules_str "   Instance:\t" instance "\n   Protocol:\t" proto "\n   Bytes:\t" bytes "\n\n";
         }
         END {
             if(NR == 0) {
                 printf "\n \033[1m" ENVIRON["NAME"] " status\033[m: \033[1mDisabled\033[m\n\n";
                 exit 2;
             };
-            printf "\n \033[1m" ENVIRON["NAME"] " status\033[m: \033[1;32mEnabled\033[m\n\n  PROXY_MODE: " ENVIRON["PROXY_MODE"] "\n  PROXY_LOCAL_CLIENTS: " ENVIRON["PROXY_LOCAL_CLIENTS"] "\n  BLLIST_PRESET: " ENVIRON["BLLIST_PRESET"] "\n  BLLIST_MODULE: " ENVIRON["BLLIST_MODULE"] "\n";
+            printf "\n \033[1m" ENVIRON["NAME"] " status\033[m: \033[1;32mEnabled\033[m\n\n  DNSMASQ_CFG_DIR: " ENVIRON["DNSMASQ_CFG_DIR"] "\n\n  PROXY_LOCAL_CLIENTS: " ENVIRON["PROXY_LOCAL_CLIENTS"] "\n\n  Main Instance: \n   PROXY_MODE: " ENVIRON["PROXY_MODE"] "\n   BLLIST_PRESET: " ENVIRON["BLLIST_PRESET"] "\n   BLLIST_MODULE: " ENVIRON["BLLIST_MODULE"] "\n";
             printf "\n  "UPDATE_STATUS"\n";
             if(length(USER_ENTRIES_STATUS) > 0) {
                 printf "\n"USER_ENTRIES_STATUS"\n";
@@ -920,9 +1244,37 @@ Status() {
             if(length(VPN_ERROR) > 0) {
                 printf "\n  "VPN_ERROR"\n";
             };
-            printf "\n  \033[4mNftables rules\033[m:\n\n";
+            printf "\n  Transit traffic:\n\n";
             printf rules_str;
         }'
+    if [ $? -eq 0 -a "$PROXY_LOCAL_CLIENTS" = "1" ]; then
+        NftListSinkLocalChain 2> /dev/null | $AWK_CMD -v UPDATE_STATUS="$_update_status" -v USER_ENTRIES_STATUS="$_user_entries_status" '
+            BEGIN {
+                rules_str = "";
+            }
+            {
+                if($0 ~ /(table|chain|type|return|\{|\})/) {
+                    next;
+                };
+                instance = $NF;
+                if(instance == "\"") {
+                    instance = "-main-";
+                };
+                gsub("\"", "", instance);
+                proto = ($3 ~ /(tcp|udp)/) ? $3 : "all";
+                bytes = (match($0, /bytes [^ ]+/) != 0) ? substr($0, RSTART+6, RLENGTH-6) : "";
+                rules_str = rules_str "   Instance:\t" instance "\n   Protocol:\t" proto "\n   Bytes:\t" bytes "\n\n";
+            }
+            END {
+                if(NR == 0) {
+                    exit 2;
+                };
+                printf "  Local traffic:\n\n";
+                printf rules_str;
+            }'
+    else
+        return 2
+    fi
 }
 
 StatusOutput() {
@@ -933,9 +1285,6 @@ StatusOutput() {
 
 ############################ Main section ##############################
 
-### Blacklist sources
-. "$BLLIST_SOURCES_SCRIPT"
-
 return_code=1
 case "$1" in
     start|force-start)
@@ -945,22 +1294,41 @@ case "$1" in
         StatusOutput
     ;;
     stop)
+        Init
         Stop "$1"
         return_code=$?
         StatusOutput
     ;;
-    restart)
-        Stop "stop"
-        Start "start"
-        return_code=$?
-        StatusOutput
+    restart|delayed-restart)
+        if [ "$1" == "delayed-restart" -a -n "$2" ]; then
+            {
+                echo "$$" > "$START_PID_FILE"
+                sleep $2 &> /dev/null
+                rm -f "$START_PID_FILE"
+                Init
+                Stop "stop"
+                Start "start"
+                return_code=$?
+                StatusOutput
+                exit $return_code;
+            } &> /dev/null &
+            return_code=0
+        else
+            Init
+            Stop "stop"
+            Start "start"
+            return_code=$?
+            StatusOutput
+        fi
     ;;
     reload)
+        Init
         Reload
         return_code=$?
         StatusOutput
     ;;
     destroy)
+        Init
         Stop "$1" &> /dev/null
         DestroyNetConfig
         ClearDataFiles
@@ -970,24 +1338,28 @@ case "$1" in
         StatusOutput
     ;;
     update|force-update)
+        Init
         Update "$1"
         return_code=$?
         StatusOutput
     ;;
-    data-files)
+    blacklist-files)
+        Init
         if [ -e "$U_PID_FILE" ] && [ "$1" != "force-update" ]; then
             echo " ${NAME} - Error! Another instance of update is already running" >&2
             exit 2
         else
-            GetDataFiles
+            GetBlacklistFiles
             return_code=$?
         fi
     ;;
     status)
+        Init
         Status
         return_code=$?
     ;;
     raw-status)
+        Init
         CheckStatus
         return_code=$?
         case $return_code in
@@ -1009,11 +1381,13 @@ case "$1" in
         esac
     ;;
     vpn-route-status)
-        NftVpnRouteStatus
+        Init
+        GetVpnRouteStatus
         return_code=$?
         echo $return_code
     ;;
     html-info)
+        Init
         Info
         return_code=$?
     ;;

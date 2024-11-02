@@ -70,6 +70,9 @@ msgstr "Байты"
 msgid "Cancel"
 msgstr "Отмена"
 
+msgid "Change dnsmasq config directory"
+msgstr "Изменить директорию конфигов dnsmasq"
+
 msgid "Changes have been saved."
 msgstr "Изменения сохранены."
 
@@ -110,11 +113,17 @@ msgstr "День"
 msgid "Debug"
 msgstr "Отладка"
 
+msgid "Description"
+msgstr "Описание"
+
 msgid "Disabled"
 msgstr "Отключено"
 
 msgid "Dismiss"
 msgstr "Закрыть"
+
+msgid "Dnsmasq config directory"
+msgstr "Директория конфигов dnsmasq"
 
 msgid "Download error"
 msgstr "Ошибка загрузки"
@@ -125,8 +134,14 @@ msgstr "Скачать журнал"
 msgid "Downloading a blacklist via proxy"
 msgstr "Скачивать блэклист через прокси"
 
+msgid "Downloading files via proxy"
+msgstr "Скачивать файлы через прокси"
+
 msgid "Edit"
 msgstr "Изменить"
+
+msgid "Edit entries"
+msgstr "Изменить записи"
 
 msgid "Emergency"
 msgstr "Чрезвычайная ситуация"
@@ -233,14 +248,14 @@ msgstr "Шаблоны IP подсетей (/24) не подлежащих оп�
 msgid "Info"
 msgstr "Информация"
 
+msgid "Instance"
+msgstr "Экземпляр"
+
 msgid "Interval"
 msgstr "Интервал"
 
 msgid "Invalid regular expression"
 msgstr "Неправильное регулярное выражение"
-
-msgid "Nftables rules"
-msgstr "Правила nftables"
 
 msgid "Last blacklist update"
 msgstr "Последнее обновление блэклиста"
@@ -257,6 +272,9 @@ msgstr "Список хостов, которые исключаются из о
 msgid "Loading"
 msgstr "Загрузка"
 
+msgid "Local traffic"
+msgstr "Локальный трафик"
+
 msgid "Log"
 msgstr "Лог"
 
@@ -268,6 +286,9 @@ msgstr "Уровни логирования"
 
 msgid "Logread not found"
 msgstr "Logread не найден"
+
+msgid "Lowest priority"
+msgstr "Самый низкий приоритет"
 
 msgid "Main settings"
 msgstr "Основные настройки"
@@ -373,8 +394,14 @@ msgstr "Отбор IP адресов из блэклиста по шаблона
 msgid "Pick domains from blacklist by FQDN filter patterns"
 msgstr "Отбор  доменов из блэклиста по шаблонам фильтра FQDN"
 
+msgid "Protocol"
+msgstr "Протокол"
+
 msgid "Proxy mode"
 msgstr "Режим прокси"
+
+msgid "Proxy type"
+msgstr "Тип прокси"
 
 msgid "Reduces RAM consumption during update"
 msgstr "Уменьшает потребление оперативной памяти при обновлении"
@@ -418,8 +445,11 @@ msgstr "Настройки"
 msgid "Shutdown"
 msgstr "Выключение"
 
-msgid "Size in memory"
-msgstr "Размер в памяти"
+msgid "Skip marked packets"
+msgstr "Пропускать помеченные пакеты"
+
+msgid "Skip packets that have already been marked in previous rules"
+msgstr "Пропускать пакеты, которые уже были помечены в предыдущих правилах"
 
 msgid "Sorting entries"
 msgstr "Сортировка записей"
@@ -429,6 +459,9 @@ msgstr "Запускается"
 
 msgid "Statistics"
 msgstr "Статистика"
+
+msgid "Statement in nftables rules"
+msgstr "Действие в правилах nftables"
 
 msgid "Status"
 msgstr "Статус"
@@ -469,6 +502,9 @@ msgid ""
 msgstr ""
 "Служба будет выключена и все данные блэклиста будут удалены. Продолжить?"
 
+msgid "This proxy will receive traffic last, even after the main blacklist"
+msgstr "В этот прокси трафик будет попадать в последнюю очередь, даже после основного блэклиста"
+
 msgid "Time"
 msgstr "Время"
 
@@ -487,6 +523,9 @@ msgstr "Конфигурационный файл Tor"
 msgid "Tor mode"
 msgstr "Режим Tor"
 
+msgid "Transit traffic"
+msgstr "Транзитный трафик"
+
 msgid "Transparent proxy"
 msgstr "Прозрачный прокси"
 
@@ -504,6 +543,9 @@ msgstr "UDP порт прозрачного прокси"
 
 msgid "Turn on if blacklist source is blocked"
 msgstr "Включите, если источник блэклиста заблокирован"
+
+msgid "Turn on if files are blocked"
+msgstr "Включите, если файлы заблокированы"
 
 msgid "Type a search pattern..."
 msgstr "Введите шаблон для поиска"
@@ -567,6 +609,9 @@ msgstr "Ошибка маршрутизации VPN! Необходим пере
 
 msgid "Warning"
 msgstr "Внимание"
+
+msgid "all"
+msgstr "все"
 
 msgid "ascending"
 msgstr "по возрастанию"

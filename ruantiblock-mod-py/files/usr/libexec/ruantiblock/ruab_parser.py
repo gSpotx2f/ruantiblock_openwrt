@@ -42,9 +42,8 @@ class Config:
         "NFTSET_CIDR",
         "NFTSET_IP",
         "NFTSET_DNSMASQ",
-        "NFTSET_CIDR_CFG",
-        "NFTSET_IP_CFG",
-        "NFTSET_DNSMASQ",
+        "NFTSET_CIDR_STRING_MAIN",
+        "NFTSET_IP_STRING_MAIN",
         "DNSMASQ_DATA_FILE",
         "IP_DATA_FILE",
         "UPDATE_STATUS_FILE",
@@ -459,6 +458,7 @@ class Summarize:
 
     @classmethod
     def _group_nets(cls, cidr_list, raw_list=None):
+
         def remove_items(start, end):
             for ip in range(int(start), int(end) + 1, 256):
                 raw_list.remove(str(IPv4Address(ip)) + "/24")
@@ -570,7 +570,7 @@ class WriteConfigFiles(Config):
             for i in (self.NFTSET_CIDR, self.NFTSET_IP):
                 file_handler.write("flush set {} {}\n".format(self.NFT_TABLE, i))
             file_handler.write(
-                "table {} {{\n{}".format(self.NFT_TABLE, self.NFTSET_CIDR_CFG)
+                "table {} {{\n{}".format(self.NFT_TABLE, self.NFTSET_CIDR_STRING_MAIN)
             )
             if len(cidr_set) > 0:
                 file_handler.write("elements={")
@@ -578,7 +578,7 @@ class WriteConfigFiles(Config):
                     file_handler.write(f"{i},")
                 file_handler.write("};")
             file_handler.write(
-                "}}\n{}".format(self.NFTSET_IP_CFG)
+                "}}\n{}".format(self.NFTSET_IP_STRING_MAIN)
             )
             if len(ip_dict) > 0:
                 file_handler.write("elements={")

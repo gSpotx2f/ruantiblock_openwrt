@@ -1,6 +1,7 @@
 'use strict';
 'require baseclass';
 'require fs';
+'require ui';
 'require view.ruantiblock.log-widget as widget';
 
 return baseclass.extend({

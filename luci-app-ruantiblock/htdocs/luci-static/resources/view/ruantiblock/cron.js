@@ -10,26 +10,26 @@ return view.extend({
 
 	currentCrontabLines: [],
 
-	toDD: function(n){
+	toDD(n){
 		return String(n).replace(/^(\d)$/, "0$1");
 	},
 
-	cronStatusString: function(s) {
+	cronStatusString(s) {
 		return s || _('No Sсhedule');
 	},
 
-	stringifyRuabTasks: function(str_array) {
+	stringifyRuabTasks(str_array) {
 		let current_tasks = str_array.filter(s => s.match(this.crontabRegexp));
 		return current_tasks.join('\n');
 	},
 
-	setCronStatus: function(value) {
+	setCronStatus(value) {
 		document.getElementById('cron_status').value = this.cronStatusString(value);
 		document.getElementById("btn_cron_del").style.visibility = (value) ?
 			'visible' : 'hidden';
 	},
 
-	writeCronFile: function() {
+	writeCronFile() {
 		let btn_cron_add   = document.getElementById('btn_cron_add');
 		let btn_cron_del   = document.getElementById('btn_cron_del');
 		let crontab_string = this.currentCrontabLines.join('\n');
@@ -53,17 +53,17 @@ return view.extend({
 			});
 	},
 
-	delRuabShedules: function() {
+	delRuabShedules() {
 		this.currentCrontabLines = this.currentCrontabLines.filter(
 			s => s.match(this.crontabRegexp) ? false : true);
 	},
 
-	delCronSchedule: function(ev) {
+	delCronSchedule(ev) {
 		this.delRuabShedules();
 		return this.writeCronFile();
 	},
 
-	setCronSchedule: function(ev) {
+	setCronSchedule(ev) {
 		let hour_interval = document.getElementById('cron_hour_interval').value;
 		let day_interval  = document.getElementById('cron_day_interval').value;
 		let hour          = document.getElementById('cron_hour').value;
@@ -88,7 +88,7 @@ return view.extend({
 		return this.writeCronFile();
 	},
 
-	onchangeHourInterval: function(e) {
+	onchangeHourInterval(e) {
 		let value                  = e.target.value;
 		let bool                   = (value != '');
 		let cron_hour              = document.getElementById('cron_hour');
@@ -106,7 +106,7 @@ return view.extend({
 		};
 	},
 
-	load: function() {
+	load() {
 		return fs.lines(tools.crontabFile).catch(e => {
 			ui.addNotification(null, E('p', _('Unable to read the contents')
 				+ ': %s [ %s ]'.format(
@@ -115,7 +115,7 @@ return view.extend({
 		});
 	},
 
-	render: function(content) {
+	render(content) {
 		this.currentCrontabLines = content;
 		let current_task = this.stringifyRuabTasks(content);
 

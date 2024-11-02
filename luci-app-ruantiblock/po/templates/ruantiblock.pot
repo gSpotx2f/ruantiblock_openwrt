@@ -55,6 +55,9 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
+msgid "Change dnsmasq config directory"
+msgstr ""
+
 msgid "Changes have been saved."
 msgstr ""
 
@@ -95,10 +98,16 @@ msgstr ""
 msgid "Debug"
 msgstr ""
 
+msgid "Description"
+msgstr ""
+
 msgid "Disabled"
 msgstr ""
 
 msgid "Dismiss"
+msgstr ""
+
+msgid "Dnsmasq config directory"
 msgstr ""
 
 msgid "Download error"
@@ -110,7 +119,13 @@ msgstr ""
 msgid "Downloading a blacklist via proxy"
 msgstr ""
 
+msgid "Downloading files via proxy"
+msgstr ""
+
 msgid "Edit"
+msgstr ""
+
+msgid "Edit entries"
 msgstr ""
 
 msgid "Emergency"
@@ -214,13 +229,13 @@ msgstr ""
 msgid "Info"
 msgstr ""
 
+msgid "Instance"
+msgstr ""
+
 msgid "Interval"
 msgstr ""
 
 msgid "Invalid regular expression"
-msgstr ""
-
-msgid "Nftables rules"
 msgstr ""
 
 msgid "Last blacklist update"
@@ -238,6 +253,9 @@ msgstr ""
 msgid "Loading"
 msgstr ""
 
+msgid "Local traffic"
+msgstr ""
+
 msgid "Log"
 msgstr ""
 
@@ -248,6 +266,9 @@ msgid "Logging levels"
 msgstr ""
 
 msgid "Logread not found"
+msgstr ""
+
+msgid "Lowest priority"
 msgstr ""
 
 msgid "Main settings"
@@ -342,7 +363,13 @@ msgstr ""
 msgid "Pick domains from blacklist by FQDN filter patterns"
 msgstr ""
 
+msgid "Protocol"
+msgstr ""
+
 msgid "Proxy mode"
+msgstr ""
+
+msgid "Proxy type"
 msgstr ""
 
 msgid "Reduces RAM consumption during update"
@@ -386,9 +413,6 @@ msgstr ""
 msgid "Shutdown"
 msgstr ""
 
-msgid "Size in memory"
-msgstr ""
-
 msgid "Sorting entries"
 msgstr ""
 
@@ -397,6 +421,10 @@ msgstr ""
 
 msgid "Statistics"
 msgstr ""
+
+msgid "Statement in nftables rules"
+msgstr ""
+
 msgid "Status"
 msgstr ""
 
@@ -429,6 +457,9 @@ msgid ""
 "Continue?"
 msgstr ""
 
+msgid "This proxy will receive traffic last, even after the main blacklist"
+msgstr ""
+
 msgid "Time"
 msgstr ""
 
@@ -447,6 +478,9 @@ msgstr ""
 msgid "Tor mode"
 msgstr ""
 
+msgid "Transit traffic"
+msgstr ""
+
 msgid "Transparent proxy"
 msgstr ""
 
@@ -463,6 +497,9 @@ msgid "Transparent proxy UDP port"
 msgstr ""
 
 msgid "Turn on if blacklist source is blocked"
+msgstr ""
+
+msgid "Turn on if files are blocked"
 msgstr ""
 
 msgid "Type a search pattern..."
@@ -509,6 +546,7 @@ msgid "URLs of remote user entries file"
 
 msgid "Use optional DNS resolver"
 msgstr ""
+
 msgid "User entries"
 msgstr ""
 
@@ -526,6 +564,9 @@ msgstr ""
 
 msgid "Warning"
 msgstr ""
+
+msgid "all"
+msgstr "все"
 
 msgid "ascending"
 msgstr ""

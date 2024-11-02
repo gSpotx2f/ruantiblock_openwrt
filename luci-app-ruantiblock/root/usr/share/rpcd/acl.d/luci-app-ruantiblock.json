@@ -7,7 +7,7 @@
 				"/usr/libexec/ruantiblock": [ "list" ],
 				"/etc/ruantiblock/fqdn_filter": [ "read" ],
 				"/etc/ruantiblock/ip_filter": [ "read" ],
-				"/etc/ruantiblock/user_entries": [ "read" ],
+				"/etc/ruantiblock/user_lists/*": [ "read" ],
 				"/etc/ruantiblock/bypass_entries": [ "read" ],
 				"/etc/ruantiblock/gr_excluded_nets": [ "read" ],
 				"/etc/ruantiblock/gr_excluded_sld": [ "read" ],
@@ -16,7 +16,8 @@
 				"/etc/crontabs/root": [ "read" ],
 				"/usr/bin/ruantiblock*": [ "exec" ],
 				"/sbin/logread -e ruantiblock:": [ "exec" ],
-				"/usr/sbin/logread -e ruantiblock:": [ "exec" ]
+				"/usr/sbin/logread -e ruantiblock:": [ "exec" ],
+				"/tmp": [ "list" ]
 			},
 			"uci": [ "network", "ruantiblock" ],
 			"ubus": {
@@ -27,7 +28,7 @@
 			"file": {
 				"/etc/ruantiblock/fqdn_filter": [ "write" ],
 				"/etc/ruantiblock/ip_filter": [ "write" ],
-				"/etc/ruantiblock/user_entries": [ "write" ],
+				"/etc/ruantiblock/user_lists/*": [ "write" ],
 				"/etc/ruantiblock/bypass_entries": [ "write" ],
 				"/etc/ruantiblock/gr_excluded_nets": [ "write" ],
 				"/etc/ruantiblock/gr_excluded_sld": [ "write" ],

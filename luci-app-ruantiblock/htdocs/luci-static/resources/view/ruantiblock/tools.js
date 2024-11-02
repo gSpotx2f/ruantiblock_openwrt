@@ -38,8 +38,10 @@ return baseclass.extend({
 	execPath          : '/usr/bin/ruantiblock',
 	tokenFile         : '/var/run/ruantiblock.token',
 	parsersDir        : '/usr/libexec/ruantiblock',
+	dnsmasqCfgDirsRoot: '/tmp',
 	torrcFile         : '/etc/tor/torrc',
 	userEntriesFile   : '/etc/ruantiblock/user_entries',
+	userListsDir      : '/etc/ruantiblock/user_lists',
 	bypassEntriesFile : '/etc/ruantiblock/bypass_entries',
 	fqdnFilterFile    : '/etc/ruantiblock/fqdn_filter',
 	ipFilterFile      : '/etc/ruantiblock/ip_filter',
@@ -76,7 +78,7 @@ return baseclass.extend({
 		expect: { result: false }
 	}),
 
-	getInitStatus: function(name) {
+	getInitStatus(name) {
 		return this.callInitStatus(name).then(res => {
 			if(res) {
 				return res[name].enabled;
@@ -89,7 +91,7 @@ return baseclass.extend({
 		});
 	},
 
-	handleServiceAction: function(name, action) {
+	handleServiceAction(name, action) {
 		return this.callInitAction(name, action).then(success => {
 			if(!success) {
 				throw _('Command failed');
@@ -101,13 +103,12 @@ return baseclass.extend({
 		});
 	},
 
-	normalizeValue: function(v) {
+	normalizeValue(v) {
 		return (v && typeof(v) === 'string') ? v.trim().replace(/\r?\n/g, '') : v;
 	},
 
 	makeStatusString: function(
 								app_status_code,
-								proxy_mode,
 								bllist_preset,
 								bllist_module,
 								vpn_route_status_code) {
@@ -154,14 +155,6 @@ return baseclass.extend({
 					</tr>
 					<tr class="tr">
 						<td class="td left">
-							${_('Proxy mode')}:
-						</td>
-						<td class="td left">
-							%s
-						</td>
-					</tr>
-					<tr class="tr">
-						<td class="td left">
 							${_('Blacklist update mode')}:
 						</td>
 						<td class="td left">
@@ -172,10 +165,9 @@ return baseclass.extend({
 		`.format(
 			spinning,
 			app_status_label,
-			(app_status_code != 2 && proxy_mode == 2 && vpn_route_status_code != 0)
+			(app_status_code != 2 && vpn_route_status_code != 0)
 				? '<span class="label-status error">'
 					+ _('VPN routing error! Need restart') + '</span>' : '',
-			(proxy_mode == 3) ? _('Transparent proxy') : (proxy_mode == 2) ? 'VPN' : 'Tor',
 			(!bllist_preset || bllist_preset === '') ? _('user entries only') :
 				(this.blacklistPresets[bllist_preset]) ?
 					`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${this.blacklistPresets[bllist_preset][2]}">
@@ -185,7 +177,7 @@ return baseclass.extend({
 	},
 
 	fileEditDialog: baseclass.extend({
-		__init__: function(file, title, description, callback, file_exists=false) {
+		__init__(file, title, description, callback, file_exists=false) {
 			this.file        = file;
 			this.title       = title;
 			this.description = description;
@@ -193,11 +185,11 @@ return baseclass.extend({
 			this.file_exists = file_exists;
 		},
 
-		load: function() {
+		load() {
 			return L.resolveDefault(fs.read(this.file), '');
 		},
 
-		render: function(content) {
+		render(content) {
 			ui.showModal(this.title, [
 				E('div', { 'class': 'cbi-section' }, [
 					E('div', { 'class': 'cbi-section-descr' }, this.description),
@@ -230,7 +222,7 @@ return baseclass.extend({
 			]);
 		},
 
-		handleSave: function(ev) {
+		handleSave(ev) {
 			let textarea = document.getElementById('widget.modal_content');
 			let value    = textarea.value.trim().replace(/\r\n/g, '\n') + '\n';
 
@@ -249,7 +241,7 @@ return baseclass.extend({
 			});
 		},
 
-		error: function(e) {
+		error(e) {
 			if(!this.file_exists && e instanceof Error && e.name === 'NotFoundError') {
 				return this.render();
 			} else {
@@ -268,7 +260,7 @@ return baseclass.extend({
 			};
 		},
 
-		show: function() {
+		show() {
 			ui.showModal(null,
 				E('p', { 'class': 'spinning' }, _('Loading'))
 			);

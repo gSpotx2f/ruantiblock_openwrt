@@ -1,5 +1,5 @@
 Info() {
-    local _update_status _user_entries_status
+    local _update_status _user_entries_status _inst
     if [ -f "$UPDATE_STATUS_FILE" ]; then
         _update_status=`$AWK_CMD '{
             if(NF < 4) {
@@ -33,29 +33,30 @@ Info() {
     else
         _user_entries_status="[]"
     fi
-    NftListBllistChainJson 2> /dev/null | $AWK_CMD -v UPDATE_STATUS="$_update_status" -v USER_ENTRIES_STATUS="$_user_entries_status" '
-        BEGIN {
-            rules_str = "";
-        }
-        {
-            rules_str = rules_str $0;
-        }
+    NftListSinkChainJson 2> /dev/null | $AWK_CMD -v UPDATE_STATUS="$_update_status" -v USER_ENTRIES_STATUS="$_user_entries_status" '
         END {
             if(NR == 0) {
                 printf "{\"status\": \"disabled\"}";
                 exit 1;
             } else {
-                printf "{\"status\":\"enabled\",\"last_blacklist_update\":%s,\"user_entries\":%s,\"rules\":%s", UPDATE_STATUS, USER_ENTRIES_STATUS, rules_str;
+                printf "{\"status\": \"enabled\",\"last_blacklist_update\": %s,\"user_entries\" :%s,\"sink\": %s", UPDATE_STATUS, USER_ENTRIES_STATUS, $0;
                 exit 0;
             };
         }'
     if [ $? -eq 0 ]; then
+        if [ "$PROXY_LOCAL_CLIENTS" = "1" ]; then
+            printf ",\"sink_local\":"
+            NftListSinkLocalChainJson 2> /dev/null
+        fi
         printf ",\"dnsmasq\":"
         $NFT_CMD -j list set $NFT_TABLE "$NFTSET_DNSMASQ" 2> /dev/null
-        if [ "$BYPASS_MODE" = "1" ]; then
-            printf ",\"dnsmasq_bypass\":"
-            $NFT_CMD -j list set $NFT_TABLE "$NFTSET_BYPASS_FQDN" 2> /dev/null
-        fi
+        printf ",\"dnsmasq_user_instances\":["
+        for _inst in $USER_INSTANCES_ALL
+        do
+            $NFT_CMD -j list set $NFT_TABLE "${NFTSET_DNSMASQ}-${_inst}" 2> /dev/null
+            printf ","
+        done
+        printf "{\"dummy\": {}}]"
         printf "}"
     fi
 }

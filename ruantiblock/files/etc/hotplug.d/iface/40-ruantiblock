@@ -1,20 +1,64 @@
 #!/bin/sh
 
-UCI_CMD=`which uci`
-if [ $? -ne 0 ]; then
-    echo " Error! UCI doesn't exists" >&2
-    exit 1
-fi
-RUAB_CMD="/usr/bin/ruantiblock"
-PROXY_MODE=`$UCI_CMD get ruantiblock.config.proxy_mode`
-IF_VPN=`$UCI_CMD get ruantiblock.config.if_vpn`
-VPN_ROUTE_CHECK=`$UCI_CMD get ruantiblock.config.vpn_route_check`
+if [ "$ACTION" = "ifup" ]; then
+    NAME="ruantiblock"
+    RUAB_CMD="/usr/bin/ruantiblock"
+    CONFIG_FILE="/etc/ruantiblock/ruantiblock.conf"
+    USER_INSTANCES_COMMON="/usr/share/ruantiblock/user_instances_common"
+    CONFIG_SCRIPT_USER_INSTANCES="/usr/share/ruantiblock/config_script_user_instances"
+    USER_INSTANCES_DIR="/etc/ruantiblock/user_instances"
+    USER_INSTANCE_VARS="U_ENABLED U_NAME U_PROXY_MODE U_TOR_TRANS_PORT U_ONION_DNS_ADDR U_IF_VPN U_VPN_GW_IP U_T_PROXY_TYPE U_T_PROXY_PORT_TCP U_T_PROXY_PORT_UDP U_T_PROXY_ALLOW_UDP U_USER_ENTRIES_DNS U_USER_ENTRIES_REMOTE U_ENABLE_ENTRIES_REMOTE_PROXY U_ENABLE_FPROXY U_FPROXY_LIST U_SKIP_MARKED_PACKETS"
+    USER_INSTANCES_MAX=10
+    DEBUG=0
+    IF_VPN_CURRENT=""
 
-[ "$VPN_ROUTE_CHECK" != "0" ] && exit 0
+    ruab_route_status=`$RUAB_CMD raw-status`
+    [ $ruab_route_status -eq 1 -o $ruab_route_status -eq 2 ] && exit 0
 
-if [ "$ACTION" = "ifup" ] && [ "$PROXY_MODE" = "2" ] && [ "$DEVICE" = "$IF_VPN" ]; then
-	if [ `$RUAB_CMD raw-status` -ne 2 ]; then
-		sleep 5
-		$RUAB_CMD reload
-	fi
+    UCI_CMD=`which uci`
+    if [ $? -ne 0 ]; then
+        echo " Error! UCI doesn't exists" >&2
+        exit 1
+    fi
+
+    [ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
+
+    VPN_ROUTE_CHECK=`$UCI_CMD get ruantiblock.config.vpn_route_check`
+    [ "$VPN_ROUTE_CHECK" != "0" ] && exit 0
+
+    PROXY_MODE=`$UCI_CMD get ruantiblock.config.proxy_mode`
+    if [ "$PROXY_MODE" = "2" ]; then
+        IF_VPN_CURRENT=`$UCI_CMD get ruantiblock.config.if_vpn`
+    fi
+
+    if [ "$DEVICE" != "$IF_VPN_CURRENT" ]; then
+
+        . "$USER_INSTANCES_COMMON"
+
+        for inst in `GetUserInstances 2`
+        do
+            IncludeUserInstanceVars "$inst"
+            if [ "$DEVICE" = "$U_IF_VPN" ]; then
+                IF_VPN_CURRENT="$U_IF_VPN"
+
+                if [ $DEBUG -ge 1 ]; then
+                    echo "  ruantiblock-vpn-iface-script: U_NAME=${U_NAME} U_IF_VPN=${U_IF_VPN}" >&2
+                    logger -p "user.debug" -t "ruantiblock-hotplug-script" "U_NAME=${U_NAME} U_IF_VPN=${U_IF_VPN}"
+                fi
+
+                break
+            fi
+            ClearUserInstanceVars
+        done
+    fi
+
+    if [ "$DEVICE" = "$IF_VPN_CURRENT" ]; then
+        if [ $DEBUG -ge 1 ]; then
+            echo "  ruantiblock-vpn-iface-script: IF_VPN_CURRENT=${IF_VPN_CURRENT} ACTION=\"${ACTION}\" DEVICE=${DEVICE} INTERFACE=${INTERFACE}" >&2
+            logger -p "user.debug" -t "ruantiblock-hotplug-script" "IF_VPN_CURRENT=${IF_VPN_CURRENT} ACTION=\"${ACTION}\" DEVICE=${DEVICE} INTERFACE=${INTERFACE}"
+        fi
+
+        sleep 5
+        $RUAB_CMD reload
+    fi
 fi

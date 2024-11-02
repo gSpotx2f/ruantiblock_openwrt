@@ -5,14 +5,40 @@ STOP=01
 
 APP_NAME="ruantiblock"
 APP_EXEC="/usr/bin/${APP_NAME}"
+DNSMASQ_VAR_DIR="/tmp"
 
 config_load $APP_NAME
 
+get_dnsmasq_cfg_dir() {
+	local _first_instance
+	if [ -d "${DNSMASQ_VAR_DIR}/dnsmasq.d" ]; then
+		printf "${DNSMASQ_VAR_DIR}/dnsmasq.d"
+		return 0
+	else
+		_first_instance=`ls -1 "$DNSMASQ_VAR_DIR" | grep -e "^dnsmasq" | head -n 1`
+		if [ -n "$_first_instance" ]; then
+			printf "${DNSMASQ_VAR_DIR}/${_first_instance}"
+			return 0
+		fi
+	fi
+	return 1
+}
+
 start() {
-	local update_at_startup
-	config_get update_at_startup config update_at_startup
+	local _update_at_startup _dnsmasq_cfg_dir
+	config_get _update_at_startup config update_at_startup
+	config_get _dnsmasq_cfg_dir config dnsmasq_cfg_dir ""
+	if [ -z "$_dnsmasq_cfg_dir" ]; then
+		_dnsmasq_cfg_dir=`get_dnsmasq_cfg_dir`
+		if [ $? -eq 0 -a -n "$_dnsmasq_cfg_dir" ]; then
+			uci set "${APP_NAME}.config.dnsmasq_cfg_dir"="$_dnsmasq_cfg_dir"
+			uci commit ruantiblock
+		else
+			exit 1
+		fi
+	fi
 	$APP_EXEC start
-	if [ $? -eq 0 -a "$update_at_startup" = "1" ]; then
+	if [ $? -eq 0 -a "$_update_at_startup" = "1" ]; then
 		$APP_EXEC update
 	else
 		/etc/init.d/dnsmasq restart
