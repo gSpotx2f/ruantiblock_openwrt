@@ -253,9 +253,6 @@ msgstr ""
 msgid "Loading"
 msgstr ""
 
-msgid "Local traffic"
-msgstr ""
-
 msgid "Log"
 msgstr ""
 
@@ -266,9 +263,6 @@ msgid "Logging levels"
 msgstr ""
 
 msgid "Logread not found"
-msgstr ""
-
-msgid "Lowest priority"
 msgstr ""
 
 msgid "Main settings"
@@ -293,6 +287,9 @@ msgid "Module settings"
 msgstr ""
 
 msgid "Name"
+msgstr ""
+
+msgid "Nftables rules"
 msgstr ""
 
 msgid "No Sсhedule"
@@ -457,9 +454,6 @@ msgid ""
 "Continue?"
 msgstr ""
 
-msgid "This proxy will receive traffic last, even after the main blacklist"
-msgstr ""
-
 msgid "Time"
 msgstr ""
 
@@ -476,9 +470,6 @@ msgid "Tor configuration file"
 msgstr ""
 
 msgid "Tor mode"
-msgstr ""
-
-msgid "Transit traffic"
 msgstr ""
 
 msgid "Transparent proxy"

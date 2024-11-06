@@ -272,9 +272,6 @@ msgstr "Список хостов, которые исключаются из о
 msgid "Loading"
 msgstr "Загрузка"
 
-msgid "Local traffic"
-msgstr "Локальный трафик"
-
 msgid "Log"
 msgstr "Лог"
 
@@ -287,14 +284,11 @@ msgstr "Уровни логирования"
 msgid "Logread not found"
 msgstr "Logread не найден"
 
-msgid "Lowest priority"
-msgstr "Самый низкий приоритет"
-
 msgid "Main settings"
 msgstr "Основные настройки"
 
 msgid "Match-set"
-msgstr "Правило"
+msgstr "Сет"
 
 msgid "Message"
 msgstr "Сообщение"
@@ -313,6 +307,9 @@ msgstr "Настройки модуля"
 
 msgid "Name"
 msgstr "Имя"
+
+msgid "Nftables rules"
+msgstr "Правила Nftables"
 
 msgid "No Sсhedule"
 msgstr "Нет расписания"
@@ -502,9 +499,6 @@ msgid ""
 msgstr ""
 "Служба будет выключена и все данные блэклиста будут удалены. Продолжить?"
 
-msgid "This proxy will receive traffic last, even after the main blacklist"
-msgstr "В этот прокси трафик будет попадать в последнюю очередь, даже после основного блэклиста"
-
 msgid "Time"
 msgstr "Время"
 
@@ -522,9 +516,6 @@ msgstr "Конфигурационный файл Tor"
 
 msgid "Tor mode"
 msgstr "Режим Tor"
-
-msgid "Transit traffic"
-msgstr "Транзитный трафик"
 
 msgid "Transparent proxy"
 msgstr "Прозрачный прокси"

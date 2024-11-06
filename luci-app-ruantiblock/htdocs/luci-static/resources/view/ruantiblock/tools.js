@@ -34,25 +34,25 @@ document.head.append(E('style', {'type': 'text/css'},
 `));
 
 return baseclass.extend({
-	appName           : 'ruantiblock',
-	execPath          : '/usr/bin/ruantiblock',
-	tokenFile         : '/var/run/ruantiblock.token',
-	parsersDir        : '/usr/libexec/ruantiblock',
-	dnsmasqCfgDirsRoot: '/tmp',
-	torrcFile         : '/etc/tor/torrc',
-	userEntriesFile   : '/etc/ruantiblock/user_entries',
-	userListsDir      : '/etc/ruantiblock/user_lists',
-	bypassEntriesFile : '/etc/ruantiblock/bypass_entries',
-	fqdnFilterFile    : '/etc/ruantiblock/fqdn_filter',
-	ipFilterFile      : '/etc/ruantiblock/ip_filter',
-	grExcludedNetsFile: '/etc/ruantiblock/gr_excluded_nets',
-	grExcludedSldFile : '/etc/ruantiblock/gr_excluded_sld',
-	crontabFile       : '/etc/crontabs/root',
-	infoLabelStarting : '<span class="label-status starting">' + _('Starting') + '</span>',
-	infoLabelRunning  : '<span class="label-status running">' + _('Enabled') + '</span>',
-	infoLabelUpdating : '<span class="label-status updating">' + _('Updating') + '</span>',
-	infoLabelStopped  : '<span class="label-status stopped">' + _('Disabled') + '</span>',
-	infoLabelError    : '<span class="label-status error">' + _('Error') + '</span>',
+	appName             : 'ruantiblock',
+	execPath            : '/usr/bin/ruantiblock',
+	tokenFile           : '/var/run/ruantiblock.token',
+	parsersDir          : '/usr/libexec/ruantiblock',
+	dnsmasqCfgDirsRoot  : '/tmp',
+	torrcFile           : '/etc/tor/torrc',
+	userEntriesFile     : '/etc/ruantiblock/user_entries',
+	userListsDir        : '/etc/ruantiblock/user_lists',
+	bypassEntriesFile   : '/etc/ruantiblock/bypass_entries',
+	fqdnFilterFile      : '/etc/ruantiblock/fqdn_filter',
+	ipFilterFile        : '/etc/ruantiblock/ip_filter',
+	grExcludedNetsFile  : '/etc/ruantiblock/gr_excluded_nets',
+	grExcludedSldFile   : '/etc/ruantiblock/gr_excluded_sld',
+	crontabFile         : '/etc/crontabs/root',
+	infoLabelStarting   : '<span class="label-status starting">' + _('Starting') + '</span>',
+	infoLabelRunning    : '<span class="label-status running">' + _('Enabled') + '</span>',
+	infoLabelUpdating   : '<span class="label-status updating">' + _('Updating') + '</span>',
+	infoLabelStopped    : '<span class="label-status stopped">' + _('Disabled') + '</span>',
+	infoLabelError      : '<span class="label-status error">' + _('Error') + '</span>',
 
 	blacklistPresets: {
 		'ruantiblock-fqdn': [ 'ruantiblock', 'fqdn', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
@@ -62,6 +62,15 @@ return baseclass.extend({
 		'rublacklist-fqdn': [ '*rublacklist', 'fqdn', 'https://rublacklist.net' ],
 		'rublacklist-ip'  : [ '*rublacklist', 'ip', 'https://rublacklist.net' ],
 		'antifilter-ip'   : [ '*antifilter', 'ip', 'https://antifilter.download' ],
+	},
+
+	defaultConfig: {
+		'proxy_mode'      : '2',
+		'tor_trans_port'  : '9040',
+		'onion_dns_addr'  : '127.0.0.1#9053',
+		'if_vpn'          : 'tun0',
+		't_proxy_port_tcp': '1100',
+		't_proxy_port_udp': '1100',
 	},
 
 	callInitStatus: rpc.declare({
@@ -107,11 +116,11 @@ return baseclass.extend({
 		return (v && typeof(v) === 'string') ? v.trim().replace(/\r?\n/g, '') : v;
 	},
 
-	makeStatusString: function(
-								app_status_code,
-								bllist_preset,
-								bllist_module,
-								vpn_route_status_code) {
+	makeStatusString(
+					app_status_code,
+					bllist_preset,
+					bllist_module,
+					vpn_route_status_code) {
 		let app_status_label;
 		let spinning = '';
 
@@ -226,7 +235,7 @@ return baseclass.extend({
 			let textarea = document.getElementById('widget.modal_content');
 			let value    = textarea.value.trim().replace(/\r\n/g, '\n') + '\n';
 
-			return fs.write(this.file, value).then(async rc => {
+			return fs.write(this.file, value).then(rc => {
 				textarea.value = value;
 				ui.addNotification(null, E('p', _('Contents have been saved.')),
 					'info');

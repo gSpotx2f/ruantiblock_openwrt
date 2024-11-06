@@ -1,4 +1,4 @@
-UCI_VARS="u_enabled u_proxy_mode u_tor_trans_port u_onion_dns_addr u_if_vpn u_vpn_gw_ip u_t_proxy_type u_t_proxy_port_tcp u_t_proxy_port_udp u_t_proxy_allow_udp u_entries_dns u_entries_remote u_enable_entries_remote_proxy u_enable_fproxy u_fproxy_list u_skip_marked_packets"
+UCI_VARS="u_enabled u_proxy_mode u_tor_trans_port u_onion_dns_addr u_if_vpn u_vpn_gw_ip u_t_proxy_type u_t_proxy_port_tcp u_t_proxy_port_udp u_t_proxy_allow_udp u_entries_dns u_entries_remote u_enable_entries_remote_proxy u_enable_fproxy u_fproxy_list"
 UCI_CMD=`which uci`
 if [ $? -ne 0 ]; then
     echo " Error! UCI doesn't exists" >&2
@@ -7,7 +7,7 @@ fi
 AWK_CMD="awk"
 
 ListUserInstances() {
-    $UCI_CMD export "$NAME" | $AWK_CMD -v TYPE="user_instance" '
+    $UCI_CMD -n export "$NAME" | $AWK_CMD -v TYPE="user_instance" '
     BEGIN {
         instances="";
     }

@@ -248,12 +248,14 @@ return view.extend({
 		o = s.taboption('tor_tab', form.Value, 'tor_trans_port',
 			_('Transparent proxy port'));
 		o.rmempty  = false;
+		o.default  = tools.defaultConfig.tor_trans_port;
 		o.datatype = 'port';
 
 		// ONION_DNS_ADDR
 		o = s.taboption('tor_tab', form.Value, 'onion_dns_addr',
 			_("Optional DNS resolver for '.onion' zone"), '<code>ipaddress#port</code>');
 		o.rmempty  = false;
+		o.default  = tools.defaultConfig.onion_dns_addr;
 		o.validate = this.validateIpPort;
 
 		// Torrc edit dialog
@@ -274,7 +276,7 @@ return view.extend({
 		o.multiple  = false;
 		o.noaliases = true;
 		o.rmempty   = false;
-		o.default   = 'tun0';
+		o.default  = tools.defaultConfig.if_vpn;
 
 		// VPN_GW_IP
 		o = s.taboption('vpn_tab', form.Value, 'vpn_gw_ip',
@@ -307,17 +309,20 @@ return view.extend({
 		o = s.taboption('tproxy_tab', form.Value, 't_proxy_port_tcp',
 			_('Transparent proxy TCP port'));
 		o.rmempty  = false;
+		o.default  = tools.defaultConfig.t_proxy_port_tcp;
 		o.datatype = 'port';
 
 		// T_PROXY_ALLOW_UDP
 		o = s.taboption('tproxy_tab', form.Flag, 't_proxy_allow_udp',
 			_('Send UDP traffic to transparent proxy'));
 		o.rmempty = false;
+		o.default = 0;
 
 		// T_PROXY_PORT_UDP
 		o = s.taboption('tproxy_tab', form.Value, 't_proxy_port_udp',
 			_('Transparent proxy UDP port'));
 		o.rmempty  = false;
+		o.default  = tools.defaultConfig.t_proxy_port_udp;
 		o.datatype = 'port';
 
 
@@ -331,6 +336,7 @@ return view.extend({
 		o.value('1', 'Tor');
 		o.value('2', 'VPN');
 		o.value('3', _('Transparent proxy'));
+		o.default = tools.defaultConfig.proxy_mode;
 
 		// BLLIST_PRESET
 		let bllist_preset = s.taboption('blacklist_tab', form.ListValue,
@@ -375,6 +381,7 @@ return view.extend({
 			_('Enable full proxy mode'));
 		o.description = _('All traffic of the specified hosts passes through the proxy, without a blacklist');
 		o.rmempty = false;
+		o.default = 0;
 
 		// FPROXY_LIST
 		o = s.taboption('blacklist_tab', form.DynamicList, 'fproxy_list',
@@ -531,7 +538,7 @@ return view.extend({
 			_('Enabled'),
 		);
 		o.rmempty   = false;
-		o.default   = '1';
+		o.default   = 1;
 		o.editable  = true;
 		o.modalonly = false;
 
@@ -547,14 +554,7 @@ return view.extend({
 		o.value('1', 'Tor');
 		o.value('2', 'VPN');
 		o.value('3', _('Transparent proxy'));
-		o.default   = '2';
-		o.modalonly = true;
-
-		// U_SKIP_MARKED_PACKETS
-		o = ss.taboption('u_main_tab', form.Flag, 'u_skip_marked_packets',
-			_('Lowest priority'));
-		o.description = _('This proxy will receive traffic last, even after the main blacklist');
-		o.rmempty   = false;
+		o.default   = tools.defaultConfig.proxy_mode;
 		o.modalonly = true;
 
 		// U_ENABLE_FPROXY
@@ -562,6 +562,7 @@ return view.extend({
 			_('Enable full proxy mode'));
 		o.description = _('All traffic of the specified hosts passes through the proxy, without a blacklist');
 		o.rmempty   = false;
+		o.default   = 0;
 		o.modalonly = true;
 
 		// U_FPROXY_LIST
@@ -579,6 +580,7 @@ return view.extend({
 		o = ss.taboption('u_tor_tab', form.Value, 'u_tor_trans_port',
 			_('Transparent proxy port'));
 		o.rmempty   = false;
+		o.default   = tools.defaultConfig.tor_trans_port;
 		o.datatype  = 'port';
 		o.modalonly = true;
 
@@ -586,6 +588,7 @@ return view.extend({
 		o = ss.taboption('u_tor_tab', form.Value, 'u_onion_dns_addr',
 			_("Optional DNS resolver for '.onion' zone"), '<code>ipaddress#port</code>');
 		o.rmempty   = false;
+		o.default   = tools.defaultConfig.onion_dns_addr;
 		o.validate  = this.validateIpPort;
 		o.modalonly = true;
 
@@ -599,7 +602,7 @@ return view.extend({
 		o.multiple  = false;
 		o.noaliases = true;
 		o.rmempty   = false;
-		o.default   = 'tun0';
+		o.default   = tools.defaultConfig.if_vpn;
 		o.modalonly = true;
 
 		// U_VPN_GW_IP
@@ -625,19 +628,22 @@ return view.extend({
 		o = ss.taboption('u_tproxy_tab', form.Value, 'u_t_proxy_port_tcp',
 			_('Transparent proxy TCP port'));
 		o.rmempty   = false;
+		o.default   = tools.defaultConfig.t_proxy_port_tcp;
 		o.datatype  = 'port';
 		o.modalonly = true;
 
 		// U_T_PROXY_ALLOW_UDP
 		o = ss.taboption('u_tproxy_tab', form.Flag, 'u_t_proxy_allow_udp',
 			_('Send UDP traffic to transparent proxy'));
-		o.rmempty = false;
+		o.rmempty   = false;
+		o.default   = 0;
 		o.modalonly = true;
 
 		// U_T_PROXY_PORT_UDP
 		o = ss.taboption('u_tproxy_tab', form.Value, 'u_t_proxy_port_udp',
 			_('Transparent proxy UDP port'));
 		o.rmempty   = false;
+		o.default   = tools.defaultConfig.t_proxy_port_udp;
 		o.datatype  = 'port';
 		o.modalonly = true;
 
