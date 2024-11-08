@@ -214,6 +214,11 @@ return view.extend({
 						rdsTableWrapper.append(this.makeDnsmasqTable(i[1], _('Dnsmasq') + ' ' + i[0]));
 					};
 				};
+				let rdbTableWrapper = document.getElementById('rdbTableWrapper');
+				if(rdbTableWrapper) {
+					rdbTableWrapper.innerHTML = '';
+					rdbTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq_bypass));
+				};
 			} else {
 				if(poll.active()) {
 					poll.stop();
