@@ -217,7 +217,7 @@ return view.extend({
 				let rdbTableWrapper = document.getElementById('rdbTableWrapper');
 				if(rdbTableWrapper) {
 					rdbTableWrapper.innerHTML = '';
-					rdbTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq_bypass));
+					rdbTableWrapper.append(this.makeDnsmasqTable(nft_data.dnsmasq_bypass, _('Dnsmasq bypass')));
 				};
 			} else {
 				if(poll.active()) {
