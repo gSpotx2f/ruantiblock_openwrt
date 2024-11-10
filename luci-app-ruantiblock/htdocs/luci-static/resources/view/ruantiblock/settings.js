@@ -95,7 +95,6 @@ return view.extend({
 		return Promise.all([
 			L.resolveDefault(fs.exec(tools.execPath, [ 'raw-status' ]), 1),
 			L.resolveDefault(fs.list(tools.parsersDir), null),
-			L.resolveDefault(fs.list(tools.dnsmasqCfgDirsRoot), null),
 			uci.load(tools.appName),
 		]).catch(e => {
 			ui.addNotification(null, E('p', _('Unable to read the contents')
@@ -109,10 +108,10 @@ return view.extend({
 		if(!data) {
 			return;
 		};
-		this.appStatusCode       = data[0].code;
-		let p_dir_arr            = data[1];
-		let curent_module        = uci.get(tools.appName, 'config', 'bllist_module');
-		let curent_preset        = uci.get(tools.appName, 'config', 'bllist_preset');
+		this.appStatusCode = data[0].code;
+		let p_dir_arr      = data[1];
+		let curent_module  = uci.get(tools.appName, 'config', 'bllist_module');
+		let curent_preset  = uci.get(tools.appName, 'config', 'bllist_preset');
 
 		if(p_dir_arr) {
 			p_dir_arr.forEach(e => {
