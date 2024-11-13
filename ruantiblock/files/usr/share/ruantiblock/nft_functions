@@ -182,7 +182,7 @@ NftInstanceAdd() {
         NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_BLLIST_CHAIN" ip daddr "@${NFTSET_ONION}${_name}" counter goto "${NFT_MARK_CHAIN}${_name}" comment \""$_inst"\"
     fi
     if [ "$_enable_fproxy" = "1" ]; then
-        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_CHAIN" ip saddr "@${NFTSET_FPROXY}${_name}" goto "${NFT_MARK_CHAIN}${_name}" comment \""$_inst"\"
+        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_CHAIN" ip saddr "@${NFTSET_FPROXY}${_name}" counter goto "${NFT_MARK_CHAIN}${_name}" comment \""$_inst"\"
     fi
 
     for _set in "${NFTSET_CIDR}${_name}" "${NFTSET_IP}${_name}"

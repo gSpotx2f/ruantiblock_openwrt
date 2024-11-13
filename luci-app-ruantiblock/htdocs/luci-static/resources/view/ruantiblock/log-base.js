@@ -206,14 +206,14 @@ return baseclass.extend({
 		},
 
 		logLevels        : {
-			'emerg' : E('span', { 'class': 'zonebadge log-emerg' }, E('strong', _('Emergency'))),
-			'alert' : E('span', { 'class': 'zonebadge log-alert' }, E('strong', _('Alert'))),
-			'crit'  : E('span', { 'class': 'zonebadge log-crit' }, E('strong', _('Critical'))),
-			'err'   : E('span', { 'class': 'zonebadge log-err' }, E('strong', _('Error'))),
-			'warn'  : E('span', { 'class': 'zonebadge log-warn' }, E('strong', _('Warning'))),
-			'notice': E('span', { 'class': 'zonebadge log-notice' }, E('strong', _('Notice'))),
-			'info'  : E('span', { 'class': 'zonebadge log-info' }, E('strong', _('Info'))),
-			'debug' : E('span', { 'class': 'zonebadge log-debug' }, E('strong', _('Debug'))),
+			'emerg' : E('span', { 'class': 'zonebadge log-emerg' }, E('strong', 'Emergency')),
+			'alert' : E('span', { 'class': 'zonebadge log-alert' }, E('strong', 'Alert')),
+			'crit'  : E('span', { 'class': 'zonebadge log-crit' }, E('strong', 'Critical')),
+			'err'   : E('span', { 'class': 'zonebadge log-err' }, E('strong', 'Error')),
+			'warn'  : E('span', { 'class': 'zonebadge log-warn' }, E('strong', 'Warning')),
+			'notice': E('span', { 'class': 'zonebadge log-notice' }, E('strong', 'Notice')),
+			'info'  : E('span', { 'class': 'zonebadge log-info' }, E('strong', 'Info')),
+			'debug' : E('span', { 'class': 'zonebadge log-debug' }, E('strong', 'Debug')),
 		},
 
 		tailValue            : 25,
