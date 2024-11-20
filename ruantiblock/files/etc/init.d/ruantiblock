@@ -7,8 +7,6 @@ APP_NAME="ruantiblock"
 APP_EXEC="/usr/bin/${APP_NAME}"
 DNSMASQ_VAR_DIR="/tmp"
 
-config_load $APP_NAME
-
 get_dnsmasq_cfg_dir() {
 	local _first_instance
 	if [ -d "${DNSMASQ_VAR_DIR}/dnsmasq.d" ]; then
@@ -26,6 +24,7 @@ get_dnsmasq_cfg_dir() {
 
 start() {
 	local _update_at_startup _dnsmasq_cfg_dir
+	config_load $APP_NAME
 	config_get _update_at_startup config update_at_startup
 	config_get _dnsmasq_cfg_dir config dnsmasq_cfg_dir ""
 	if [ -z "$_dnsmasq_cfg_dir" ]; then
