@@ -35,16 +35,16 @@ NftCmdWrapper() {
 
 NftRouteDelete() {
     local _route_table_id=$1
-    $IP_CMD route flush table $_route_table_id
-    $IP_CMD rule del table $_route_table_id
+    $IP_CMD route flush table "$_route_table_id"
+    $IP_CMD rule del table "$_route_table_id"
 }
 
 NftRouteAdd() {
     local _vpn_ip _type="$1" _route_table_id=$2 _pkts_mark=$3 _if_vpn="$4" _vpn_gw_ip="$5"
     if [ "$_type" = "lo" ]; then
-        echo 0 > /proc/sys/net/ipv4/conf/lo/rp_filter
-        $IP_CMD rule add fwmark $_pkts_mark table $_route_table_id priority $LO_RULE_PRIO
-        $IP_CMD route add local default dev lo table $_route_table_id
+        echo 0 > "/proc/sys/net/ipv4/conf/lo/rp_filter"
+        $IP_CMD rule add fwmark "$_pkts_mark" table "$_route_table_id" priority "$LO_RULE_PRIO"
+        $IP_CMD route add local default dev lo table "$_route_table_id"
 
         if [ $DEBUG -ge 1 ]; then
             echo "  nft_functions.NftRouteAdd: ${IP_CMD} rule add fwmark ${_pkts_mark} table ${_route_table_id} priority ${LO_RULE_PRIO}" >&2
@@ -56,13 +56,13 @@ NftRouteAdd() {
         if [ -n "$_vpn_gw_ip" ]; then
             _vpn_ip="$_vpn_gw_ip"
         else
-            _vpn_ip=`$IP_CMD addr list dev $_if_vpn 2> /dev/null | $AWK_CMD '/inet/{f=($3 == "peer") ? 4 : 2; sub("/[0-9]{1,2}$", "", $f); print $f; exit}'`
+            _vpn_ip=`$IP_CMD addr list dev "$_if_vpn" 2> /dev/null | $AWK_CMD '/inet/{f=($3 == "peer") ? 4 : 2; sub("/[0-9]{1,2}$", "", $f); print $f; exit}'`
         fi
         if [ -n "$_vpn_ip" -a "$_type" = "vpn" ]; then
-            echo 0 > /proc/sys/net/ipv4/conf/$_if_vpn/rp_filter
-            NftRouteDelete $_route_table_id 2> /dev/null
-            $IP_CMD rule add fwmark $_pkts_mark table $_route_table_id priority $VPN_RULE_PRIO
-            $IP_CMD route add default via $_vpn_ip table $_route_table_id
+            echo 0 > "/proc/sys/net/ipv4/conf/${_if_vpn}/rp_filter"
+            NftRouteDelete "$_route_table_id" 2> /dev/null
+            $IP_CMD rule add fwmark "$_pkts_mark" table "$_route_table_id" priority "$VPN_RULE_PRIO"
+            $IP_CMD route add default via "$_vpn_ip" table "$_route_table_id"
             if [ $? -ne 0 ]; then
                 echo "  Error! An error occurred while adding the route. Routing table id=${_route_table_id}, VPN gateway IP=${_vpn_ip}" >&2
                 MakeLogRecord "err" "Error! An error occurred while adding the route. Routing table id=${_route_table_id}, VPN gateway IP=${_vpn_ip}"
@@ -80,7 +80,7 @@ NftRouteAdd() {
 
 NftRouteStatus() {
     local _route_table_id=$1
-    [ -n "`$IP_CMD route show table $_route_table_id 2> /dev/null`" ] && return 0
+    [ -n "`$IP_CMD route show table "$_route_table_id" 2> /dev/null`" ] && return 0
     return 1
 }
 
@@ -88,7 +88,7 @@ NftAddBaseChains() {
     local _chain_prio_first=$1 _chain_prio_local=$2 _chain_prio_fproxy=$3
     $NFT_CMD add chain $NFT_TABLE "$NFT_LOCAL_CLIENTS_CHAIN" { type route hook output priority ${_chain_prio_local}\; policy accept\; }
     $NFT_CMD add chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
-    $NFT_CMD add chain $NFT_TABLE "$NFT_FPROXY_CHAIN"  { type filter hook prerouting priority ${_chain_prio_fproxy}\; policy accept\; }
+    $NFT_CMD add chain $NFT_TABLE "$NFT_FPROXY_CHAIN" { type filter hook prerouting priority ${_chain_prio_fproxy}\; policy accept\; }
     $NFT_CMD add chain $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" { type filter hook prerouting priority ${_chain_prio_first}\; policy accept\; }
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_CHAIN" meta iif lo return
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_CHAIN" ip daddr "@${NFTSET_FPROXY_PRIVATE}" return

@@ -1,3 +1,4 @@
+
 UCI_SECTION="ruantiblock.config"
 UCI_VARS="dnsmasq_cfg_dir proxy_mode proxy_local_clients nftset_clear_sets allowed_hosts_mode allowed_hosts_list bypass_mode bypass_entries_dns enable_fproxy fproxy_list enable_bllist_proxy if_vpn vpn_gw_ip vpn_route_check tor_trans_port onion_dns_addr t_proxy_type t_proxy_port_tcp t_proxy_port_udp t_proxy_allow_udp enable_logging bllist_min_entries bllist_module bllist_preset bllist_ip_limit bllist_summarize_ip bllist_summarize_cidr bllist_ip_filter bllist_ip_filter_type bllist_sd_limit bllist_fqdn_filter bllist_fqdn_filter_type bllist_enable_idn bllist_alt_nslookup bllist_alt_dns_addr update_at_startup enable_tmp_downloads"
 UCI_CMD=`which uci`
@@ -27,3 +28,9 @@ eval `$UCI_CMD show "$UCI_SECTION" | $AWK_CMD -F "=" -v UCI_VARS="$UCI_VARS" '
                 print toupper(i) "=\"""\"";
         };
     }'`
+
+. /lib/functions/network.sh
+network_get_subnet subnet_lan "lan"
+if [ -n "$subnet_lan" ]; then
+    FPROXY_PRIVATE_NETS="${subnet_lan} ${FPROXY_PRIVATE_NETS}"
+fi

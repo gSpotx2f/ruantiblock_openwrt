@@ -516,8 +516,8 @@ UpdateBllistProxySet() {
     _ip_string=`FormatNftSetElemsList "$_ip_string"`
 
     if [ $DEBUG -ge 1 ]; then
-        echo "  ruantiblock.UpdateBllistProxySet()._ip_string=${_ip_string=}; _name=${_name}" >&2
-        MakeLogRecord "debug" "ruantiblock.UpdateBllistProxySet()._ip_string=${_ip_string=}; _name=${_name}"
+        echo "  ruantiblock.UpdateBllistProxySet()._ip_string=${_ip_string}; _name=${_name}" >&2
+        MakeLogRecord "debug" "ruantiblock.UpdateBllistProxySet()._ip_string=${_ip_string}; _name=${_name}"
     fi
 
     if [ -n "$_ip_string" ]; then
@@ -834,7 +834,7 @@ AddUserEntries() {
         ClearDataFiles user_instances
     fi
 
-    for _inst in $USER_INSTANCES_ALL
+    for _inst in $USER_INSTANCES_ALL_FNAMES
     do
         IncludeUserInstanceVars "$_inst"
         _instance_entries_file="${USER_LISTS_DIR}/${_inst}"
@@ -844,14 +844,14 @@ AddUserEntries() {
             MakeLogRecord "debug" "ruantiblock.AddUserEntries._instance_entries_file=${_instance_entries_file}"
         fi
 
-        printf "flush set %s %s\nflush set %s %s\n" "$NFT_TABLE" "${NFTSET_CIDR}.${_inst}" "$NFT_TABLE" "${NFTSET_IP}.${_inst}" >> "$_ip_data_file_user_instances"
+        printf "flush set %s %s\nflush set %s %s\n" "$NFT_TABLE" "${NFTSET_CIDR}.${U_NAME}" "$NFT_TABLE" "${NFTSET_IP}.${U_NAME}" >> "$_ip_data_file_user_instances"
 
         if [ "$U_PROXY_MODE" != "2" -a "$U_PROXY_MODE" != "3" ]; then
             ### Запись для .onion
-            printf "server=/onion/%s\nnftset=/onion/%s#%s\n" "$U_ONION_DNS_ADDR" "$NFT_TABLE_DNSMASQ" "${NFTSET_ONION}.${_inst}" >> "$_dnsmasq_data_file_user_instances"
+            printf "server=/onion/%s\nnftset=/onion/%s#%s\n" "$U_ONION_DNS_ADDR" "$NFT_TABLE_DNSMASQ" "${NFTSET_ONION}.${U_NAME}" >> "$_dnsmasq_data_file_user_instances"
         fi
         if [ -f "$_instance_entries_file" ]; then
-            { cat "$_instance_entries_file"; printf "\n0\n"; } | ParseUserEntries "`printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}.${_inst}"`" "`printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}.${_inst}"`" "${NFTSET_DNSMASQ}.${_inst}" "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file" "${_inst}:local" "$U_ENTRIES_DNS"
+            { cat "$_instance_entries_file"; printf "\n0\n"; } | ParseUserEntries "`printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}.${U_NAME}"`" "`printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}.${U_NAME}"`" "${NFTSET_DNSMASQ}.${U_NAME}" "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file" "${U_NAME}:local" "$U_ENTRIES_DNS"
         fi
         if [ -n "$U_ENTRIES_REMOTE" ]; then
             for _url in $U_ENTRIES_REMOTE
@@ -861,17 +861,17 @@ AddUserEntries() {
                 while :
                 do
                     if [ "$U_ENABLE_ENTRIES_REMOTE_PROXY" = "1" ]; then
-                        UpdateBllistProxySet "$_inst" "$_url"
+                        UpdateBllistProxySet "$U_NAME" "$_url"
                     fi
-                    { Download - "$_url"; printf "\n$?\n"; } | ParseUserEntries "`printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}.${_inst}"`" "`printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}.${_inst}"`" "${NFTSET_DNSMASQ}.${_inst}" "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file" "${_inst}:${_url}" "$U_ENTRIES_DNS"
+                    { Download - "$_url"; printf "\n$?\n"; } | ParseUserEntries "`printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}.${U_NAME}"`" "`printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}.${U_NAME}"`" "${NFTSET_DNSMASQ}.${U_NAME}" "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file" "${U_NAME}:${_url}" "$U_ENTRIES_DNS"
                     if [ $? -eq 0 ]; then
                         _instance_return_code=0
                         break
                     else
                         _instance_return_code=1
                         ### STDOUT
-                        echo " User entries download attempt ${_attempt}: failed [${_inst}:${_url}]" >&2
-                        MakeLogRecord "err" "User entries download attempt ${_attempt}: failed [${_inst}:${_url}]"
+                        echo " User entries download attempt ${_attempt}: failed [${U_NAME}:${_url}]" >&2
+                        MakeLogRecord "err" "User entries download attempt ${_attempt}: failed [${U_NAME}:${_url}]"
                         _attempt=$(($_attempt + 1))
                         [ $_attempt -gt $USER_ENTRIES_REMOTE_DOWNLOAD_ATTEMPTS ] && break
                         sleep $USER_ENTRIES_REMOTE_DOWNLOAD_TIMEOUT
@@ -885,7 +885,7 @@ AddUserEntries() {
                 fi
             done
             if [ "$U_ENABLE_ENTRIES_REMOTE_PROXY" = "1" ]; then
-                FlushNftSets "${NFTSET_BLLIST_PROXY}.${_inst}"
+                FlushNftSets "${NFTSET_BLLIST_PROXY}.${U_NAME}"
             fi
         fi
         ClearUserInstanceVars
