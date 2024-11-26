@@ -21,7 +21,8 @@
 			},
 			"uci": [ "network", "ruantiblock" ],
 			"ubus": {
-				"luci": [ "getInitList", "setInitAction" ]
+				"luci": [ "getInitList", "setInitAction" ],
+				"service": [ "list" ]
 			}
 		},
 		"write": {

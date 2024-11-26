@@ -22,7 +22,7 @@ export DATA_DIR="/var/${NAME}"
 export MODULES_DIR="/usr/libexec/${NAME}"
 RUN_FILES_DIR="/var/run"
 ### Директория доп. конфигов dnsmasq
-export DNSMASQ_CFG_DIR="/var/dnsmasq.d"
+export DNSMASQ_CONFDIR="/var/dnsmasq.d"
 ### Команда для перезапуска dnsmasq
 export DNSMASQ_RESTART_CMD="/etc/init.d/dnsmasq restart"
 ### Директория для html-страницы статуса (не используется в OpenWrt)
@@ -137,7 +137,7 @@ export BLLIST_MODULE=""
 export BLLIST_PRESET=""
 ### В случае если из источника получено менее указанного кол-ва записей, то обновления списков не происходит
 export BLLIST_MIN_ENTRIES=3000
-### Лимит IP адресов. При достижении, в конфиг ipset будет добавлена вся подсеть /24 вместо множества IP адресов пренадлежащих этой сети (0 - выкл)
+### Лимит IP адресов. При достижении, в конфиг nftables будет добавлена вся подсеть /24 вместо множества IP адресов пренадлежащих этой сети (0 - выкл)
 export BLLIST_IP_LIMIT=0
 ### Файл с подсетями класса C (/24). IP адреса из этих подсетей не группируются при оптимизации (записи д.б. в виде: 68.183.221. 149.154.162. и пр. Одна запись на строку)
 export BLLIST_GR_EXCLUDED_NETS_FILE="${CONFIG_DIR}/gr_excluded_nets"
@@ -145,7 +145,7 @@ export BLLIST_GR_EXCLUDED_NETS_FILE="${CONFIG_DIR}/gr_excluded_nets"
 export BLLIST_SUMMARIZE_IP=0
 ### Группировать идущие подряд подсети /24 в диапазоны CIDR
 export BLLIST_SUMMARIZE_CIDR=0
-### Фильтрация записей блэклиста по шаблонам из файла BLLIST_IP_FILTER_FILE. Записи (IP, CIDR) попадающие под шаблоны исключаются из кофига ipset (0 - выкл, 1 - вкл)
+### Фильтрация записей блэклиста по шаблонам из файла BLLIST_IP_FILTER_FILE. Записи (IP, CIDR) попадающие под шаблоны исключаются из кофига nftables (0 - выкл, 1 - вкл)
 export BLLIST_IP_FILTER=0
 ### Тип фильтра IP (0 - все записи, кроме совпадающих с шаблонами; 1 - только записи, совпадающие с шаблонами)
 export BLLIST_IP_FILTER_TYPE=0
@@ -195,9 +195,9 @@ BLLIST_SOURCES_SCRIPT="${SCRIPTS_DIR}/blacklist_sources"
 ### Config script
 [ -f "$CONFIG_SCRIPT" ] && . "$CONFIG_SCRIPT"
 
-export DNSMASQ_DATA_FILE_BYPASS="${DNSMASQ_CFG_DIR}/00-${NAME}_bypass.dnsmasq"
-export DNSMASQ_DATA_FILE_USER_INSTANCES="${DNSMASQ_CFG_DIR}/01-${NAME}_user_instances.dnsmasq"
-export DNSMASQ_DATA_FILE="${DNSMASQ_CFG_DIR}/02-${NAME}.dnsmasq"
+export DNSMASQ_DATA_FILE_BYPASS="${DNSMASQ_CONFDIR}/00-${NAME}_bypass.dnsmasq"
+export DNSMASQ_DATA_FILE_USER_INSTANCES="${DNSMASQ_CONFDIR}/01-${NAME}_user_instances.dnsmasq"
+export DNSMASQ_DATA_FILE="${DNSMASQ_CONFDIR}/02-${NAME}.dnsmasq"
 
 ### Utilities
 AWK_CMD="awk"
@@ -694,9 +694,8 @@ AddBypassEntries() {
     if [ "$BYPASS_MODE" = "1" ]; then
         if [ -f "$BYPASS_ENTRIES_FILE" ]; then
             $AWK_CMD 'BEGIN {
-                    null = "";
-                    ip_array[0] = null;
-                    fqdn_array[0] = null;
+                    ip_array[0];
+                    fqdn_array[0];
                 }
                 function writeIpList(array,  _str) {
                     _str = "";
@@ -724,7 +723,7 @@ AddBypassEntries() {
                 ($0 !~ /^([\040\011]*$|#)/) {
                     sub("\015", "", $0);
                     if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}([\057][0-9]{1,2})?$/) {
-                        ip_array[$0] = null;
+                        ip_array[$0];
                     }
                     else if($0 ~ /^([a-z0-9._-]+[.])*([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
                         fqdn_array[length(fqdn_array)] = $1 " " $2;
@@ -748,10 +747,9 @@ ParseUserEntries() {
         -v IP_DATA_FILE="$4" -v DNSMASQ_DATA_FILE="$5" -v USER_ENTRIES_STATUS_FILE="$6" \
         -v ID="$7" -v USER_ENTRIES_DNS="$8" '
         BEGIN {
-            null = "";
-            ip_array[0] = null;
-            cidr_array[0] = null;
-            fqdn_array[0] = null;
+            ip_array[0];
+            cidr_array[0];
+            fqdn_array[0];
         }
         function writeIpList(array,  _str) {
             _str = "";
@@ -779,10 +777,10 @@ ParseUserEntries() {
         ($0 !~ /^([\040\011]*$|#)/) {
             sub("\015", "", $0);
             if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/) {
-                ip_array[$0] = null;
+                ip_array[$0];
             }
             else if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/) {
-                cidr_array[$0] = null;
+                cidr_array[$0];
             }
             else if($0 ~ /^([a-z0-9._-]+[.])*([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
                 fqdn_array[length(fqdn_array)] = $1 " " $2;

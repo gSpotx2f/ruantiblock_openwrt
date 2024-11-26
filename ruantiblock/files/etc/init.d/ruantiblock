@@ -5,17 +5,30 @@ STOP=01
 
 APP_NAME="ruantiblock"
 APP_EXEC="/usr/bin/${APP_NAME}"
-DNSMASQ_VAR_DIR="/tmp"
+VAR_DIR="/tmp"
 
-get_dnsmasq_cfg_dir() {
-	local _first_instance
-	if [ -d "${DNSMASQ_VAR_DIR}/dnsmasq.d" ]; then
-		printf "${DNSMASQ_VAR_DIR}/dnsmasq.d"
+get_dnsmasq_confdir() {
+	local _first_instance_dir
+	if [ -d "${VAR_DIR}/dnsmasq.d" ]; then
+		printf "${VAR_DIR}/dnsmasq.d"
 		return 0
 	else
-		_first_instance=`ls -1 "$DNSMASQ_VAR_DIR" | grep -e "^dnsmasq" | head -n 1`
-		if [ -n "$_first_instance" ]; then
-			printf "${DNSMASQ_VAR_DIR}/${_first_instance}"
+		_first_instance_dir=`ubus call service list | jsonfilter -e "VAR=$.dnsmasq.instances.*.mount" | awk '
+			BEGIN {
+				RS = " ";
+			}
+			{
+				sub("VAR=", "", $0);
+				gsub(/[\047,\134,\073]/, "", $0);
+				if($0 ~ /^\/tmp\/dnsmasq\./ && !($0 in a)) {
+					a[length(a)] = $0;
+				};
+			}
+			END {
+				print a[0];
+			}'`
+		if [ -n "$_first_instance_dir" ]; then
+			printf "$_first_instance_dir"
 			return 0
 		fi
 	fi
@@ -23,14 +36,14 @@ get_dnsmasq_cfg_dir() {
 }
 
 start() {
-	local _update_at_startup _dnsmasq_cfg_dir
+	local _update_at_startup _dnsmasq_confdir
 	config_load $APP_NAME
 	config_get _update_at_startup config update_at_startup
-	config_get _dnsmasq_cfg_dir config dnsmasq_cfg_dir ""
-	if [ -z "$_dnsmasq_cfg_dir" ]; then
-		_dnsmasq_cfg_dir=`get_dnsmasq_cfg_dir`
-		if [ $? -eq 0 -a -n "$_dnsmasq_cfg_dir" ]; then
-			uci set "${APP_NAME}.config.dnsmasq_cfg_dir"="$_dnsmasq_cfg_dir"
+	config_get _dnsmasq_confdir config dnsmasq_confdir ""
+	if [ -z "$_dnsmasq_confdir" ]; then
+		_dnsmasq_confdir=`get_dnsmasq_confdir`
+		if [ $? -eq 0 -a -n "$_dnsmasq_confdir" ]; then
+			uci set "${APP_NAME}.config.dnsmasq_confdir"="$_dnsmasq_confdir"
 			uci commit ruantiblock
 		else
 			exit 1

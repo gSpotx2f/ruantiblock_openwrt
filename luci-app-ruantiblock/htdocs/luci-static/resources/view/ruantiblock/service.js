@@ -2,6 +2,7 @@
 'require baseclass';
 'require fs';
 'require poll';
+'require rpc';
 'require uci';
 'require ui';
 'require view';
@@ -16,6 +17,12 @@ const btn_style_warning  = 'btn cbi-button-negative important'
 return view.extend({
 	statusTokenValue: null,
 
+	callServicesList: rpc.declare({
+		object: 'service',
+		method: 'list',
+		expect: { '': {} }
+	}),
+
 	dialogDestroy: baseclass.extend({
 		__init__(context) {
 			this.context = context;
@@ -25,33 +32,39 @@ return view.extend({
 
 		dnsmasqCfgDirsSelect: null,
 
-		cancelButton        : E('button', {
+		cancelButton		: E('button', {
 			'id'   : 'btn_cancel',
 			'class': btn_style_neutral,
 			'click': ui.hideModal,
 		}, _('Cancel')),
 
 		load() {
-			return L.resolveDefault(fs.list(tools.dnsmasqCfgDirsRoot), null);
+			return this.context.callServicesList();
 		},
 
 		render(data) {
 			let section               = uci.get(tools.appName, 'config');
-			this.currentDnsmasqCfgDir = section.dnsmasq_cfg_dir;
+			this.currentDnsmasqCfgDir = section.dnsmasq_confdir;
 			let available_cfg_dirs    = [];
 
-			let dnsmasq_cfg_dirs_arr = data;
-			if(dnsmasq_cfg_dirs_arr) {
-				dnsmasq_cfg_dirs_arr.forEach(e => {
-					let fname = e.name;
-					if(fname.startsWith('dnsmasq')) {
-						available_cfg_dirs.push([ fname, tools.dnsmasqCfgDirsRoot + '/' + fname ]);
+			if(data.dnsmasq && data.dnsmasq.instances) {
+				let ubus_dirs = new Set();
+				for(let [k, v] of Object.entries(data.dnsmasq.instances)) {
+					if(v.mount) {
+						for(let i of Object.keys(v.mount)) {
+							if(!ubus_dirs.has(i) && i.startsWith('/tmp/dnsmasq.')) {
+								if(i == "/tmp/dnsmasq.d") {
+									k = _("default");
+								};
+								available_cfg_dirs.push([ `${i} [ ${k} ]`, i ]);
+								ubus_dirs.add(i);
+							};
+						};
 					};
-				});
+				};
 			};
-
 			this.dnsmasqCfgDirsSelect = E('select', {
-				'id'   : 'dnsmasq_cfg_dirs_list',
+				'id'   : 'dnsmasq_confdirs_list',
 				'class': "cbi-input-select",
 			}),
 
@@ -90,7 +103,7 @@ return view.extend({
 			this.cancelButton.disabled = true;
 			return this.context.appAction('destroy').then(() => {
 				if(this.dnsmasqCfgDirsSelect.value !== this.currentDnsmasqCfgDir) {
-					uci.set(tools.appName, 'config', 'dnsmasq_cfg_dir',
+					uci.set(tools.appName, 'config', 'dnsmasq_confdir',
 							this.dnsmasqCfgDirsSelect.value);
 					uci.save();
 					uci.apply();
@@ -171,21 +184,21 @@ return view.extend({
 			return;
 		};
 
-		let app_status_code       = (force_app_code) ? force_app_code : status_array[0].code;
+		let app_status_code	      = (force_app_code) ? force_app_code : status_array[0].code;
 		let vpn_route_status_code = status_array[1].code;
 		let enabled_flag          = status_array[2];
-		let dnsmasq_cfg_dir       = section.dnsmasq_cfg_dir;
+		let dnsmasq_confdir       = section.dnsmasq_confdir;
 		let bllist_preset         = section.bllist_preset;
 		let bllist_module         = section.bllist_module;
 
 		let btn_enable = elems[2] || document.getElementById('btn_enable');
 		if(enabled_flag == true) {
-			btn_enable.onclick     = ui.createHandlerFn(
+			btn_enable.onclick	 = ui.createHandlerFn(
 				this, this.serviceAction, 'disable', 'btn_enable');
 			btn_enable.textContent = _('Enabled');
 			btn_enable.className   = btn_style_positive;
 		} else {
-			btn_enable.onclick     = ui.createHandlerFn(
+			btn_enable.onclick	 = ui.createHandlerFn(
 				this, this.serviceAction, 'enable', 'btn_enable');
 			btn_enable.textContent = _('Disabled');
 			btn_enable.className   = btn_style_negative;
@@ -196,14 +209,14 @@ return view.extend({
 		let btn_destroy = elems[4] || document.getElementById('btn_destroy');
 
 		let btnStartStateOn = () => {
-			btn_start.onclick     = ui.createHandlerFn(
+			btn_start.onclick	 = ui.createHandlerFn(
 				this, this.appAction, 'stop', 'btn_start');
 			btn_start.textContent = _('Enabled');
 			btn_start.className   = btn_style_positive;
 		}
 
 		let btnStartStateOff = () => {
-			btn_start.onclick     = ui.createHandlerFn(
+			btn_start.onclick	 = ui.createHandlerFn(
 				this, this.appAction,'start', 'btn_start');
 			btn_start.textContent = _('Disabled');
 			btn_start.className   = btn_style_negative;
@@ -308,8 +321,8 @@ return view.extend({
 			return;
 		};
 
-		let section             = uci.get(tools.appName, 'config');
-		this.statusTokenValue   = (Array.isArray(status_array)) ?
+		let section = uci.get(tools.appName, 'config');
+		this.statusTokenValue = (Array.isArray(status_array)) ?
 								tools.normalizeValue(status_array[4]) : null;
 
 		let dialog_destroy = new this.dialogDestroy(this);
@@ -399,7 +412,7 @@ return view.extend({
 		]);
 	},
 
-	handleSave     : null,
+	handleSave	 : null,
 	handleSaveApply: null,
-	handleReset    : null,
+	handleReset	: null,
 });

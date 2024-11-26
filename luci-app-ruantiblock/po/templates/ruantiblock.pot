@@ -562,6 +562,9 @@ msgstr "все"
 msgid "ascending"
 msgstr ""
 
+msgid "default"
+msgstr ""
+
 msgid "descending"
 msgstr ""
 

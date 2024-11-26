@@ -38,7 +38,6 @@ return baseclass.extend({
 	execPath            : '/usr/bin/ruantiblock',
 	tokenFile           : '/var/run/ruantiblock.token',
 	parsersDir          : '/usr/libexec/ruantiblock',
-	dnsmasqCfgDirsRoot  : '/tmp',
 	torrcFile           : '/etc/tor/torrc',
 	userEntriesFile     : '/etc/ruantiblock/user_entries',
 	userListsDir        : '/etc/ruantiblock/user_lists',

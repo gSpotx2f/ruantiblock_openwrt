@@ -607,6 +607,9 @@ msgstr "все"
 msgid "ascending"
 msgstr "по возрастанию"
 
+msgid "default"
+msgstr "по умолчанию"
+
 msgid "descending"
 msgstr "по убыванию"
 
