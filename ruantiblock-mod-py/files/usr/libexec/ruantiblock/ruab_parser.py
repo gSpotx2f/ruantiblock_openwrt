@@ -325,8 +325,8 @@ class BlackListParser(Config):
             ):
                 self.ip_dict[value] = subnet
                 self.ip_subnet_dict[subnet] = (self.ip_subnet_dict.get(subnet) or 0) + 1
-        elif self.cidr_pattern.fullmatch(value) and value not in self.cidr_set:
-                self.cidr_set.add(value)
+        elif self.cidr_pattern.fullmatch(value):
+            self.cidr_set.add(value)
 
     def _convert_to_punycode(self, string):
         if self.cyr_pattern.search(string):
@@ -433,7 +433,7 @@ class Summarize:
                 hosts = 1
             end = ip_obj
         else:
-            if hosts > 1 and hosts >= HOSTS_LIMIT:
+            if hosts > 1 and hosts >= cls.HOSTS_LIMIT:
                 if raw_list:
                     remove_items(start, end)
                 yield start, end
