@@ -604,10 +604,10 @@ AddNftRules() {
 }
 
 DeleteNftRules() {
-    NftInstanceDelete " "
-    DeleteUserInstancesNftRules
     NftDeleteActionChains
     NftDeleteBaseChains
+    NftInstanceDelete " "
+    DeleteUserInstancesNftRules
     if [ "$PROXY_MODE" = "2" ]; then
         NftRouteDelete $VPN_ROUTE_TABLE_ID_START 2> /dev/null
     elif [ "$PROXY_MODE" = "3" -a "$T_PROXY_TYPE" = "1" ]; then
