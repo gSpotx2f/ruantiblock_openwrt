@@ -72,6 +72,8 @@ export PKTS_MARK_START=8
 export ENABLE_LOGGING=1
 ### Вывод дополнительных сообщений в лог (0 - выкл, 1, 2)
 export DEBUG=0
+### Файл для вывода некоторых отладочных сообщений
+export DEBUG_FILE="/tmp/ruanliblock.debug"
 ### Html-страница с инфо о текущем статусе (0 - выкл, 1 - вкл) (не используется в OpenWrt)
 export ENABLE_HTML_INFO=0
 ### Максимальное кол-во элементов списка nftables
@@ -940,8 +942,22 @@ GetMainInstanceEntries() {
             if [ "$ENABLE_BLLIST_PROXY" = "1" ]; then
                 UpdateBllistProxySet " " "$BLLIST_HOSTS"
             fi
-            $BLLIST_MODULE
-            _return_code=$?
+
+            if [ $DEBUG -ge 1 ]; then
+                echo "  ruantiblock.GetMainInstanceEntries: BLLIST_MODULE=${BLLIST_MODULE} MODULE_RUN_TIMEOUT=${MODULE_RUN_TIMEOUT} _attempt=${_attempt}" >&2
+                MakeLogRecord "debug" "ruantiblock.GetMainInstanceEntries: BLLIST_MODULE=${BLLIST_MODULE} MODULE_RUN_TIMEOUT=${MODULE_RUN_TIMEOUT} _attempt=${_attempt}"
+
+                echo "BLLIST_MODULE=${BLLIST_MODULE}" > "$DEBUG_FILE"
+                $BLLIST_MODULE >> "$DEBUG_FILE" 2>&1
+                _return_code=$?
+
+                echo "  ruantiblock.GetMainInstanceEntries._return_code=${_return_code}" >&2
+                MakeLogRecord "debug" "ruantiblock.GetMainInstanceEntries._return_code=${_return_code}"
+            else
+                $BLLIST_MODULE
+                _return_code=$?
+            fi
+
             [ $_return_code -eq 0 ] && break
             ### STDOUT
             echo " Module run attempt ${_attempt}: failed [${BLLIST_MODULE}]" >&2

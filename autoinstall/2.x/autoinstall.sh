@@ -10,9 +10,9 @@ LUCI_APP=1
 HTTPS_DNS_PROXY=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="2.1.1-r2"
-RUAB_MOD_LUA_VERSION="2.1.1-r1"
-RUAB_LUCI_APP_VERSION="2.1.1-1"
+RUAB_VERSION="2.1.2-r1"
+RUAB_MOD_LUA_VERSION="2.1.2-r1"
+RUAB_LUCI_APP_VERSION="2.1.2-r1"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
 

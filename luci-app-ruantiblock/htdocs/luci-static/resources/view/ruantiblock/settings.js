@@ -702,7 +702,7 @@ return view.extend({
 							fs.exec_direct(tools.execPath, [ 'restart' ]).then(
 								() => console.log(tools.execPath + ' restarted...')
 							);
-						}, 1000);
+						}, 2000);
 					});
 				};
 				tasks.push(res);

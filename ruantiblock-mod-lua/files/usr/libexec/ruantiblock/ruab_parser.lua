@@ -340,7 +340,7 @@ function BlackListParser:ip_value_processing(value)
                 if not self.BLLIST_IP_FILTER or (self.BLLIST_IP_FILTER and not self:check_filter(ip_entry, self.BLLIST_IP_FILTER_PATTERNS, self.BLLIST_IP_FILTER_TYPE)) then
                     if ip_entry:match("^" .. self.ip_pattern .. "$") and not self.ip_table[ip_entry] then
                         local subnet = self:get_subnet(ip_entry)
-                        if subnet and (self.BLLIST_GR_EXCLUDED_NETS_PATTERNS[subnet] or ((not self.BLLIST_IP_LIMIT or self.BLLIST_IP_LIMIT == 0) or (not self.ip_subnet_table[subnet] or self.ip_subnet_table[subnet] <= self.BLLIST_IP_LIMIT))) then
+                        if subnet and (self.BLLIST_GR_EXCLUDED_NETS_PATTERNS[subnet] or ((not self.BLLIST_IP_LIMIT or self.BLLIST_IP_LIMIT == 0) or (not self.ip_subnet_table[subnet] or self.ip_subnet_table[subnet] < self.BLLIST_IP_LIMIT))) then
                             self.ip_table[ip_entry] = subnet
                             self.ip_subnet_table[subnet] = (self.ip_subnet_table[subnet] or 0) + 1
                             self.ip_count = self.ip_count + 1
