@@ -73,7 +73,7 @@ export ENABLE_LOGGING=1
 ### Вывод дополнительных сообщений в лог (0 - выкл, 1, 2)
 export DEBUG=0
 ### Файл для вывода некоторых отладочных сообщений
-export DEBUG_FILE="/tmp/ruanliblock.debug"
+export DEBUG_FILE="/tmp/${NAME}.debug"
 ### Html-страница с инфо о текущем статусе (0 - выкл, 1 - вкл) (не используется в OpenWrt)
 export ENABLE_HTML_INFO=0
 ### Максимальное кол-во элементов списка nftables
@@ -998,7 +998,7 @@ GetMainInstanceEntries() {
 }
 
 GetBlacklistFiles() {
-    local _return_code=1 _user_entries_ret_code=1
+    local _return_code=0 _user_entries_ret_code=1
     AddBypassEntries
     GetMainInstanceEntries
     case $? in

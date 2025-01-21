@@ -15,6 +15,7 @@ import socket
 import ssl
 import sys
 from urllib import request
+#import zlib
 
 
 class Config:
@@ -281,8 +282,12 @@ class BlackListParser(Config):
                     if not chunk:
                         break
 
-    def _align_chunk(self, url):
+    def prepare_data(self, url):
         for chunk in self._download_data(url):
+            yield chunk
+
+    def _align_chunk(self, url):
+        for chunk in self.prepare_data(url):
             if chunk is None:
                 yield self.rest
                 continue
@@ -458,7 +463,6 @@ class Summarize:
 
     @classmethod
     def _group_nets(cls, cidr_list, raw_list=None):
-
         def remove_items(start, end):
             for ip in range(int(start), int(end) + 1, 256):
                 raw_list.remove(str(IPv4Address(ip)) + "/24")
@@ -506,6 +510,18 @@ class OptimizeConfig(Config):
         self.cidr_count = 0
         self.ip_count = 0
         self.output_fqdn_count = 0
+
+    def _remove_subdomains(self):
+        tld_dict = {}
+        for fqdn, sld in self.fqdn_dict.items():
+            tld_dict.setdefault(sld, [])
+            tld_dict[sld].append(fqdn)
+        for v in tld_dict.values():
+            for i in v:
+                if i in self.fqdn_dict:
+                    for j in v:
+                        if (j != i) and j.endswith("." + i):
+                            self.fqdn_dict.pop(j, None)
 
     def _optimize_fqdn_dict(self):
         optimized_set = set()
@@ -555,6 +571,7 @@ class OptimizeConfig(Config):
             self.ip_subnet_dict.update(i.ip_subnet_dict)
             self.fqdn_dict.update(i.fqdn_dict)
             self.sld_dict.update(i.sld_dict)
+        self._remove_subdomains()
         self._optimize_fqdn_dict()
         self._optimize_ip_dict()
         self._group_ip_ranges()
@@ -666,6 +683,16 @@ class ZiFQDN(BlackListParser):
         self.site_encoding = self.ZI_ENCODING
         self.fields_separator = ";"
         self.ips_separator = "|"
+        # self.decomp_obj = zlib.decompressobj(wbits=47)
+
+    # def prepare_data(self, url):
+    #     """
+    #     for https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv.gz
+    #     """
+    #     for chunk in self._download_data(url):
+    #         if chunk:
+    #             data = self.decomp_obj.decompress(chunk)
+    #             yield data
 
     def parser_func(self):
         for url in self.url:
@@ -692,7 +719,6 @@ class ZiIp(ZiFQDN):
                 entry_list = entry.split(self.fields_separator)
                 for i in entry_list[0].split(self.ips_separator):
                     self.ip_value_processing(i)
-
 
 class AfFQDN(BlackListParser):
     def __init__(self, *args, **kwargs):

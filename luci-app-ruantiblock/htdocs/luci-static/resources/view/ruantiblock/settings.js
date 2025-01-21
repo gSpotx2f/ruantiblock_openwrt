@@ -149,13 +149,6 @@ return view.extend({
 				'<br /><code>poker<br />[ck]?a[sz]ino?<br />[vw]ulkan<br />slots?</code>'
 		);
 
-		let user_entries_edit = new tools.fileEditDialog(
-			tools.userEntriesFile,
-			_('User entries'),
-			_('One entry (IP, CIDR or FQDN) per line. In the FQDN records, you can specify the DNS server for resolving this domain (separated by a space). You can also comment on lines (<code>#</code> is the first character of a line).<br />Examples:') +
-				'<br /><code>#comment<br />domain.net<br />sub.domain.com 8.8.8.8<br />sub.domain.com 8.8.8.8#53<br />74.125.131.19<br />74.125.0.0/16</code>'
-		);
-
 		let bypass_entries_edit = new tools.fileEditDialog(
 			tools.bypassEntriesFile,
 			_('Exclusion list'),

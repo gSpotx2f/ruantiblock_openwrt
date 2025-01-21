@@ -251,6 +251,12 @@ if not it then
     Config.BLLIST_SUMMARIZE_CIDR = false
     Config.BLLIST_SUMMARIZE_IP = false
 end
+--[[
+local zlib = prequire("zlib")
+if Config.BLLIST_ENABLE_IDN and not idn then
+    error("You need to install lua-lzlib...")
+end
+--]]
 
 -- Iconv check
 
@@ -392,6 +398,12 @@ function BlackListParser:parser_func()
     error("Method BlackListParser:parser_func() must be overridden by a subclass!")
 end
 
+function BlackListParser:prepare_data()
+    return function(chunk)
+        return chunk
+    end
+end
+
 function BlackListParser:chunk_buffer()
     local ret_value = ""
     local last_chunk
@@ -425,7 +437,7 @@ function BlackListParser:get_http_data(url)
         end
         ret_val, ret_code, ret_headers = http_module.request{url = url, method="HEAD", headers = self.http_send_headers}
         if ret_val and ret_code == 200 then
-            local http_sink = ltn12.sink.chain(self:chunk_buffer(), self:parser_func())
+            local http_sink = ltn12.sink.chain(self:prepare_data(), self:chunk_buffer(), self:parser_func())
             ret_val, ret_code, ret_headers = http_module.request{url = url, sink = http_sink, headers = self.http_send_headers}
             self.http_codes[ret_code] = true
             if not ret_val or ret_code ~= 200 then
@@ -437,7 +449,7 @@ function BlackListParser:get_http_data(url)
             print(string.format("Connection error! (%s) URL: %s", ret_code, url))
         end
     else
-        local wget_sink = ltn12.sink.chain(self:chunk_buffer(), self:parser_func())
+        local wget_sink = ltn12.sink.chain(self:prepare_data(), self:chunk_buffer(), self:parser_func())
         ret_val = ltn12.pump.all(ltn12.source.file(io.popen(self.WGET_CMD .. self.wget_user_agent .. ' "' .. url .. '"', 'r')), wget_sink)
     end
     return (ret_val == 1) and true or false
@@ -695,21 +707,25 @@ function OptimizeConfig:new(t)
     return instance
 end
 
-function OptimizeConfig:_optimize_ip_table()
-    local optimized_table = {}
-    for ipaddr, subnet in pairs(self.ip_table) do
-        if self.ip_subnet_table[subnet] then
-            if (self.BLLIST_IP_LIMIT and self.BLLIST_IP_LIMIT > 0 and not self.BLLIST_GR_EXCLUDED_NETS_PATTERNS[subnet]) and self.ip_subnet_table[subnet] >= self.BLLIST_IP_LIMIT then
-                self.cidr_table[string.format("%s0/24", subnet)] = true
-                self.ip_subnet_table[subnet] = nil
-                self.cidr_count = self.cidr_count + 1
-            else
-                optimized_table[ipaddr] = true
-                self.ip_records_count = self.ip_records_count + 1
+function OptimizeConfig:_remove_subdomains()
+    local tld_table = {}
+    for fqdn, sld in pairs(self.fqdn_table) do
+        if not tld_table[sld] then
+            tld_table[sld] = {}
+        end
+        tld_table[sld][fqdn] = true
+    end
+    for _, v in pairs(tld_table) do
+        for i in pairs(v) do
+            if self.fqdn_table[i] then
+                for j in pairs(v) do
+                    if (j ~= i) and j:find("." .. i, 1, true) then
+                        self.fqdn_table[j] = nil
+                    end
+                end
             end
         end
     end
-    self.ip_table = optimized_table
 end
 
 function OptimizeConfig:_optimize_fqdn_table()
@@ -726,6 +742,23 @@ function OptimizeConfig:_optimize_fqdn_table()
         end
     end
     self.fqdn_table = optimized_table
+end
+
+function OptimizeConfig:_optimize_ip_table()
+    local optimized_table = {}
+    for ipaddr, subnet in pairs(self.ip_table) do
+        if self.ip_subnet_table[subnet] then
+            if (self.BLLIST_IP_LIMIT and self.BLLIST_IP_LIMIT > 0 and not self.BLLIST_GR_EXCLUDED_NETS_PATTERNS[subnet]) and self.ip_subnet_table[subnet] >= self.BLLIST_IP_LIMIT then
+                self.cidr_table[string.format("%s0/24", subnet)] = true
+                self.ip_subnet_table[subnet] = nil
+                self.cidr_count = self.cidr_count + 1
+            else
+                optimized_table[ipaddr] = true
+                self.ip_records_count = self.ip_records_count + 1
+            end
+        end
+    end
+    self.ip_table = optimized_table
 end
 
 function OptimizeConfig:_group_ip_ranges()
@@ -759,6 +792,7 @@ function OptimizeConfig:optimize()
         self:_union(self.fqdn_table, i.fqdn_table)
         self:_union(self.sld_table, i.sld_table)
     end
+    self:_remove_subdomains()
     self:_optimize_fqdn_table()
     self:_optimize_ip_table()
     if self.BLLIST_SUMMARIZE_IP then
@@ -908,6 +942,43 @@ local Zi = Class(BlackListParser, {
     url = Config.ZI_ALL_URL,
     site_encoding = Config.ZI_ENCODING,
 })
+
+-- for https://raw.githubusercontent.com/zapret-info/z-i/master/dump.csv.gz
+-- lua-lzlib --
+--[[
+function Zi:prepare_data()
+    local curr_chunk
+    local stream = zlib.inflate({
+        read = function(self, consume)
+            return curr_chunk
+        end,
+    })
+    return function(chunk)
+        if chunk then
+            curr_chunk = chunk
+            return (stream:read(2048)) or ""
+        end
+        stream:close()
+        return nil
+    end
+end
+--]]
+-- lua-zlib --
+--[[
+function Zi:prepare_data()
+    local stream = zlib.inflate()
+    return function(chunk)
+        if chunk then
+            local inflated, eos = stream(chunk)
+            if eos then
+                stream = zlib.inflate()
+            end
+            return inflated
+        end
+        return nil
+    end
+end
+--]]
 
 function Zi:parser_func()
     return function(chunk)
@@ -1075,7 +1146,6 @@ if parser_classes then
     for _, i in ipairs(parser_instances) do
         ret_list[i:run()] = true
     end
-
     local return_sum = 0
     for i, _ in pairs(ret_list) do
         return_sum = return_sum + i
@@ -1091,5 +1161,4 @@ if parser_classes then
 else
     error("Wrong configuration! (Config.BLLIST_MODE, Config.BLLIST_SOURCE)")
 end
-
 os.exit(ret_list[1] and 1 or (ret_list[2] and 2 or 0))
