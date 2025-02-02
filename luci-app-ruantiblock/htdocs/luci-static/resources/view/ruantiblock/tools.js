@@ -204,25 +204,25 @@ return baseclass.extend({
 					E('div', { 'class': 'cbi-section' },
 						E('p', {},
 							E('textarea', {
-								'id': 'widget.modal_content',
-								'class': 'cbi-input-textarea',
-								'style': 'width:100% !important',
-								'rows': 10,
-								'wrap': 'off',
+								'id'        : 'widget.modal_content',
+								'class'     : 'cbi-input-textarea',
+								'style'     : 'width:100% !important',
+								'rows'      : 10,
+								'wrap'      : 'off',
 								'spellcheck': 'false',
 							},
 							content)
 						)
 					),
 				]),
-				E('div', { 'class': 'right' }, [
+				E('div', { 'class': 'right button-row' }, [
 					E('button', {
 						'class': 'btn',
 						'click': ui.hideModal,
 					}, _('Dismiss')),
 					' ',
 					E('button', {
-						'id': 'btn_save',
+						'id'   : 'btn_save',
 						'class': 'btn cbi-button-positive important',
 						'click': ui.createHandlerFn(this, this.handleSave),
 					}, _('Save')),

@@ -24,10 +24,10 @@ document.head.append(E('style', {'type': 'text/css'},
 	--app-log-dark-font-color: #fff;
 	--app-log-light-font-color: #fff;
 	--app-log-debug-font-color: #e7e7e7;
-	--app-log-emerg-color: #a93734;
+	--app-log-emerg-color: #960909;
 	--app-log-alert: #eb5050;
 	--app-log-crit: #dc7f79;
-	--app-log-err: #c89593;
+	--app-log-err: #9a5954;
 	--app-log-warn: #8d7000;
 	--app-log-notice: #007627;
 	--app-log-info: rgba(0,0,0,0);
@@ -103,7 +103,6 @@ log-emerg td {
 }
 .log-info {
 	background-color: var(--app-log-info) !important;
-	/*color: var(--app-log-dark-font-color) !important;*/
 }
 .log-debug {
 	background-color: var(--app-log-debug) !important;
@@ -137,6 +136,13 @@ log-emerg td {
 .log-host-dropdown-item {
 }
 .log-facility-dropdown-item {
+}
+#moreEntriesBar {
+	opacity: 0.7;
+}
+#moreEntriesBar > button {
+	margin: 1em 0 1em 0 !important;
+	min-width: 100%;
 }
 .log-side-block {
 	position: fixed;
@@ -701,7 +707,7 @@ return baseclass.extend({
 
 		filterSettingsModal() {
 			return ui.showModal(_('Filter settings'), [
-				E('div', { 'class': 'cbi-map' }, [
+				E('div', { 'class': 'cbi-map' },
 					E('div', { 'class': 'cbi-section' }, [
 						E('div', { 'class': 'cbi-section-node' }, [
 							E('div', { 'class': 'cbi-value' }, [
@@ -709,36 +715,40 @@ return baseclass.extend({
 									'class': 'cbi-value-title',
 									'for'  : 'tailInput',
 								}, _('Last entries')),
-								E('div', { 'class': 'cbi-value-field' }, [
-									this.tailInput,
-									E('button', {
-										'class': 'cbi-button btn',
-										'click': L.bind(ev => {
-											ev.target.blur();
-											ev.preventDefault();
-											this.tailInput.value = 0;
-											this.tailInput.focus();
-										}, this),
-									}, '&#9003;'),
-								]),
+								E('div', { 'class': 'cbi-value-field' },
+									E('span', { 'class': 'control-group' }, [
+										this.tailInput,
+										E('button', {
+											'class': 'cbi-button btn',
+											'click': L.bind(ev => {
+												ev.target.blur();
+												ev.preventDefault();
+												this.tailInput.value = 0;
+												this.tailInput.focus();
+											}, this),
+										}, '&#9003;'),
+									])
+								),
 							]),
 							E('div', { 'class': 'cbi-value' }, [
 								E('label', {
 									'class': 'cbi-value-title',
 									'for'  : 'timeFilter',
 								}, _('Timestamp filter')),
-								E('div', { 'class': 'cbi-value-field' }, [
-									this.timeFilter,
-									E('button', {
-										'class': 'cbi-button btn',
-										'click': L.bind(ev => {
-											ev.target.blur();
-											ev.preventDefault();
-											this.timeFilter.value = null;
-											this.timeFilter.focus();
-										}, this),
-									}, '&#9003;'),
-								]),
+								E('div', { 'class': 'cbi-value-field' },
+									E('span', { 'class': 'control-group' }, [
+										this.timeFilter,
+										E('button', {
+											'class': 'cbi-button btn',
+											'click': L.bind(ev => {
+												ev.target.blur();
+												ev.preventDefault();
+												this.timeFilter.value = null;
+												this.timeFilter.focus();
+											}, this),
+										}, '&#9003;'),
+									])
+								),
 							]),
 							E('div', { 'class': 'cbi-value' }, [
 								E('label', {
@@ -763,18 +773,20 @@ return baseclass.extend({
 									'class': 'cbi-value-title',
 									'for'  : 'msgFilter',
 								}, _('Message filter')),
-								E('div', { 'class': 'cbi-value-field' }, [
-									this.msgFilter,
-									E('button', {
-										'class': 'cbi-button btn',
-										'click': L.bind(ev => {
-											ev.target.blur();
-											ev.preventDefault();
-											this.msgFilter.value = null;
-											this.msgFilter.focus();
-										}, this),
-									}, '&#9003;'),
-								]),
+								E('div', { 'class': 'cbi-value-field' },
+									E('span', { 'class': 'control-group' }, [
+										this.msgFilter,
+										E('button', {
+											'class': 'cbi-button btn',
+											'click': L.bind(ev => {
+												ev.target.blur();
+												ev.preventDefault();
+												this.msgFilter.value = null;
+												this.msgFilter.focus();
+											}, this),
+										}, '&#9003;'),
+									])
+								)
 							]),
 							E('div', { 'class': 'cbi-value' }, [
 								E('label', {
@@ -813,9 +825,9 @@ return baseclass.extend({
 								]) : ''),
 						]),
 					]),
-				]),
-				E('div', { 'class': 'right' }, [
-					this.logFilterForm,
+				),
+				this.logFilterForm,
+				E('div', { 'class': 'right button-row' }, [
 					E('button', {
 						'class': 'btn',
 						'click': ev => {
@@ -875,6 +887,13 @@ return baseclass.extend({
 		},
 
 		onSubmitFilter() {
+			if(this.logSorting.value != this.logSortingValue) {
+				if(this.logSorting.value == 'desc') {
+					this.logWrapper.after(this.moreEntriesBar);
+				} else {
+					this.logWrapper.before(this.moreEntriesBar);
+				};
+			};
 			this.saveSettingsToLocalStorage(
 				this.tailInput.value, this.logSorting.value, this.autoRefresh.checked);
 			this.setFilterSettings();
@@ -998,6 +1017,7 @@ return baseclass.extend({
 			this.logFilterForm = E('form', {
 				'id'    : 'logFilterForm',
 				'name'  : 'logFilterForm',
+				'style' : 'display:none',
 				'submit': ev => {
 					ev.preventDefault();
 					return this.onSubmitFilter();
@@ -1021,24 +1041,36 @@ return baseclass.extend({
 				}),
 			}, '&#10227;');
 
+			function getMoreEntries(ev) {
+				ev.target.blur();
+				if(this.fastTailValue === null) {
+					this.fastTailValue = Number(this.tailValue);
+				};
+				if(this.fastTailValue > 0) {
+					this.fastTailValue += this.fastTailIncrement;
+				};
+				return this.reloadLog(this.fastTailValue);
+			}
+
 			this.moreEntriesBtn = E('button', {
-				'title': _('Get more entries'),
+				'title': _('More entries'),
 				'class': 'cbi-button btn log-side-btn',
 				'style': 'margin-top:1px !important',
-				'click': ui.createHandlerFn(this, function(ev) {
-					ev.target.blur();
-					if(this.fastTailValue === null) {
-						this.fastTailValue = Number(this.tailValue);
-					}
-					if(this.fastTailValue > 0) {
-						this.fastTailValue += this.fastTailIncrement;
-					};
-					return this.reloadLog(this.fastTailValue);
-				}),
+				'click': ui.createHandlerFn(this, getMoreEntries),
 			}, `+${this.fastTailIncrement}`);
 
+			this.moreEntriesRowBtn = E('button', {
+				'class': 'cbi-button btn',
+				'click': ui.createHandlerFn(this, getMoreEntries),
+			}, _('More entries'));
+
+			this.moreEntriesBar = E('div', {
+				'id'   : 'moreEntriesBar',
+				'class': 'center',
+			}, this.moreEntriesRowBtn);
+
 			this.allEntriesBtn = E('button', {
-				'title': _('Get all entries'),
+				'title': _('All entries'),
 				'class': 'cbi-button btn log-side-btn',
 				'style': 'margin-top:1px !important',
 				'click': ui.createHandlerFn(this, function(ev) {
@@ -1059,7 +1091,8 @@ return baseclass.extend({
 			}, '&#9634;');
 
 			this.actionButtons.push(this.filterEditsBtn, this.logDownloadBtn,
-									this.refreshBtn,this.moreEntriesBtn,
+									this.refreshBtn, this.moreEntriesBtn,
+									this.moreEntriesRowBtn,
 									this.allEntriesBtn, this.filterModalBtn);
 
 			document.body.append(
@@ -1094,6 +1127,11 @@ return baseclass.extend({
 				poll.add(this.pollFuncWrapper, this.pollInterval);
 			};
 
+			let logArea = [ this.moreEntriesBar, this.logWrapper ];
+			if(this.logSortingValue == 'desc') {
+				logArea.reverse();
+			};
+
 			return E([
 				E('h2', { 'id': 'logTitle', 'class': 'fade-in' }, this.title),
 				E('div', { 'class': 'cbi-section-descr fade-in' }),
@@ -1115,9 +1153,7 @@ return baseclass.extend({
 					])
 				),
 				E('div', { 'class': 'cbi-section fade-in' },
-					E('div', { 'class': 'cbi-section-node' },
-						this.logWrapper
-					)
+					E('div', { 'class': 'cbi-section-node' }, logArea)
 				),
 				E('div', { 'class': 'cbi-section fade-in' },
 					E('div', { 'class': 'cbi-section-node' },

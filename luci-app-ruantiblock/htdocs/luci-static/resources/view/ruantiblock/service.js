@@ -63,6 +63,7 @@ return view.extend({
 					};
 				};
 			};
+
 			this.dnsmasqCfgDirsSelect = E('select', {
 				'id'   : 'dnsmasq_confdirs_list',
 				'class': "cbi-input-select",
@@ -87,7 +88,7 @@ return view.extend({
 						]),
 					]),
 				]),
-				E('div', { 'class': 'right' }, [
+				E('div', { 'class': 'right button-row' }, [
 					this.cancelButton,
 					' ',
 					E('button', {
@@ -321,7 +322,7 @@ return view.extend({
 			return;
 		};
 
-		let section = uci.get(tools.appName, 'config');
+		let section			  = uci.get(tools.appName, 'config');
 		this.statusTokenValue = (Array.isArray(status_array)) ?
 								tools.normalizeValue(status_array[4]) : null;
 
