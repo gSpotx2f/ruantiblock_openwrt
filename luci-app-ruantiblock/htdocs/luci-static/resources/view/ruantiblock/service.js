@@ -322,7 +322,7 @@ return view.extend({
 			return;
 		};
 
-		let section			  = uci.get(tools.appName, 'config');
+		let section	          = uci.get(tools.appName, 'config');
 		this.statusTokenValue = (Array.isArray(status_array)) ?
 								tools.normalizeValue(status_array[4]) : null;
 
