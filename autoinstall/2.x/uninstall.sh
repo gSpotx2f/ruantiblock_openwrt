@@ -12,9 +12,10 @@ HTDOCS_VIEW="${PREFIX}/www/luci-static/resources/view"
 HTDOCS_RUAB="${HTDOCS_VIEW}/ruantiblock"
 CRONTAB_FILE="/etc/crontabs/root"
 DATA_DIR="/tmp/ruantiblock"
-DNSMASQ_DATA_FILE="/tmp/dnsmasq.d/02-ruantiblock.dnsmasq"
+DNSMASQ_DATA_FILE="/tmp/dnsmasq*.d/02-ruantiblock.dnsmasq"
 DNSMASQ_DATA_FILE_TMP="${DNSMASQ_DATA_FILE}.tmp"
-DNSMASQ_DATA_FILE_BYPASS="/tmp/dnsmasq.d/01-ruantiblock_bypass.dnsmasq"
+DNSMASQ_DATA_FILE_BYPASS="/tmp/dnsmasq*.d/00-ruantiblock_bypass.dnsmasq"
+DNSMASQ_DATA_FILE_USER_INSTANCES="/tmp/dnsmasq*.d/01-ruantiblock_user_instances.dnsmasq"
 SCRIPTS_DIR="/usr/share/ruantiblock"
 MODULES_DIR="/usr/libexec/ruantiblock"
 ### ruantiblock
@@ -115,6 +116,7 @@ RemoveAppFiles() {
     RemoveFile "${FILE_BYPASS_ENTRIES}.opkg"
     rm -f "$DNSMASQ_DATA_FILE"
     rm -f "$DNSMASQ_DATA_FILE_BYPASS"
+    rm -f "$DNSMASQ_DATA_FILE_USER_INSTANCES"
     rm -rf "$DATA_DIR"/*
     rm -rf "$USER_LISTS_DIR"
     rmdir "$SCRIPTS_DIR" "$MODULES_DIR" 2> /dev/null
