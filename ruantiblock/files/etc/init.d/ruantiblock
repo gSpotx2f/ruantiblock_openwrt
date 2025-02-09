@@ -8,12 +8,12 @@ APP_EXEC="/usr/bin/${APP_NAME}"
 VAR_DIR="/tmp"
 
 get_dnsmasq_confdir() {
-	local _first_instance_dir
+	local _current_dir="$1" _first_instance_dir
 	if [ -d "${VAR_DIR}/dnsmasq.d" ]; then
 		printf "${VAR_DIR}/dnsmasq.d"
 		return 0
 	else
-		_first_instance_dir=`ubus call service list | jsonfilter -e "VAR=$.dnsmasq.instances.*.mount" | awk '
+		_first_instance_dir=`ubus call service list | jsonfilter -e "VAR=$.dnsmasq.instances.*.mount" | awk -v CUR_DIR="$_current_dir" '
 			BEGIN {
 				RS = " ";
 			}
@@ -25,7 +25,7 @@ get_dnsmasq_confdir() {
 				};
 			}
 			END {
-				print a[0];
+				print (CUR_DIR in a) ? CUR_DIR : a[0];
 			}'`
 		if [ -n "$_first_instance_dir" ]; then
 			printf "$_first_instance_dir"
@@ -36,18 +36,18 @@ get_dnsmasq_confdir() {
 }
 
 start() {
-	local _update_at_startup _dnsmasq_confdir
+	local _update_at_startup _dnsmasq_confdir_cur _dnsmasq_confdir
 	config_load $APP_NAME
 	config_get _update_at_startup config update_at_startup
-	config_get _dnsmasq_confdir config dnsmasq_confdir ""
-	if [ -z "$_dnsmasq_confdir" ]; then
-		_dnsmasq_confdir=`get_dnsmasq_confdir`
-		if [ $? -eq 0 -a -n "$_dnsmasq_confdir" ]; then
+	config_get _dnsmasq_confdir_cur config dnsmasq_confdir ""
+	_dnsmasq_confdir=`get_dnsmasq_confdir "$_dnsmasq_confdir_cur"`
+	if [ $? -eq 0 -a -n "$_dnsmasq_confdir" ]; then
+		if [ "$_dnsmasq_confdir" != "$_dnsmasq_confdir_cur" ]; then
 			uci set "${APP_NAME}.config.dnsmasq_confdir"="$_dnsmasq_confdir"
 			uci commit ruantiblock
-		else
-			exit 1
 		fi
+	else
+		exit 1
 	fi
 	$APP_EXEC start
 	if [ $? -eq 0 -a "$_update_at_startup" = "1" ]; then

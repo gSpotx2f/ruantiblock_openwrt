@@ -643,7 +643,6 @@ CheckStatus() {
 GetVpnRouteStatus() {
     local _inst _i=1 _ret_val=0
     for _inst in $USER_INSTANCES_VPN_FNAMES
-
     do
         if ! NftRouteStatus $(($VPN_ROUTE_TABLE_ID_START + $_i)); then
             _ret_val=1
@@ -662,16 +661,24 @@ ClearDataFiles() {
     if [ -d "$DATA_DIR" ]; then
         if [ -z "$_arg" -o "$_arg" = "main_instance" ]; then
             printf "" > "$IP_DATA_FILE"
-            printf "" > "$DNSMASQ_DATA_FILE"
             printf "0 0 0" > "$UPDATE_STATUS_FILE"
         fi
         if [ -z "$_arg" -o "$_arg" = "user_instances" ]; then
             printf "" > "$IP_DATA_FILE_USER_INSTANCES"
-            printf "" > "$DNSMASQ_DATA_FILE_USER_INSTANCES"
             printf "" > "$USER_ENTRIES_STATUS_FILE"
         fi
         if [ -z "$_arg" ]; then
             printf "" > "$IP_DATA_FILE_BYPASS"
+        fi
+    fi
+    if [ -d "$DNSMASQ_CONFDIR" ]; then
+         if [ -z "$_arg" -o "$_arg" = "main_instance" ]; then
+            printf "" > "$DNSMASQ_DATA_FILE"
+        fi
+        if [ -z "$_arg" -o "$_arg" = "user_instances" ]; then
+            printf "" > "$DNSMASQ_DATA_FILE_USER_INSTANCES"
+        fi
+        if [ -z "$_arg" ]; then
             printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
         fi
     fi
@@ -681,9 +688,11 @@ PreStartCheck() {
     [ -d "$DATA_DIR" ] || mkdir -p "$DATA_DIR"
     [ "$ENABLE_HTML_INFO" = "1" -a ! -d "$HTML_DIR" ] && mkdir -p "$HTML_DIR"
     ### Костыль для старта dnsmasq
-    [ -e "$DNSMASQ_DATA_FILE" ] || printf "" > "$DNSMASQ_DATA_FILE"
-    [ -e "$DNSMASQ_DATA_FILE_BYPASS" ] || printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
-    [ -e "$DNSMASQ_DATA_FILE_USER_INSTANCES" ] || printf "" > "$DNSMASQ_DATA_FILE_USER_INSTANCES"
+    if [ -d "$DNSMASQ_CONFDIR" ]; then
+        [ -e "$DNSMASQ_DATA_FILE" ] || printf "" > "$DNSMASQ_DATA_FILE"
+        [ -e "$DNSMASQ_DATA_FILE_BYPASS" ] || printf "" > "$DNSMASQ_DATA_FILE_BYPASS"
+        [ -e "$DNSMASQ_DATA_FILE_USER_INSTANCES" ] || printf "" > "$DNSMASQ_DATA_FILE_USER_INSTANCES"
+    fi
 }
 
 AddBypassEntries() {
@@ -1056,6 +1065,14 @@ MakeToken() {
     date +%s > "$TOKEN_FILE"
 }
 
+CheckDnsmasqConfDir() {
+    if [ ! -d "$DNSMASQ_CONFDIR" ]; then
+        echo " Error! DNSMASQ_CONFDIR (${DNSMASQ_CONFDIR}) does not exists." >&2
+        return 1
+    fi
+    return 0
+}
+
 Update() {
     local _arg="$1" _return_code=0
     if CheckStatus; then
@@ -1287,9 +1304,13 @@ case "$1" in
     ;;
     update|force-update)
         Init
-        Update "$1"
-        return_code=$?
-        StatusOutput
+        if CheckDnsmasqConfDir; then
+            Update "$1"
+            return_code=$?
+            StatusOutput
+        else
+            return_code=1
+        fi
     ;;
     blacklist-files)
         Init
@@ -1297,8 +1318,12 @@ case "$1" in
             echo " ${NAME} - Error! Another instance of update is already running" >&2
             exit 2
         else
-            GetBlacklistFiles
-            return_code=$?
+            if CheckDnsmasqConfDir; then
+                GetBlacklistFiles
+                return_code=$?
+            else
+                return_code=1
+            fi
         fi
     ;;
     status)
