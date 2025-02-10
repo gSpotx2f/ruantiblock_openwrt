@@ -1067,7 +1067,8 @@ MakeToken() {
 
 CheckDnsmasqConfDir() {
     if [ ! -d "$DNSMASQ_CONFDIR" ]; then
-        echo " Error! DNSMASQ_CONFDIR (${DNSMASQ_CONFDIR}) does not exists." >&2
+        echo " Error! DNSMASQ_CONFDIR (${DNSMASQ_CONFDIR}) does not exists" >&2
+        MakeLogRecord "err" "Error! DNSMASQ_CONFDIR (${DNSMASQ_CONFDIR}) does not exists"
         return 1
     fi
     return 0
