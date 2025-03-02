@@ -190,9 +190,13 @@ export BLLIST_ALT_DNS_ADDR="8.8.8.8"
 CONFIG_SCRIPT="${SCRIPTS_DIR}/config_script"
 export USER_INSTANCES_COMMON="${SCRIPTS_DIR}/user_instances_common"
 export CONFIG_SCRIPT_USER_INSTANCES="${SCRIPTS_DIR}/config_script_user_instances"
-START_SCRIPT="${SCRIPTS_DIR}/start_script"
-STOP_SCRIPT="${SCRIPTS_DIR}/stop_script"
 BLLIST_SOURCES_SCRIPT="${SCRIPTS_DIR}/blacklist_sources"
+
+### Event scripts
+START_SCRIPT="${MODULES_DIR}/start_script"
+STOP_SCRIPT="${MODULES_DIR}/stop_script"
+PRE_UPDATE_SCRIPT="${MODULES_DIR}/pre_update_script"
+POST_UPDATE_SCRIPT="${MODULES_DIR}/post_update_script"
 
 ### Config script
 [ -f "$CONFIG_SCRIPT" ] && . "$CONFIG_SCRIPT"
@@ -1088,6 +1092,8 @@ Update() {
         MakeLogRecord "err" "${_arg} - Error! Another instance of update is already running"
         _return_code=2
     else
+        ### Pre-update script
+        [ -x "$PRE_UPDATE_SCRIPT" ] && $PRE_UPDATE_SCRIPT > /dev/null 2>&1 &
         ToggleUPIDFile add
         echo " ${NAME} ${_arg}..."
         MakeLogRecord "notice" "${_arg}..."
@@ -1100,6 +1106,8 @@ Update() {
         _return_code=$?
         RestartDnsmasq
         ToggleUPIDFile del
+        ### Pre-update script
+        [ -x "$POST_UPDATE_SCRIPT" ] && $POST_UPDATE_SCRIPT > /dev/null 2>&1 &
     fi
     MakeToken
     return $_return_code
