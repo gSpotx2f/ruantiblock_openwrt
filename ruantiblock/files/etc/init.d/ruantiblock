@@ -13,20 +13,20 @@ get_dnsmasq_confdir() {
 		printf "${VAR_DIR}/dnsmasq.d"
 		return 0
 	else
-		_first_instance_dir=`ubus call service list | jsonfilter -e "VAR=$.dnsmasq.instances.*.mount" | awk -v CUR_DIR="$_current_dir" '
+		_first_instance_dir=$(ubus call service list | jsonfilter -e "VAR=$.dnsmasq.instances.*.mount" | awk -v CUR_DIR="$_current_dir" '
 			BEGIN {
 				RS = " ";
 			}
 			{
 				sub("VAR=", "", $0);
-				gsub(/[\047,\134,\073]/, "", $0);
+				gsub(/[\047,\073,\\]/, "", $0);
 				if($0 ~ /^\/tmp\/dnsmasq\./ && !($0 in a)) {
 					a[length(a)] = $0;
 				};
 			}
 			END {
 				print (CUR_DIR in a) ? CUR_DIR : a[0];
-			}'`
+			}')
 		if [ -n "$_first_instance_dir" ]; then
 			printf "$_first_instance_dir"
 			return 0
@@ -40,7 +40,7 @@ start() {
 	config_load $APP_NAME
 	config_get _update_at_startup config update_at_startup
 	config_get _dnsmasq_confdir_cur config dnsmasq_confdir ""
-	_dnsmasq_confdir=`get_dnsmasq_confdir "$_dnsmasq_confdir_cur"`
+	_dnsmasq_confdir=$(get_dnsmasq_confdir "$_dnsmasq_confdir_cur")
 	if [ $? -eq 0 -a -n "$_dnsmasq_confdir" ]; then
 		if [ "$_dnsmasq_confdir" != "$_dnsmasq_confdir_cur" ]; then
 			uci set "${APP_NAME}.config.dnsmasq_confdir"="$_dnsmasq_confdir"
