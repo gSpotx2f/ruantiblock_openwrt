@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 
 --[[
- (с) 2024 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+ (с) 2025 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 
  lua == 5.1
 --]]

@@ -7,7 +7,7 @@ PREFIX=""
 CONFIG_DIR="${PREFIX}/etc/ruantiblock"
 USER_LISTS_DIR="${CONFIG_DIR}/user_lists"
 EXEC_DIR="${PREFIX}/usr/bin"
-BACKUP_DIR="${CONFIG_DIR}/autoinstall.bak.`date +%s`"
+BACKUP_DIR="${CONFIG_DIR}/autoinstall.bak.$(date +%s)"
 HTDOCS_VIEW="${PREFIX}/www/luci-static/resources/view"
 HTDOCS_RUAB="${HTDOCS_VIEW}/ruantiblock"
 CRONTAB_FILE="/etc/crontabs/root"
@@ -33,7 +33,7 @@ FILE_MAIN_SCRIPT="${EXEC_DIR}/ruantiblock"
 FILE_TORRC="${PREFIX}/etc/tor/torrc"
 
 AWK_CMD="awk"
-OPKG_CMD=`which opkg`
+OPKG_CMD="$(which opkg)"
 if [ $? -ne 0 ]; then
     echo " Error! opkg doesn't exists" >&2
     exit 1
@@ -61,13 +61,13 @@ RemoveFile() {
 BackupCurrentConfig() {
     local _file
     MakeDir "$BACKUP_DIR"
-    for _file in `ls -1 "$CONFIG_DIR" | grep -v "$(basename $BACKUP_DIR)"`
+    for _file in $(ls -1 "$CONFIG_DIR" | grep -v "$(basename $BACKUP_DIR)")
     do
         cp -af "${CONFIG_DIR}/${_file}" "${BACKUP_DIR}/${_file}"
     done
     for _file in "$FILE_UCI_CONFIG" "$FILE_TORRC"
     do
-        [ -e "$_file" ] && cp -af "$_file" "${BACKUP_DIR}/`basename ${_file}`"
+        [ -e "$_file" ] && cp -af "$_file" "${BACKUP_DIR}/$(basename ${_file})"
     done
 }
 
@@ -91,7 +91,7 @@ RemoveCronTask() {
 RestoreTorConfig() {
     [ -e "${FILE_TORRC}.bak" ] && mv -f "${FILE_TORRC}.bak" "$FILE_TORRC"
     if [ -x "/etc/init.d/tor" ]; then
-        if `/etc/init.d/tor enabled`; then
+        if $(/etc/init.d/tor enabled); then
             /etc/init.d/tor restart
         fi
     fi

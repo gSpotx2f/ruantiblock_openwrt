@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-(с) 2024 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+(с) 2025 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 
  Python >= 3.6
 """

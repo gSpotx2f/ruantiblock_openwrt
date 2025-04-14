@@ -25,7 +25,7 @@ ListUserInstances() {
 
 GetUserInstances() {
     local _type="$1" _fnames="$2" _i=0 _inst _instances=""
-    for _inst in `ListUserInstances`
+    for _inst in $(ListUserInstances)
     do
         IncludeUserInstanceVars "$_inst"
         if [ $_i -lt $USER_INSTANCES_MAX -a -n "$U_NAME" -a "$U_ENABLED" != "0" ]; then
@@ -45,7 +45,7 @@ GetUserInstances() {
 
 SetUserInstancesItems() {
     local _i=0 _inst _instances_all="" _instances_all_fnames="" _instances_vpn="" _instances_vpn_fnames="" _instances_cfg=""  _instances_cfg_fnames=""
-    for _inst in `ListUserInstances`
+    for _inst in $(ListUserInstances)
     do
         IncludeUserInstanceVars "$_inst"
         if [ $_i -lt $USER_INSTANCES_MAX -a -n "$U_NAME" -a "$U_ENABLED" != "0" ]; then

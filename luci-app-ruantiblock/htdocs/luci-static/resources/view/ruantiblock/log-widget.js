@@ -46,38 +46,50 @@ return baseclass.extend({
 					if(e[4] in this.logLevels) {
 						this.logLevelsStat[e[4]] = this.logLevelsStat[e[4]] + 1;
 					};
-					lines.push(
-						`<tr class="tr log-${e[4] || 'empty'}"><td class="td left log-entry-text-nowrap" data-title="#">${e[0]}</td>` +
-						((e[1]) ? `<td class="td left log-entry-time-cell" data-title="${_('Timestamp')}">${e[1]}</td>` : '') +
-						((e[2]) ? `<td class="td left log-entry-host-cell" data-title="${_('Host')}">${e[2]}</td>` : '') +
-						((e[3]) ? `<td class="td left log-entry-text-nowrap" data-title="${_('Facility')}">${e[3]}</td>` : '') +
-						((e[4]) ? `<td class="td left log-entry-text-nowrap" data-title="${_('Level')}">${e[4]}</td>` : '') +
-						((e[5]) ? `<td class="td left log-entry-message-cell" data-title="${_('Message')}">${e[5]}</td>` : '') +
-						'</tr>'
-					);
+
+					let line = [ `<tr class="tr log-${(e[1]) ? e[4] || 'empty' : (this.entriesHandler) ? 'raw' : 'empty'}">` ];
+					this.logCols.forEach((c, i) => {
+						if(c) {
+							let cellClass = '';
+							switch(i) {
+								case 0:
+								case 3:
+								case 4:
+									cellClass = 'log-entry-text-nowrap';
+									break;
+								case 1:
+									cellClass = 'log-entry-time-cell';
+									break;
+								case 2:
+									cellClass = 'log-entry-host-cell';
+									break;
+								case 5:
+									cellClass = 'log-entry-message-cell';
+									break;
+							};
+							line.push(`<td class="td left ${cellClass}" data-title="${c}">${e[i] || '&#160;'}</td>`);
+						};
+					});
+					line.push('</tr>');
+					lines.push(line.join(''));
 				});
 				lines = lines.join('');
-				logTable.append(
-					E('tr', { 'class': 'tr table-titles' }, [
-						E('th', { 'class': 'th left log-entry-text-nowrap' }, '#'),
-						(logdataArray[0][1]) ?
-							E('th', { 'class': 'th left log-entry-text-nowrap' }, _('Timestamp')) : '',
-						(logdataArray[0][2]) ?
-							E('th', { 'class': 'th left log-entry-text-nowrap' }, _('Host')) : '',
-						(logdataArray[0][3]) ?
-							E('th', { 'class': 'th left log-entry-text-nowrap' }, _('Facility')) : '',
-						(logdataArray[0][4]) ?
-							E('th', { 'class': 'th left log-entry-text-nowrap' }, _('Level')) : '',
-						(logdataArray[0][5]) ?
-							E('th', { 'class': 'th left log-entry-text-nowrap' }, _('Message')) : '',
-					])
-				);
+
+				let logTableHeader = E('tr', { 'class': 'tr table-titles' });
+				this.logCols.forEach(e => {
+					if(e) {
+						logTableHeader.append(
+							E('th', { 'class': 'th left log-entry-text-nowrap' }, e)
+						);
+					};
+				});
+				logTable.append(logTableHeader);
 			};
 
 			try {
 				logTable.insertAdjacentHTML('beforeend', lines);
 			} catch(err) {
-				if(err.name === 'SyntaxError') {
+				if(err.name == 'SyntaxError') {
 					ui.addNotification(null,
 						E('p', {}, _('HTML/XML error') + ': ' + err.message), 'error');
 				};

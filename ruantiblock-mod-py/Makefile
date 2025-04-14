@@ -1,11 +1,11 @@
 #
-# (с) 2024 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
+# (с) 2025 gSpot (https://github.com/gSpotx2f/ruantiblock_openwrt)
 #
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ruantiblock-mod-py
-PKG_VERSION:=2.1.4
+PKG_VERSION:=2.1.5
 PKG_RELEASE:=1
 PKG_MAINTAINER:=gSpot <https://github.com/gSpotx2f/ruantiblock_openwrt>
 

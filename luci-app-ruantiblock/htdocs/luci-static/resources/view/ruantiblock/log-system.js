@@ -1,17 +1,18 @@
 'use strict';
 'require baseclass';
 'require fs';
-'require ui';
 'require view.ruantiblock.log-widget as widget';
 
 return baseclass.extend({
 	view: widget.view.extend({
+		enableAutoRefresh: true,
+
 		/**
 		 * Pattern for picking application-specific entries from the log.
 		 *
 		 * @property {string} appPattern
 		 */
-		appPattern     : '^',
+		appPattern       : '^',
 
 		/**
 		 * Enable "tail" option for the logread (logread -l).
@@ -19,19 +20,19 @@ return baseclass.extend({
 		 *
 		 * @property {bool} loggerTail
 		 */
-		loggerTail     : false,
+		loggerTail       : false,
 
-		logdRegexp     : new RegExp(/^([^\s]{3}\s+[^\s]{3}\s+\d{1,2}\s+\d{1,2}:\d{1,2}:\d{1,2}\s+\d{4})\s+([a-z0-9]+)\.([a-z]+)\s+(.*)$/),
+		logdRegexp       : new RegExp(/^([^\s]{3}\s+[^\s]{3}\s+\d{1,2}\s+\d{1,2}:\d{1,2}:\d{1,2}\s+\d{4})\s+([a-z0-9]+)\.([a-z]+)\s+(.*)$/),
 
-		syslog_ngRegexp: new RegExp(/^([^\s]{3}\s+\d{1,2}\s+\d{1,2}:\d{1,2}:\d{1,2})\s+([^\s]+)\s+(.*)$/),
+		syslog_ngRegexp  : new RegExp(/^([^\s]{3}\s+\d{1,2}\s+\d{1,2}:\d{1,2}:\d{1,2})\s+([^\s]+)\s+(.*)$/),
 
-		entryRegexp    : null,
+		entryRegexp      : null,
 
-		isLoggerChecked: false,
+		loggerChecked    : false,
 
-		entriesHandler : null,
+		entriesHandler   : null,
 
-		logger         : null,
+		logger           : null,
 
 		getLogHash() {
 			return this.getLogData(1, true).then(data => {
@@ -63,6 +64,18 @@ return baseclass.extend({
 				null,                                  // Facility  (String)
 				null,                                  // Level     (String)
 				this.htmlEntities(strArray[3]) || ' ', // Message   (String)
+			];
+		},
+
+		// unsupported log handler
+		unsupportedLogHandler(line, lineNum) {
+			return [
+				lineNum,                        // #         (Number)
+				null,                           // Timestamp (String)
+				null,                           // Host      (String)
+				null,                           // Facility  (String)
+				null,                           // Level     (String)
+				this.htmlEntities(line) || ' ', // Message   (String)
 			];
 		},
 
@@ -102,8 +115,7 @@ return baseclass.extend({
 				return [];
 			};
 
-			let unsupportedLog = false;
-			let strings        = logdata.trim().split(/\n/);
+			let strings = logdata.trim().split(/\n/);
 
 			if(!this.loggerTail && tail && tail > 0 && strings) {
 				strings = strings.slice(-tail);
@@ -111,45 +123,61 @@ return baseclass.extend({
 
 			this.totalLogLines = strings.length;
 
-			let entriesArray   = strings.map((e, i) => {
-				if(!this.isLoggerChecked) {
+			let entriesArray = strings.map((e, i) => {
+				if(!this.loggerChecked) {
 					if(this.logdRegexp.test(e)) {
-						this.entryRegexp    = this.logdRegexp;
-						this.isFacilities   = true;
-						this.isLevels       = true;
-						this.logHosts       = {};
-						this.entriesHandler = this.logdHandler;
+						this.entryRegexp       = this.logdRegexp;
+						this.logTimestampFlag  = true;
+						this.logFacilitiesFlag = true;
+						this.logLevelsFlag     = true;
+						this.logHostsFlag      = false;
+						this.logHosts          = {};
+						this.entriesHandler    = this.logdHandler;
+						this.logCols           = [
+							'#',
+							_('Timestamp'),
+							null,
+							_('Facility'),
+							_('Level'),
+							_('Message'),
+						];
+						this.loggerChecked = true;
 					}
 					else if(this.syslog_ngRegexp.test(e)) {
-						this.entryRegexp    = this.syslog_ngRegexp;
-						this.isHosts        = true;
-						this.logFacilities  = {};
-						this.logLevels      = {};
-						this.entriesHandler = this.syslog_ngHandler;
+						this.entryRegexp       = this.syslog_ngRegexp;
+						this.logTimestampFlag  = true;
+						this.logFacilitiesFlag = false;
+						this.logLevelsFlag     = false;
+						this.logHostsFlag      = true;
+						this.logFacilities     = {};
+						this.logLevels         = {};
+						this.entriesHandler    = this.syslog_ngHandler;
+						this.logCols           = [
+							'#',
+							_('Timestamp'),
+							_('Host'),
+							null,
+							null,
+							_('Message'),
+						];
+						this.loggerChecked = true;
 					} else {
-						unsupportedLog = true;
-						return;
+						return this.unsupportedLogHandler(e, i + 1);
 					};
-					this.isLoggerChecked = true;
 				};
 
 				let strArray = e.match(this.entryRegexp);
 				if(strArray) {
 					return this.entriesHandler(strArray, i + 1);
 				} else {
-					unsupportedLog = true;
-					return;
+					return this.unsupportedLogHandler(e, i + 1);
 				};
 			});
 
-			if(unsupportedLog) {
-				throw new Error(_('Unable to load log data:') + ' ' + _('Unsupported log format'));
-			} else {
-				if(this.logSortingValue === 'desc') {
-					entriesArray.reverse();
-				};
-				return entriesArray;
+			if(this.logSortingValue == 'desc') {
+				entriesArray.reverse();
 			};
+			return entriesArray;
 		},
 	}),
 });

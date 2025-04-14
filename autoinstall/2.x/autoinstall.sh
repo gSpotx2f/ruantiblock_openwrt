@@ -10,9 +10,9 @@ LUCI_APP=1
 HTTPS_DNS_PROXY=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="2.1.4-r3"
-RUAB_MOD_LUA_VERSION="2.1.4-r1"
-RUAB_LUCI_APP_VERSION="2.1.4-r1"
+RUAB_VERSION="2.1.5-r1"
+RUAB_MOD_LUA_VERSION="2.1.5-r1"
+RUAB_LUCI_APP_VERSION="2.1.5-r1"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
 
@@ -29,7 +29,6 @@ URL_LUCI_APP_PKG="${BASE_URL}/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_LUCI_A
 URL_LUCI_APP_RU_PKG="${BASE_URL}/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
 ### tor
 URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/tor/etc/tor/torrc"
-### ruantiblock-mod-lua
 URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
 
 ### Local files
@@ -37,7 +36,7 @@ URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
 CONFIG_DIR="${PREFIX}/etc/ruantiblock"
 USER_LISTS_DIR="${CONFIG_DIR}/user_lists"
 EXEC_DIR="${PREFIX}/usr/bin"
-BACKUP_DIR="${CONFIG_DIR}/autoinstall.bak.`date +%s`"
+BACKUP_DIR="${CONFIG_DIR}/autoinstall.bak.$(date +%s)"
 ### packages
 FILE_RUAB_PKG="${PKG_DIR}/ruantiblock_${RUAB_VERSION}_all.ipk"
 FILE_MOD_LUA_PKG="${PKG_DIR}/ruantiblock-mod-lua_${RUAB_MOD_LUA_VERSION}_all.ipk"
@@ -56,23 +55,21 @@ FILE_INIT_SCRIPT="${PREFIX}/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="${EXEC_DIR}/ruantiblock"
 ### tor
 FILE_TORRC="${PREFIX}/etc/tor/torrc"
-### ruantiblock-mod-lua
-#FILE_LUA_IPTOOL="${PREFIX}/usr/lib/lua/iptool.lua"
 FILE_LUA_IDN="${PREFIX}/usr/lib/lua/idn.lua"
 
 AWK_CMD="awk"
-WGET_CMD=`which wget`
+WGET_CMD="$(which wget)"
 if [ $? -ne 0 ]; then
     echo " Error! wget doesn't exists" >&2
     exit 1
 fi
 WGET_PARAMS="--no-check-certificate -q -O "
-OPKG_CMD=`which opkg`
+OPKG_CMD="$(which opkg)"
 if [ $? -ne 0 ]; then
     echo " Error! opkg doesn't exists" >&2
     exit 1
 fi
-UCI_CMD=`which uci`
+UCI_CMD="$(which uci)"
 if [ $? -ne 0 ]; then
     echo " Error! uci doesn't exists" >&2
     exit 1
@@ -104,7 +101,7 @@ RemoveFile() {
 DlFile() {
     local _dir _file
     if [ -n "$2" ]; then
-        _dir=`dirname "$2"`
+        _dir=$(dirname "$2")
         MakeDir "$_dir"
         _file="$2"
     else
@@ -119,19 +116,19 @@ DlFile() {
 }
 
 BackupFile() {
-    [ -e "$1" ] && cp -f "$1" "${1}.bak.`date +%s`"
+    [ -e "$1" ] && cp -f "$1" "${1}.bak.$(date +%s)"
 }
 
 BackupCurrentConfig() {
     local _file
     MakeDir "$BACKUP_DIR"
-    for _file in `ls -1 "$CONFIG_DIR" | grep -v "$(basename $BACKUP_DIR)"`
+    for _file in $(ls -1 "$CONFIG_DIR" | grep -v "$(basename $BACKUP_DIR)")
     do
         cp -af "${CONFIG_DIR}/${_file}" "${BACKUP_DIR}/${_file}"
     done
     for _file in "$FILE_UCI_CONFIG" "$FILE_TORRC"
     do
-        [ -e "$_file" ] && cp -af "$_file" "${BACKUP_DIR}/`basename ${_file}`"
+        [ -e "$_file" ] && cp -af "$_file" "${BACKUP_DIR}/$(basename ${_file})"
     done
 }
 
@@ -165,7 +162,7 @@ InstallPackages() {
     local _pkg
     for _pkg in $@
     do
-        if [ -z "`$OPKG_CMD list-installed $_pkg`" ]; then
+        if [ -z "$($OPKG_CMD list-installed $_pkg)" ]; then
             $OPKG_CMD --force-overwrite install $_pkg
             if [ $? -ne 0 ]; then
                 echo "Error during installation of the package (${_pkg})" >&2
@@ -181,7 +178,6 @@ InstallBaseConfig() {
     RemoveFile "$FILE_RUAB_PKG" > /dev/null
     DlFile "$URL_RUAB_PKG" "$FILE_RUAB_PKG" && $OPKG_CMD install "$FILE_RUAB_PKG" > /dev/null
     _return_code=$?
-    # костыль для остановки сервиса, который запускается автоматически после установки пакета!
     AppStop
     return $_return_code
 }
@@ -205,7 +201,7 @@ InstallTPConfig() {
 }
 
 TorrcSettings() {
-    local _lan_ip=`$UCI_CMD get network.lan.ipaddr | $AWK_CMD -F "/" '{print $1}'`
+    local _lan_ip=$($UCI_CMD get network.lan.ipaddr | $AWK_CMD -F "/" '{print $1}')
     if [ -z "$_lan_ip" ]; then
         _lan_ip="0.0.0.0"
     fi
@@ -223,7 +219,6 @@ InstallTorConfig() {
     TorrcSettings
     $UCI_CMD set ruantiblock.config.proxy_mode="1"
     $UCI_CMD commit ruantiblock
-    # dnsmasq rebind protection
     $UCI_CMD add_list dhcp.@dnsmasq[0].rebind_domain='onion'
     $UCI_CMD commit dhcp
 }
@@ -392,7 +387,6 @@ ConfirmProcessing() {
 
 ConfirmProxyMode
 ConfirmBlacklist
-#ConfirmLuaModule
 ConfirmLuciApp
 ConfirmHttpsDnsProxy
 ConfirmProcessing
@@ -414,7 +408,7 @@ if [ $? -eq 0 ]; then
     else
         PrintBold "Installing Tor configuration..."
         InstallTorConfig
-        if `/etc/init.d/tor enabled`; then
+        if $(/etc/init.d/tor enabled); then
             /etc/init.d/tor restart
         fi
     fi

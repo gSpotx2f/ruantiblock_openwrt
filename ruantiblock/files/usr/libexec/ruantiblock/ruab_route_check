@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PID_FILE="/var/run/`basename $0`.pid"
+PID_FILE="/var/run/$(basename $0).pid"
 APP_EXEC="/usr/bin/ruantiblock"
 
 . "$USER_INSTANCES_COMMON"
@@ -9,7 +9,7 @@ VPN_IFACES_STATUS=1
 
 CheckIfaceStatus() {
     local _iface="$1" _ret_val=0
-    if [ -z "`$IP_CMD link show dev $_iface up 2> /dev/null`" ]; then
+    if [ -z "$($IP_CMD link show dev $_iface up 2> /dev/null)" ]; then
         _ret_val=1
 
         if [ $DEBUG -ge 1 ]; then
@@ -23,7 +23,7 @@ CheckIfaceStatus() {
 
 VpnRouteInstanceStatus() {
     local _vpn_route_table_id=$1
-    [ -n "`$IP_CMD route show table $_vpn_route_table_id 2> /dev/null`" ] && return 0
+    [ -n "$($IP_CMD route show table $_vpn_route_table_id 2> /dev/null)" ] && return 0
     return 1
 }
 
@@ -83,7 +83,7 @@ Start() {
 }
 
 Stop() {
-    kill -s SIGKILL `cat "$PID_FILE"` 2> /dev/null
+    kill -s SIGKILL $(cat "$PID_FILE") 2> /dev/null
     rm -f "$PID_FILE"
 }
 
@@ -104,7 +104,7 @@ case "$1" in
         fi
     ;;
     *)
-        echo "Usage: `basename $0` start|stop"
+        echo "Usage: $(basename $0) start|stop"
         exit 1
     ;;
 esac

@@ -1,5 +1,6 @@
+
 UCI_VARS="u_enabled u_proxy_mode u_tor_trans_port u_onion_dns_addr u_if_vpn u_vpn_gw_ip u_t_proxy_type u_t_proxy_port_tcp u_t_proxy_port_udp u_t_proxy_allow_udp u_entries_dns u_entries_remote u_enable_entries_remote_proxy u_enable_fproxy u_fproxy_list"
-UCI_CMD=`which uci`
+UCI_CMD="$(which uci)"
 if [ $? -ne 0 ]; then
     echo " Error! UCI doesn't exists" >&2
     exit 1
@@ -26,7 +27,7 @@ IncludeUserInstanceVars() {
     local _inst="$1"
     local _uci_section="${NAME}.${_inst}"
     U_NAME="$_inst"
-    eval `$UCI_CMD show "$_uci_section" | $AWK_CMD -F "=" -v UCI_VARS="$UCI_VARS" '
+    eval $($UCI_CMD show "$_uci_section" | $AWK_CMD -F "=" -v UCI_VARS="$UCI_VARS" '
     BEGIN {
         split(UCI_VARS, split_array, " ");
         for(i in split_array)
@@ -45,7 +46,7 @@ IncludeUserInstanceVars() {
             for(i in vars_array)
                 print toupper(i) "=\"""\"";
         };
-    }'`
+    }')
 
     if [ $DEBUG -ge 2 ]; then
         echo "  user_instances_config_script.IncludeUserInstanceVars: _inst=${_inst} U_NAME=${U_NAME} U_PROXY_MODE=${U_PROXY_MODE}" >&2
