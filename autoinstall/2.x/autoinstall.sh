@@ -10,9 +10,9 @@ LUCI_APP=1
 HTTPS_DNS_PROXY=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="2.1.5-r1"
-RUAB_MOD_LUA_VERSION="2.1.5-r1"
-RUAB_LUCI_APP_VERSION="2.1.5-r1"
+RUAB_VERSION="2.1.6-r1"
+RUAB_MOD_LUA_VERSION="2.1.6-r1"
+RUAB_LUCI_APP_VERSION="2.1.6-r1"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
 
@@ -219,6 +219,7 @@ InstallTorConfig() {
     TorrcSettings
     $UCI_CMD set ruantiblock.config.proxy_mode="1"
     $UCI_CMD commit ruantiblock
+    # dnsmasq rebind protection
     $UCI_CMD add_list dhcp.@dnsmasq[0].rebind_domain='onion'
     $UCI_CMD commit dhcp
 }
@@ -387,6 +388,7 @@ ConfirmProcessing() {
 
 ConfirmProxyMode
 ConfirmBlacklist
+#ConfirmLuaModule
 ConfirmLuciApp
 ConfirmHttpsDnsProxy
 ConfirmProcessing

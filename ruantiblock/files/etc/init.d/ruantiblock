@@ -6,31 +6,37 @@ STOP=01
 APP_NAME="ruantiblock"
 APP_EXEC="/usr/bin/${APP_NAME}"
 VAR_DIR="/tmp"
+UBUS_ATTEMPTS=10
 
 get_dnsmasq_confdir() {
-	local _current_dir="$1" _first_instance_dir
+	local _current_dir="$1" _i=0 _first_instance_dir
 	if [ -d "${VAR_DIR}/dnsmasq.d" ]; then
 		printf "${VAR_DIR}/dnsmasq.d"
 		return 0
 	else
-		_first_instance_dir=$(ubus call service list | jsonfilter -e "VAR=$.dnsmasq.instances.*.mount" | awk -v CUR_DIR="$_current_dir" '
-			BEGIN {
-				RS = " ";
-			}
-			{
-				sub("VAR=", "", $0);
-				gsub(/[\047,\073,\\]/, "", $0);
-				if($0 ~ /^\/tmp\/dnsmasq\./ && !($0 in a)) {
-					a[length(a)] = $0;
-				};
-			}
-			END {
-				print (CUR_DIR in a) ? CUR_DIR : a[0];
-			}')
-		if [ -n "$_first_instance_dir" ]; then
-			printf "$_first_instance_dir"
-			return 0
-		fi
+		while [ $_i -lt $UBUS_ATTEMPTS ]
+		do
+			_first_instance_dir=$(ubus call service list | jsonfilter -e "VAR=$.dnsmasq.instances.*.mount" | awk -v CUR_DIR="$_current_dir" '
+				BEGIN {
+					RS = " ";
+				}
+				{
+					sub("VAR=", "", $0);
+					gsub(/[\047,\073,\\]/, "", $0);
+					if($0 ~ /^\/tmp\/dnsmasq\./ && !($0 in a)) {
+						a[length(a)] = $0;
+					};
+				}
+				END {
+					print (CUR_DIR in a) ? CUR_DIR : a[0];
+				}')
+			if [ -n "$_first_instance_dir" ]; then
+				printf "$_first_instance_dir"
+				return 0
+			fi
+			_i=$(($_i + 1))
+			sleep 1
+		done
 	fi
 	return 1
 }
@@ -51,7 +57,7 @@ start() {
 	fi
 	$APP_EXEC start
 	if [ $? -eq 0 -a "$_update_at_startup" = "1" ]; then
-		$APP_EXEC update
+		$APP_EXEC update > /dev/null &
 	else
 		/etc/init.d/dnsmasq restart
 	fi
