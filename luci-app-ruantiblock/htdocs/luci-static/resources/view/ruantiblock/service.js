@@ -32,7 +32,7 @@ return view.extend({
 
 		dnsmasqCfgDirsSelect: null,
 
-		cancelButton		: E('button', {
+		cancelButton        : E('button', {
 			'id'   : 'btn_cancel',
 			'class': btn_style_neutral,
 			'click': ui.hideModal,
@@ -61,6 +61,21 @@ return view.extend({
 							};
 						};
 					};
+				};
+			};
+
+			if(this.currentDnsmasqCfgDir) {
+				let match = false;
+				for(let i of available_cfg_dirs) {
+					if(i[1] == this.currentDnsmasqCfgDir) {
+						match = true;
+						break;
+					};
+				};
+				if(!match) {
+					available_cfg_dirs.unshift(
+						[ `${this.currentDnsmasqCfgDir} [ UCI ]`, this.currentDnsmasqCfgDir ]
+					);
 				};
 			};
 
