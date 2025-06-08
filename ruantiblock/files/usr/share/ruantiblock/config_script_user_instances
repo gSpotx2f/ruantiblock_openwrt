@@ -27,26 +27,30 @@ IncludeUserInstanceVars() {
     local _inst="$1"
     local _uci_section="${NAME}.${_inst}"
     U_NAME="$_inst"
-    eval $($UCI_CMD show "$_uci_section" | $AWK_CMD -F "=" -v UCI_VARS="$UCI_VARS" '
-    BEGIN {
-        split(UCI_VARS, split_array, " ");
-        for(i in split_array)
-            vars_array[split_array[i]]="";
-    }
-    {
-        sub(/^.*[.]/, "", $1);
-        gsub(/["\047]/, "", $2);
-        if($1 in vars_array) {
-            print toupper($1) "=\"" $2 "\"";
-            delete vars_array[$1];
-        };
-    }
-    END {
-        if(length(vars_array) > 0) {
-            for(i in vars_array)
-                print toupper(i) "=\"""\"";
-        };
-    }')
+    eval $($UCI_CMD show "$_uci_section" | $AWK_CMD -v UCI_VARS="$UCI_VARS" '
+        BEGIN {
+            split(UCI_VARS, split_array, " ");
+            for(i in split_array)
+                vars_array[split_array[i]]="";
+        }
+        {
+            match($0, /^[^=]+/);
+            end  = RSTART + RLENGTH;
+            name = substr($0, RSTART, end - 1);
+            val  = substr($0, end + 1);
+            sub(/^.*[.]/, "", name);
+            gsub(/["\047]/, "", val);
+            if(name in vars_array) {
+                print toupper(name) "=\"" val "\"";
+                delete vars_array[name];
+            };
+        }
+        END {
+            if(length(vars_array) > 0) {
+                for(i in vars_array)
+                    print toupper(i) "=\"""\"";
+            };
+        }')
 
     if [ $DEBUG -ge 2 ]; then
         echo "  user_instances_config_script.IncludeUserInstanceVars: _inst=${_inst} U_NAME=${U_NAME} U_PROXY_MODE=${U_PROXY_MODE}" >&2
