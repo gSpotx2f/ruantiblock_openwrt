@@ -205,8 +205,8 @@ export CONFIG_SCRIPT_USER_INSTANCES="${SCRIPTS_DIR}/config_script_user_instances
 BLLIST_SOURCES_SCRIPT="${SCRIPTS_DIR}/blacklist_sources"
 
 ### Event scripts
-START_SCRIPT="${MODULES_DIR}/start_script"
-STOP_SCRIPT="${MODULES_DIR}/stop_script"
+POST_START_SCRIPT="${MODULES_DIR}/post_start_script"
+POST_STOP_SCRIPT="${MODULES_DIR}/post_stop_script"
 PRE_UPDATE_SCRIPT="${MODULES_DIR}/pre_update_script"
 POST_UPDATE_SCRIPT="${MODULES_DIR}/post_update_script"
 
@@ -1104,9 +1104,9 @@ Update() {
         MakeLogRecord "err" "${_arg} - Error! Another instance of update is already running"
         _return_code=2
     else
-        ### Pre-update script
-        [ -x "$PRE_UPDATE_SCRIPT" ] && $PRE_UPDATE_SCRIPT > /dev/null 2>&1 &
         ToggleUPIDFile add
+        ### Pre-update script
+        [ -x "$PRE_UPDATE_SCRIPT" ] && $PRE_UPDATE_SCRIPT
         echo " ${NAME} ${_arg}..."
         MakeLogRecord "notice" "${_arg}..."
         if [ "$NFTSET_CLEAR_SETS" = "1" ]; then
@@ -1118,8 +1118,8 @@ Update() {
         _return_code=$?
         RestartDnsmasq
         ToggleUPIDFile del
-        ### Pre-update script
-        [ -x "$POST_UPDATE_SCRIPT" ] && $POST_UPDATE_SCRIPT > /dev/null 2>&1 &
+        ### Post-update script
+        [ -x "$POST_UPDATE_SCRIPT" ] && $POST_UPDATE_SCRIPT &
     fi
     MakeToken
     return $_return_code
@@ -1150,8 +1150,8 @@ Start() {
             $ROUTE_CHECK_EXEC start &> /dev/null &
         fi
         MakeInstancesCache
-        ### Start-script
-        [ -x "$START_SCRIPT" ] && $START_SCRIPT > /dev/null 2>&1 &
+        ### Post-start script
+        [ -x "$POST_START_SCRIPT" ] && $POST_START_SCRIPT &
     fi
     rm -f "$START_PID_FILE"
     MakeToken
@@ -1169,8 +1169,8 @@ Stop() {
         if [ -x "$ROUTE_CHECK_EXEC" ]; then
             $ROUTE_CHECK_EXEC stop &> /dev/null
         fi
-        ### Stop-script
-        [ -x "$STOP_SCRIPT" ] && $STOP_SCRIPT > /dev/null 2>&1 &
+        ### Post-stop script
+        [ -x "$POST_STOP_SCRIPT" ] && $POST_STOP_SCRIPT &
         MakeToken
     else
         echo " ${NAME} does not running" >&2
