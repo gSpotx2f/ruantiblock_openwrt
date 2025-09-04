@@ -13,17 +13,20 @@ msgstr ""
 "Language: ru\n"
 "X-Generator: Poedit 2.0.6\n"
 
+msgid "<code>!pattern</code> - entries that do not match the pattern."
+msgstr "<code>!шаблон</code> - записи не совпадающие с шаблоном."
+
 msgid "2nd level domains that are excluded from optimization"
 msgstr "Домены 2-го уровня не подлежащие оптимизации"
 
 msgid "Add user entries to the blacklist when updating"
 msgstr "Добавлять записи пользователя в блэклист при обновлении"
 
-msgid "Alert"
-msgstr "Тревога"
-
 msgid "All"
 msgstr "Все"
+
+msgid "All entries"
+msgstr "Все записи"
 
 msgid "All entries except matching patterns"
 msgstr "Все записи, кроме соответствующих шаблонам"
@@ -42,6 +45,9 @@ msgstr "Произошла ошибка при попытке получить �
 
 msgid "Apply"
 msgstr "Применить"
+
+msgid "Apply pattern as regular expression"
+msgstr "Применять фильтр как регулярное выражение"
 
 msgid "Apply proxy rules to router application traffic"
 msgstr "Применять правила прокси к трафику приложений роутера"
@@ -95,9 +101,6 @@ msgstr "Содержимое сохранено."
 msgid "Convert cyrillic domains to punycode"
 msgstr "Конвертировать кириллические домены в punycode"
 
-msgid "Critical"
-msgstr "Критическая ситуация"
-
 msgid "Current schedule"
 msgstr "Текущее расписание"
 
@@ -109,9 +112,6 @@ msgstr "DNS сервер для FQDN записей списка исключе�
 
 msgid "Day"
 msgstr "День"
-
-msgid "Debug"
-msgstr "Отладка"
 
 msgid "Description"
 msgstr "Описание"
@@ -142,9 +142,6 @@ msgstr "Изменить"
 
 msgid "Edit entries"
 msgstr "Изменить записи"
-
-msgid "Emergency"
-msgstr "Чрезвычайная ситуация"
 
 msgid "Enable"
 msgstr "Включить"
@@ -245,9 +242,6 @@ msgstr "Режим ограничения IP адресов"
 msgid "IP subnet patterns (/24) that are excluded from optimization"
 msgstr "Шаблоны IP подсетей (/24) не подлежащих оптимизации"
 
-msgid "Info"
-msgstr "Информация"
-
 msgid "Instance"
 msgstr "Экземпляр"
 
@@ -305,6 +299,9 @@ msgstr "Минута"
 msgid "Module settings"
 msgstr "Настройки модуля"
 
+msgid "More entries"
+msgstr "Больше записей"
+
 msgid "Name"
 msgstr "Имя"
 
@@ -322,9 +319,6 @@ msgstr "Нет данных"
 
 msgid "No entries available..."
 msgstr "Нет доступных записей..."
-
-msgid "Notice"
-msgstr "Сообщение"
 
 msgid "Number of entries"
 msgstr "Кол-во записей"
@@ -597,9 +591,6 @@ msgstr "Режим VPN"
 
 msgid "VPN routing error! Need restart"
 msgstr "Ошибка маршрутизации VPN! Необходим перезапуск"
-
-msgid "Warning"
-msgstr "Внимание"
 
 msgid "all"
 msgstr "все"

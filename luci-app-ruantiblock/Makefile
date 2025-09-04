@@ -5,8 +5,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-ruantiblock
-PKG_VERSION:=2.1.6
-PKG_RELEASE:=3
+PKG_VERSION:=2.1.7
+PKG_RELEASE:=1
 LUCI_TITLE:=LuCI support for ruantiblock
 LUCI_DEPENDS:=+ruantiblock
 LUCI_PKGARCH:=all

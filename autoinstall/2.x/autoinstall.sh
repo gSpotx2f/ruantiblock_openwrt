@@ -10,9 +10,9 @@ LUCI_APP=1
 HTTPS_DNS_PROXY=1
 
 OWRT_VERSION="current"
-RUAB_VERSION="2.1.6-r3"
-RUAB_MOD_LUA_VERSION="2.1.6-r1"
-RUAB_LUCI_APP_VERSION="2.1.6-r3"
+RUAB_VERSION="2.1.7-r1"
+RUAB_MOD_LUA_VERSION="2.1.7-r1"
+RUAB_LUCI_APP_VERSION="2.1.7-r1"
 BASE_URL="https://raw.githubusercontent.com/gSpotx2f/packages-openwrt/master"
 PKG_DIR="/tmp"
 
@@ -29,7 +29,6 @@ URL_LUCI_APP_PKG="${BASE_URL}/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_LUCI_A
 URL_LUCI_APP_RU_PKG="${BASE_URL}/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
 ### tor
 URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/tor/etc/tor/torrc"
-URL_LUA_IDN="https://raw.githubusercontent.com/haste/lua-idn/master/idn.lua"
 
 ### Local files
 
@@ -55,7 +54,6 @@ FILE_INIT_SCRIPT="${PREFIX}/etc/init.d/ruantiblock"
 FILE_MAIN_SCRIPT="${EXEC_DIR}/ruantiblock"
 ### tor
 FILE_TORRC="${PREFIX}/etc/tor/torrc"
-FILE_LUA_IDN="${PREFIX}/usr/lib/lua/idn.lua"
 
 AWK_CMD="awk"
 WGET_CMD="$(which wget)"
@@ -228,7 +226,6 @@ InstallLuaModule() {
     InstallPackages "lua" "luasocket" "luasec" "luabitop"
     RemoveFile "$FILE_MOD_LUA_PKG" > /dev/null
     DlFile "$URL_MOD_LUA_PKG" "$FILE_MOD_LUA_PKG" && $OPKG_CMD install "$FILE_MOD_LUA_PKG"
-    FileExists "$FILE_LUA_IDN" || DlFile "$URL_LUA_IDN" "$FILE_LUA_IDN"
     $UCI_CMD set ruantiblock.config.bllist_module="/usr/libexec/ruantiblock/ruab_parser.lua"
     $UCI_CMD commit ruantiblock
 }

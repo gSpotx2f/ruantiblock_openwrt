@@ -54,9 +54,6 @@ return baseclass.extend({
 
 		// syslog-ng
 		syslog_ngHandler(strArray, lineNum) {
-			if(!(strArray[2] in this.logHosts)) {
-				this.logHosts[strArray[2]] = this.makeLogHostsDropdownItem(strArray[2]);
-			};
 			return [
 				lineNum,                               // #         (Number)
 				strArray[1],                           // Timestamp (String)
@@ -130,8 +127,7 @@ return baseclass.extend({
 						this.logTimestampFlag  = true;
 						this.logFacilitiesFlag = true;
 						this.logLevelsFlag     = true;
-						this.logHostsFlag      = false;
-						this.logHosts          = {};
+						this.logHostFlag       = false;
 						this.entriesHandler    = this.logdHandler;
 						this.logCols           = [
 							'#',
@@ -148,7 +144,7 @@ return baseclass.extend({
 						this.logTimestampFlag  = true;
 						this.logFacilitiesFlag = false;
 						this.logLevelsFlag     = false;
-						this.logHostsFlag      = true;
+						this.logHostFlag       = true;
 						this.logFacilities     = {};
 						this.logLevels         = {};
 						this.entriesHandler    = this.syslog_ngHandler;

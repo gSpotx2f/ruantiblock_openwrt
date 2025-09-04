@@ -1,16 +1,19 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
+msgid "<code>!pattern</code> - entries that do not match the pattern."
+msgstr ""
+
 msgid "2nd level domains that are excluded from optimization"
 msgstr ""
 
 msgid "Add user entries to the blacklist when updating"
 msgstr ""
 
-msgid "Alert"
+msgid "All"
 msgstr ""
 
-msgid "All"
+msgid "All entries"
 msgstr ""
 
 msgid "All entries except matching patterns"
@@ -26,6 +29,9 @@ msgid "An error occurred while trying to get the log size!"
 msgstr ""
 
 msgid "Apply"
+msgstr ""
+
+msgid "Apply pattern as regular expression"
 msgstr ""
 
 msgid "Apply proxy rules to router application traffic"
@@ -80,9 +86,6 @@ msgstr ""
 msgid "Convert cyrillic domains to punycode"
 msgstr ""
 
-msgid "Critical"
-msgstr ""
-
 msgid "Current schedule"
 msgstr ""
 
@@ -93,9 +96,6 @@ msgid "DNS server that is used for the FQDN entries of exclusion list"
 msgstr ""
 
 msgid "Day"
-msgstr ""
-
-msgid "Debug"
 msgstr ""
 
 msgid "Description"
@@ -128,8 +128,6 @@ msgstr ""
 msgid "Edit entries"
 msgstr ""
 
-msgid "Emergency"
-msgstr ""
 msgid "Enable"
 msgstr ""
 
@@ -226,9 +224,6 @@ msgstr ""
 msgid "IP subnet patterns (/24) that are excluded from optimization"
 msgstr ""
 
-msgid "Info"
-msgstr ""
-
 msgid "Instance"
 msgstr ""
 
@@ -286,6 +281,9 @@ msgstr ""
 msgid "Module settings"
 msgstr ""
 
+msgid "More entries"
+msgstr ""
+
 msgid "Name"
 msgstr ""
 
@@ -302,9 +300,6 @@ msgid "No data"
 msgstr ""
 
 msgid "No entries available..."
-msgstr ""
-
-msgid "Notice"
 msgstr ""
 
 msgid "Number of entries"
@@ -551,9 +546,6 @@ msgid "VPN mode"
 msgstr ""
 
 msgid "VPN routing error! Need restart"
-msgstr ""
-
-msgid "Warning"
 msgstr ""
 
 msgid "all"

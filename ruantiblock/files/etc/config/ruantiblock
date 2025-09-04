@@ -27,7 +27,7 @@ config main 'config'
 	option bllist_sd_limit '16'
 	option bllist_fqdn_filter '1'
 	option bllist_fqdn_filter_type '0'
-	option bllist_enable_idn '0'
+	option bllist_enable_idn '1'
 	option bllist_alt_nslookup '0'
 	option bllist_alt_dns_addr '8.8.8.8'
 

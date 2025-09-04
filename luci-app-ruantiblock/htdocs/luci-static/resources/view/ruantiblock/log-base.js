@@ -107,6 +107,7 @@ log-emerg td {
 }
 .log-info {
 	background-color: var(--app-log-info) !important;
+	/*color: var(--app-log-dark-font-color) !important;*/
 }
 .log-debug {
 	background-color: var(--app-log-debug) !important;
@@ -256,7 +257,9 @@ return baseclass.extend({
 
 		timeFilterReValue    : false,
 
-		hostFilterValue      : [],
+		hostFilterValue      : null,
+
+		hostFilterReValue    : false,
 
 		facilityFilterValue  : [],
 
@@ -274,17 +277,13 @@ return baseclass.extend({
 
 		logTimestampFlag     : false,
 
-		logHostsFlag         : false,
+		logHostFlag          : false,
 
 		logFacilitiesFlag    : false,
 
 		logLevelsFlag        : false,
 
-		logHosts             : {},
-
 		logLevelsStat        : {},
-
-		logHostsDropdown     : null,
 
 		logFacilitiesDropdown: null,
 
@@ -315,6 +314,44 @@ return baseclass.extend({
 			return (/^[0-9]+$/.test(value)) ? value : 0
 		},
 
+		makeRegExpButton(filterEl, checked) {
+			const btnOnClass  = 'cbi-button-positive btn important',
+			      btnOnStyle  = 'text-decoration:none',
+			      btnOffClass = 'cbi-button-neutral btn',
+			      btnOffStyle = 'text-decoration:line-through';
+			let btn = E('button', {
+				'class': checked ? btnOnClass : btnOffClass,
+				'style': checked ? btnOnStyle : btnOffStyle,
+				'title': _('Apply pattern as regular expression'),
+				'click': ev => {
+					ev.target.toggle();
+					filterEl.focus();
+					ev.preventDefault();
+				},
+			}, 'RE');
+			btn._state  = checked;
+			btn._on     = function() {
+				this._state    = true;
+				this.className = btnOnClass;
+				this.style     = btnOnStyle;
+			};
+			btn._off    = function() {
+				this._state    = false;
+				this.className = btnOffClass;
+				this.style     = btnOffStyle;
+			};
+			btn.checked = function() {
+				return this._state;
+			};
+			btn.toggle  = function() {
+				this._state ? this._off() : this._on();
+			};
+			btn.set     = function(flag) {
+				flag ? this._on() : this._off();
+			};
+			return btn;
+		},
+
 		makeLogConvertTimestampSection() {
 			if(!this.enableConvertTimestamp) {
 				return '';
@@ -330,7 +367,7 @@ return baseclass.extend({
 						E('label', {}),
 					]),
 					E('div', { 'class': 'cbi-value-description' },
-						_('Convert timestamps to a human readable date')
+						_('Convert timestamps to a human readable date.')
 					),
 				]),
 			]);
@@ -342,70 +379,52 @@ return baseclass.extend({
 					'class': 'cbi-value-title',
 					'for'  : 'timeFilter',
 				}, _('Timestamp filter')),
-				E('div', { 'class': 'cbi-value-field' },
+				E('div', { 'class': 'cbi-value-field' }, [
 					E('span', { 'class': 'control-group' }, [
 						this.timeFilter,
 						E('button', {
-							'class': 'cbi-button btn',
-							'click': L.bind(ev => {
+							'class': 'cbi-button-neutral btn',
+							'click': ev => {
 								ev.target.blur();
 								ev.preventDefault();
 								this.timeFilter.value = null;
 								this.timeFilter.focus();
-							}, this),
+							},
 						}, '&#9003;'),
-					])
-				),
-			]);
-		},
-
-		makeLogtimeFilterReSection() {
-			return E('div', { 'class': 'cbi-value' }, [
-				E('label', {
-					'class': 'cbi-value-title',
-					'for'  : 'timeFilterRe',
-				}, _('Filter is regexp')),
-				E('div', { 'class': 'cbi-value-field' }, [
-					E('div', { 'class': 'cbi-checkbox' }, [
-						this.timeFilterRe,
-						E('label', {}),
+						this.timeFilterReBtn,
 					]),
 					E('div', { 'class': 'cbi-value-description' },
-						_('Apply timestamp filter as regular expression')
+						_('<code>!pattern</code> - entries that do not match the pattern.')
 					),
 				]),
 			]);
 		},
 
-		makeLogHostsDropdownItem(host) {
-			return E(
-				'span',
-				{ 'class': 'zonebadge log-host-dropdown-item' },
-				E('strong', host)
-			);
-		},
-
-		makeLogHostsDropdownSection() {
-			this.logHostsDropdown = new ui.Dropdown(
-				null,
-				this.logHosts,
-				{
-					id                : 'logHostsDropdown',
-					multiple          : true,
-					select_placeholder: _('All'),
-				}
-			);
-			return E(
-				'div', { 'class': 'cbi-value' }, [
-					E('label', {
-						'class': 'cbi-value-title',
-						'for'  : 'logHostsDropdown',
-					}, _('Hosts')),
-					E('div', { 'class': 'cbi-value-field' },
-						this.logHostsDropdown.render()
+		makeLogHostFilterSection() {
+			return E('div', { 'class': 'cbi-value' }, [
+				E('label', {
+					'class': 'cbi-value-title',
+					'for'  : 'hostFilter',
+				}, _('Host filter')),
+				E('div', { 'class': 'cbi-value-field' }, [
+					E('span', { 'class': 'control-group' }, [
+						this.hostFilter,
+						E('button', {
+							'class': 'cbi-button-neutral btn',
+							'click': ev => {
+								ev.target.blur();
+								ev.preventDefault();
+								this.hostFilter.value = null;
+								this.hostFilter.focus();
+							},
+						}, '&#9003;'),
+						this.hostFilterReBtn,
+					]),
+					E('div', { 'class': 'cbi-value-description' },
+						_('<code>!pattern</code> - entries that do not match the pattern.')
 					),
-				]
-			);
+				]),
+			]);
 		},
 
 		makeLogFacilitiesDropdownSection() {
@@ -456,13 +475,13 @@ return baseclass.extend({
 			);
 		},
 
-		setRegexpValidator(elem, flag) {
+		setRegexpValidator(elem, flagEl) {
 			ui.addValidator(
 				elem,
 				'string',
 				true,
 				v => {
-					if(!flag.checked) {
+					if(!flagEl.checked()) {
 						return true;
 					};
 					try {
@@ -485,10 +504,11 @@ return baseclass.extend({
 					this.convertTimestampValue = this.convertTimestamp.checked;
 				};
 				this.timeFilterValue   = this.timeFilter.value;
-				this.timeFilterReValue = this.timeFilterRe.checked;
+				this.timeFilterReValue = this.timeFilterReBtn.checked()
 			};
-			if(this.logHostsFlag) {
-				this.hostFilterValue = this.logHostsDropdown.getValue();
+			if(this.logHostFlag) {
+				this.hostFilterValue   = this.hostFilter.value;
+				this.hostFilterReValue = this.hostFilterReBtn.checked()
 			};
 			if(this.logFacilitiesFlag) {
 				this.facilityFilterValue = this.logFacilitiesDropdown.getValue();
@@ -497,7 +517,8 @@ return baseclass.extend({
 				this.levelFilterValue = this.logLevelsDropdown.getValue();
 			};
 			this.msgFilterValue   = this.msgFilter.value;
-			this.msgFilterReValue = this.msgFilterRe.checked;
+			this.msgFilterReValue = this.msgFilterReBtn.checked()
+
 			this.logSortingValue  = this.logSorting.value;
 			this.autoRefreshValue = this.autoRefresh.checked;
 			if(this.autorefreshOn) {
@@ -517,11 +538,12 @@ return baseclass.extend({
 				if(this.enableConvertTimestamp) {
 					this.convertTimestamp.checked = this.convertTimestampValue;
 				};
-				this.timeFilter.value     = this.timeFilterValue;
-				this.timeFilterRe.checked = this.timeFilterReValue;
+				this.timeFilter.value = this.timeFilterValue;
+				this.timeFilterReBtn.set(this.timeFilterReValue);
 			};
-			if(this.logHostsFlag) {
-				this.logHostsDropdown.setValue(this.hostFilterValue);
+			if(this.logHostFlag) {
+				this.hostFilter.value = this.hostFilterValue;
+				this.hostFilterReBtn.set(this.hostFilterReValue);
 			};
 			if(this.logFacilitiesFlag) {
 				this.logFacilitiesDropdown.setValue(this.facilityFilterValue);
@@ -529,8 +551,9 @@ return baseclass.extend({
 			if(this.logLevelsFlag) {
 				this.logLevelsDropdown.setValue(this.levelFilterValue);
 			};
-			this.msgFilter.value     = this.msgFilterValue;
-			this.msgFilterRe.checked = this.msgFilterReValue;
+			this.msgFilter.value = this.msgFilterValue;
+			this.msgFilterReBtn.set(this.msgFilterReValue);
+
 			this.logSorting.value    = this.logSortingValue;
 			this.autoRefresh.checked = this.autoRefreshValue;
 		},
@@ -586,35 +609,63 @@ return baseclass.extend({
 		},
 
 		setStringFilter(entriesArray, fieldNum, pattern) {
-			let fArr = [];
+			let not     = pattern.startsWith('!');
+			pattern     = pattern.replace(/^!/, '');
+			let isHFunc = (typeof(this.filterHighlightFunc) == 'function');
+			let fArr    = [];
+			if(!pattern) {
+				return entriesArray;
+			};
 			entriesArray.forEach((e, i) => {
-				if(e[fieldNum] !== null && e[fieldNum].includes(pattern)) {
-					if(typeof(this.filterHighlightFunc) == 'function') {
-						e[fieldNum] = e[fieldNum].replace(pattern, this.filterHighlightFunc);
+				if(e[fieldNum] == null) {
+					return;
+				};
+				if(not) {
+					if(!(e[fieldNum].includes(pattern))) {
+						fArr.push(e);
 					};
-					fArr.push(e);
+				} else {
+					if(e[fieldNum].includes(pattern)) {
+						if(isHFunc) {
+							e[fieldNum] = e[fieldNum].replace(pattern, this.filterHighlightFunc);
+						};
+						fArr.push(e);
+					};
 				};
 			});
 			return fArr;
 		},
 
-		setRegexpFilter(entriesArray, fieldNum, pattern, formElem) {
-			let fArr = [];
+		setRegexpFilter(entriesArray, fieldNum, pattern) {
+			let not     = pattern.startsWith('!');
+			pattern     = pattern.replace(/^!/, '');
+			let isHFunc = (typeof(this.filterHighlightFunc) == 'function');
+			let fArr    = [];
+			if(!pattern) {
+				return entriesArray;
+			};
 			try {
 				let regExp = new RegExp(pattern, 'giu');
 				entriesArray.forEach((e, i) => {
-					if(e[fieldNum] !== null && regExp.test(e[fieldNum])) {
-						if(this.filterHighlightFunc) {
-							e[fieldNum] = e[fieldNum].replace(regExp, this.filterHighlightFunc);
+					if(e[fieldNum] == null) {
+						return;
+					};
+					if(not) {
+						if(!(regExp.test(e[fieldNum]))) {
+							fArr.push(e);
 						};
-						fArr.push(e);
+					} else {
+						if(regExp.test(e[fieldNum])) {
+							if(isHFunc) {
+								e[fieldNum] = e[fieldNum].replace(regExp, this.filterHighlightFunc);
+							};
+							fArr.push(e);
+						};
 					};
 					regExp.lastIndex = 0;
 				});
 			} catch(err) {
 				if(err.name == 'SyntaxError') {
-					ui.addNotification(null,
-						E('p', {}, _('Invalid regular expression') + ': ' + err.message));
 					return entriesArray;
 				} else {
 					throw err;
@@ -629,20 +680,18 @@ return baseclass.extend({
 				return entriesArray;
 			};
 			return (this.timeFilterReValue) ?
-				this.setRegexpFilter(entriesArray, 1, fPattern, this.timeFilter) :
+				this.setRegexpFilter(entriesArray, 1, fPattern) :
 					this.setStringFilter(entriesArray, 1, fPattern);
 		},
 
 		setHostFilter(entriesArray) {
-			let logHostsKeys = Object.keys(this.logHosts);
-			if(logHostsKeys.length > 0 && this.logHostsDropdown) {
-				this.logHostsDropdown.addChoices(logHostsKeys, this.logHosts);
-				if(this.hostFilterValue.length == 0) {
-					return entriesArray;
-				};
-				return entriesArray.filter(e => this.hostFilterValue.includes(e[2]));
+			let fPattern = this.hostFilterValue;
+			if(!fPattern) {
+				return entriesArray;
 			};
-			return entriesArray;
+			return (this.hostFilterReValue) ?
+				this.setRegexpFilter(entriesArray, 2, fPattern) :
+					this.setStringFilter(entriesArray, 2, fPattern);
 		},
 
 		setFacilityFilter(entriesArray) {
@@ -673,7 +722,7 @@ return baseclass.extend({
 				return entriesArray;
 			};
 			return (this.msgFilterReValue) ?
-				this.setRegexpFilter(entriesArray, 5, fPattern, this.msgFilter) :
+				this.setRegexpFilter(entriesArray, 5, fPattern) :
 					this.setStringFilter(entriesArray, 5, fPattern);
 		},
 
@@ -803,18 +852,14 @@ return baseclass.extend({
 					if(this.logTimestampFlag && !this.logTimeFilterElem) {
 						this.logTimeFilterElem = this.makeLogTimeFilterSection();
 					};
-					if(this.logTimestampFlag && !this.logtimeFilterReElem) {
-						this.logtimeFilterReElem = this.makeLogtimeFilterReSection();
+					if(this.logHostFlag && !this.logHostFilterElem) {
+						this.logHostFilterElem = this.makeLogHostFilterSection();
 					};
-
 					if(this.logFacilitiesFlag && !this.logFacilitiesDropdown) {
 						this.logFacilitiesDropdownElem = this.makeLogFacilitiesDropdownSection();
 					};
 					if(this.logLevelsFlag && !this.logLevelsDropdown) {
 						this.logLevelsDropdownElem = this.makeLogLevelsDropdownSection();
-					};
-					if(this.logHostsFlag && !this.logHostsDropdown) {
-						this.logHostsDropdownElem = this.makeLogHostsDropdownSection();
 					};
 				};
 
@@ -845,21 +890,20 @@ return baseclass.extend({
 									E('span', { 'class': 'control-group' }, [
 										this.tailInput,
 										E('button', {
-											'class': 'cbi-button btn',
-											'click': L.bind(ev => {
+											'class': 'cbi-button-neutral btn',
+											'click': ev => {
 												ev.target.blur();
 												ev.preventDefault();
 												this.tailInput.value = 0;
 												this.tailInput.focus();
-											}, this),
+											},
 										}, '&#9003;'),
 									])
 								),
 							]),
 							this.logConvertTimestampElem,
 							this.logTimeFilterElem,
-							this.logtimeFilterReElem,
-							this.logHostsDropdownElem,
+							this.logHostFilterElem,
 							this.logFacilitiesDropdownElem,
 							this.logLevelsDropdownElem,
 							E('div', { 'class': 'cbi-value' }, [
@@ -867,33 +911,22 @@ return baseclass.extend({
 									'class': 'cbi-value-title',
 									'for'  : 'msgFilter',
 								}, _('Message filter')),
-								E('div', { 'class': 'cbi-value-field' },
+								E('div', { 'class': 'cbi-value-field' }, [
 									E('span', { 'class': 'control-group' }, [
 										this.msgFilter,
 										E('button', {
-											'class': 'cbi-button btn',
-											'click': L.bind(ev => {
+											'class': 'cbi-button-neutral btn',
+											'click': ev => {
 												ev.target.blur();
 												ev.preventDefault();
 												this.msgFilter.value = null;
 												this.msgFilter.focus();
-											}, this),
+											},
 										}, '&#9003;'),
-									])
-								)
-							]),
-							E('div', { 'class': 'cbi-value' }, [
-								E('label', {
-									'class': 'cbi-value-title',
-									'for'  : 'msgFilterRe',
-								}, _('Filter is regexp')),
-								E('div', { 'class': 'cbi-value-field' }, [
-									E('div', { 'class': 'cbi-checkbox' }, [
-										this.msgFilterRe,
-										E('label', {}),
+										this.msgFilterReBtn,
 									]),
 									E('div', { 'class': 'cbi-value-description' },
-										_('Apply message filter as regular expression')
+										_('<code>!pattern</code> - entries that do not match the pattern.')
 									),
 								]),
 							]),
@@ -1057,10 +1090,10 @@ return baseclass.extend({
 			ui.addValidator(this.tailInput, 'uinteger', true);
 
 			this.convertTimestamp = E('input', {
-				'id'   : 'convertTimestamp',
-				'name' : 'convertTimestamp',
-				'type' : 'checkbox',
-				'form' : 'logFilterForm',
+				'id'  : 'convertTimestamp',
+				'name': 'convertTimestamp',
+				'type': 'checkbox',
+				'form': 'logFilterForm',
 			});
 			this.convertTimestamp.checked = this.convertTimestampValue;
 
@@ -1073,27 +1106,30 @@ return baseclass.extend({
 				'placeholder': _('Type a search pattern...'),
 			});
 
-			this.timeFilterRe = E('input', {
-				'id'    : 'timeFilterRe',
-				'name'  : 'timeFilterRe',
-				'type'  : 'checkbox',
-				'form'  : 'logFilterForm',
-				'change': ev => this.timeFilter.focus(),
+			this.timeFilterReBtn = this.makeRegExpButton(this.timeFilter, this.timeFilterReValue);
+			this.setRegexpValidator(this.timeFilter, this.timeFilterReBtn);
+
+			this.hostFilter = E('input', {
+				'id'         : 'hostFilter',
+				'name'       : 'hostFilter',
+				'type'       : 'text',
+				'form'       : 'logFilterForm',
+				'class'      : 'cbi-input-text',
+				'placeholder': _('Type a search pattern...'),
 			});
 
-			this.setRegexpValidator(this.timeFilter, this.timeFilterRe);
+			this.hostFilterReBtn = this.makeRegExpButton(this.hostFilter, this.hostFilterReValue);
+			this.setRegexpValidator(this.hostFilter, this.hostFilterReBtn);
 
 			this.logConvertTimestampElem   = '';
 			this.logTimeFilterElem         = '';
-			this.logtimeFilterReElem       = '';
-			this.logHostsDropdownElem      = '';
+			this.logHostFilterElem         = '';
 			this.logFacilitiesDropdownElem = '';
 			this.logLevelsDropdownElem     = '';
 
 			if(this.logTimestampFlag) {
 				this.logConvertTimestampElem = this.makeLogConvertTimestampSection();
 				this.logTimeFilterElem       = this.makeLogTimeFilterSection();
-				this.logtimeFilterReElem     = this.makeLogtimeFilterReSection();
 			};
 			if(this.logLevelsFlag) {
 				this.logLevelsDropdownElem = this.makeLogLevelsDropdownSection();
@@ -1101,8 +1137,8 @@ return baseclass.extend({
 			if(this.logFacilitiesFlag) {
 				this.logFacilitiesDropdownElem = this.makeLogFacilitiesDropdownSection();
 			};
-			if(this.logHostsFlag) {
-				this.logHostsDropdownElem = this.makeLogHostsDropdownSection();
+			if(this.logHostFlag) {
+				this.logHostFilterElem = this.makeLogHostFilterSection();
 			};
 
 			this.msgFilter = E('input', {
@@ -1114,15 +1150,8 @@ return baseclass.extend({
 				'placeholder': _('Type a search pattern...'),
 			});
 
-			this.msgFilterRe = E('input', {
-				'id'    : 'msgFilterRe',
-				'name'  : 'msgFilterRe',
-				'type'  : 'checkbox',
-				'form'  : 'logFilterForm',
-				'change': ev => this.msgFilter.focus(),
-			});
-
-			this.setRegexpValidator(this.msgFilter, this.msgFilterRe);
+			this.msgFilterReBtn = this.makeRegExpButton(this.msgFilter, this.msgFilterReValue);
+			this.setRegexpValidator(this.msgFilter, this.msgFilterReBtn);
 
 			this.logSorting = E('select', {
 				'id'   : 'logSorting',

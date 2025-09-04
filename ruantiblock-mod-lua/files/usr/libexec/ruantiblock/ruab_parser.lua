@@ -309,7 +309,7 @@ function BlackListParser:convert_encoding(input)
     if self.ICONV_TYPE == "lua" and self.iconv_handler then
         output = self.iconv_handler:iconv(input)
     elseif self.ICONV_TYPE == "standalone" and self.ICONV_CMD then
-        local iconv_handler = assert(io.popen('printf \'' .. input .. '\' | ' .. self.ICONV_CMD .. ' -f "' .. self.site_encoding .. '" -t "' .. self.encoding .. '"', 'r'))
+        local iconv_handler = assert(io.popen('printf \'%s\' \'' .. input .. '\' | ' .. self.ICONV_CMD .. ' -f "' .. self.site_encoding .. '" -t "' .. self.encoding .. '"', 'r'))
         output = iconv_handler:read("*a")
         iconv_handler:close()
     end
