@@ -22,8 +22,8 @@ CheckIfaceStatus() {
 }
 
 VpnRouteInstanceStatus() {
-    local _vpn_route_table_id=$1
-    [ -n "$($IP_CMD route show table $_vpn_route_table_id 2> /dev/null)" ] && return 0
+    local _route_table_id=$1
+    $IP_CMD route show table $_route_table_id 2> /dev/null | $AWK_CMD 'BEGIN {code=1} /^(default|local)/ {code=0} END {exit code}' && return 0
     return 1
 }
 

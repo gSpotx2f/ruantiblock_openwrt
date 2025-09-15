@@ -83,6 +83,8 @@ local Config = Class(nil, {
         ["BLLIST_FQDN_EXCLUDED_FILE"] = true,
         ["BLLIST_IP_EXCLUDED_ENABLE"] = true,
         ["BLLIST_IP_EXCLUDED_FILE"] = true,
+        ["BLLIST_CIDR_EXCLUDED_ENABLE"] = true,
+        ["BLLIST_CIDR_EXCLUDED_FILE"] = true,
     },
     BLLIST_FQDN_FILTER_PATTERNS = {},
     BLLIST_IP_FILTER_PATTERNS = {},
@@ -91,6 +93,7 @@ local Config = Class(nil, {
     BLLIST_GR_EXCLUDED_NETS_PATTERNS = {},
     BLLIST_FQDN_EXCLUDED_ITEMS = {},
     BLLIST_IP_EXCLUDED_ITEMS = {},
+    BLLIST_CIDR_EXCLUDED_ITEMS = {},
     -- iconv type: standalone iconv or lua-iconv (standalone, lua)
     ICONV_TYPE = "standalone",
     -- standalone iconv
@@ -99,7 +102,7 @@ local Config = Class(nil, {
     encoding = "UTF-8",
     site_encoding = "",
     http_send_headers = {
-        ["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0",
+        ["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/142.0",
     },
     connect_timeout = nil,
 })
@@ -168,60 +171,7 @@ Config.BLLIST_SUMMARIZE_IP = remap_bool(Config.BLLIST_SUMMARIZE_IP)
 Config.BLLIST_SUMMARIZE_CIDR = remap_bool(Config.BLLIST_SUMMARIZE_CIDR)
 Config.BLLIST_FQDN_EXCLUDED_ENABLE = remap_bool(Config.BLLIST_FQDN_EXCLUDED_ENABLE)
 Config.BLLIST_IP_EXCLUDED_ENABLE = remap_bool(Config.BLLIST_IP_EXCLUDED_ENABLE)
-
--- Loading filters
-
-function Config:load_filter_files()
-    function load_file(file, t, is_array)
-        local file_handler = io.open(file, "r")
-        if file_handler then
-            for line in file_handler:lines() do
-                if #line > 0 and line:match("^[^#]") then
-                    if is_array then
-                        t[#t + 1] = line
-                    else
-                        t[line] = true
-                    end
-                end
-            end
-            file_handler:close()
-        end
-    end
-    if self.BLLIST_FQDN_FILTER then
-        load_file(self.BLLIST_FQDN_FILTER_FILE, self.BLLIST_FQDN_FILTER_PATTERNS)
-    end
-    if self.BLLIST_IP_FILTER then
-        load_file(self.BLLIST_IP_FILTER_FILE, self.BLLIST_IP_FILTER_PATTERNS)
-    end
-    if self.BLLIST_GR_EXCLUDED_SLD_FILE then
-        load_file(self.BLLIST_GR_EXCLUDED_SLD_FILE, self.BLLIST_GR_EXCLUDED_SLD_PATTERNS)
-    end
-    if self.BLLIST_GR_EXCLUDED_SLD_MASKS_FILE then
-        load_file(self.BLLIST_GR_EXCLUDED_SLD_MASKS_FILE, self.BLLIST_GR_EXCLUDED_SLD_MASKS_PATTERNS, true)
-    end
-    if self.BLLIST_GR_EXCLUDED_NETS_FILE then
-        load_file(self.BLLIST_GR_EXCLUDED_NETS_FILE, self.BLLIST_GR_EXCLUDED_NETS_PATTERNS)
-    end
-    if self.BLLIST_FQDN_EXCLUDED_ENABLE then
-        load_file(self.BLLIST_FQDN_EXCLUDED_FILE, self.BLLIST_FQDN_EXCLUDED_ITEMS)
-    end
-    if self.BLLIST_IP_EXCLUDED_ENABLE then
-        load_file(self.BLLIST_IP_EXCLUDED_FILE, self.BLLIST_IP_EXCLUDED_ITEMS)
-    end
-end
-
-function Config:check_sld_masks(sld)
-    if #self.BLLIST_GR_EXCLUDED_SLD_MASKS_PATTERNS > 0 then
-        for _, pattern in ipairs(self.BLLIST_GR_EXCLUDED_SLD_MASKS_PATTERNS) do
-            if sld:find(pattern) then
-                return true
-            end
-        end
-    end
-    return false
-end
-
-Config:load_filter_files()
+Config.BLLIST_CIDR_EXCLUDED_ENABLE = remap_bool(Config.BLLIST_CIDR_EXCLUDED_ENABLE)
 
 -- Importing packages
 
@@ -250,6 +200,7 @@ end
 if not it then
     Config.BLLIST_SUMMARIZE_CIDR = false
     Config.BLLIST_SUMMARIZE_IP = false
+    Config.BLLIST_CIDR_EXCLUDED_ENABLE = false
 end
 --[[
 local zlib = prequire("zlib")
@@ -271,6 +222,113 @@ elseif Config.ICONV_TYPE == "lua" then
 else
     error("Config.ICONV_TYPE should be either 'lua' or 'standalone'")
 end
+
+-- Loading filters
+
+function Config:load_filter_files()
+    function load_file(file, t, is_array, func)
+        local file_handler = io.open(file, "r")
+        if file_handler then
+            for line in file_handler:lines() do
+                if #line > 0 and not line:match("^#") then
+                    if func then
+                        line = func(line)
+                    end
+                    if line ~= nil then
+                        if is_array then
+                            t[#t + 1] = line
+                        else
+                            t[line] = true
+                        end
+                    end
+                end
+            end
+            file_handler:close()
+        end
+    end
+
+    if self.BLLIST_FQDN_FILTER then
+        load_file(self.BLLIST_FQDN_FILTER_FILE, self.BLLIST_FQDN_FILTER_PATTERNS, true)
+    end
+    if self.BLLIST_IP_FILTER then
+        load_file(self.BLLIST_IP_FILTER_FILE, self.BLLIST_IP_FILTER_PATTERNS, true)
+    end
+    if self.BLLIST_GR_EXCLUDED_SLD_FILE then
+        load_file(self.BLLIST_GR_EXCLUDED_SLD_FILE, self.BLLIST_GR_EXCLUDED_SLD_PATTERNS)
+    end
+    if self.BLLIST_GR_EXCLUDED_SLD_MASKS_FILE then
+        load_file(self.BLLIST_GR_EXCLUDED_SLD_MASKS_FILE, self.BLLIST_GR_EXCLUDED_SLD_MASKS_PATTERNS, true)
+    end
+    if self.BLLIST_GR_EXCLUDED_NETS_FILE then
+        load_file(self.BLLIST_GR_EXCLUDED_NETS_FILE, self.BLLIST_GR_EXCLUDED_NETS_PATTERNS)
+    end
+    if self.BLLIST_FQDN_EXCLUDED_ENABLE then
+        load_file(self.BLLIST_FQDN_EXCLUDED_FILE, self.BLLIST_FQDN_EXCLUDED_ITEMS)
+    end
+    if self.BLLIST_IP_EXCLUDED_ENABLE then
+        load_file(self.BLLIST_IP_EXCLUDED_FILE, self.BLLIST_IP_EXCLUDED_ITEMS)
+    end
+    if self.BLLIST_CIDR_EXCLUDED_ENABLE then
+        load_file(self.BLLIST_CIDR_EXCLUDED_FILE, self.BLLIST_CIDR_EXCLUDED_ITEMS, true,
+            function(l)
+                if l:match("^%d%d?%d?%.%d%d?%d?%.%d%d?%d?%.%d%d?%d?/%d%d?$") then
+                    local a, p = it.get_network_addr(l)
+                    if a ~= nil and p ~= nil then
+                        return { [1] = a, [2] = p }
+                    end
+                end
+                return
+            end
+        )
+    end
+end
+
+function Config:check_filter(str, filter_patterns, reverse)
+    if filter_patterns and str then
+        for _, pattern in ipairs(filter_patterns) do
+            if str:match(pattern) then
+                return not reverse
+            end
+        end
+    end
+    return reverse
+end
+
+function Config:check_sld_masks(sld)
+    if #self.BLLIST_GR_EXCLUDED_SLD_MASKS_PATTERNS > 0 then
+        for _, pattern in ipairs(self.BLLIST_GR_EXCLUDED_SLD_MASKS_PATTERNS) do
+            if sld:find(pattern) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function Config:check_cidr_overlap_ip(ip)
+    if #self.BLLIST_CIDR_EXCLUDED_ITEMS > 0 then
+        for _, net in ipairs(self.BLLIST_CIDR_EXCLUDED_ITEMS) do
+            if it.overlap_ip(ip, net) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function Config:check_cidr_overlap_net(ip)
+    if #self.BLLIST_CIDR_EXCLUDED_ITEMS > 0 then
+        for _, net in ipairs(self.BLLIST_CIDR_EXCLUDED_ITEMS) do
+            if it.overlap_net(ip, net) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+Config:load_filter_files()
+
 
 ------------------------------ Classes -------------------------------
 
@@ -321,17 +379,6 @@ function BlackListParser:convert_to_punycode(input)
         input = self:convert_encoding(input)
     end
     return input and (idn.encode(input))
-end
-
-function BlackListParser:check_filter(str, filter_patterns, reverse)
-    if filter_patterns and str then
-        for pattern in pairs(filter_patterns) do
-            if str:match(pattern) then
-                return not reverse
-            end
-        end
-    end
-    return reverse
 end
 
 function BlackListParser:get_subnet(ip)
@@ -707,6 +754,23 @@ function OptimizeConfig:new(t)
     return instance
 end
 
+function OptimizeConfig:_exclude_nets()
+    local ip_table = {}
+    for ip, subnet in pairs(self.ip_table) do
+        if not self:check_cidr_overlap_ip(ip) then
+            ip_table[ip] = subnet
+        end
+    end
+    self.ip_table = ip_table
+    local cidr_table = {}
+    for net in pairs(self.cidr_table) do
+        if not self:check_cidr_overlap_net(net) then
+            cidr_table[net] = true
+        end
+    end
+    self.cidr_table = cidr_table
+end
+
 function OptimizeConfig:_remove_subdomains()
     local tld_table = {}
     for fqdn, sld in pairs(self.fqdn_table) do
@@ -791,6 +855,9 @@ function OptimizeConfig:optimize()
         self:_union(self.ip_subnet_table, i.ip_subnet_table)
         self:_union(self.fqdn_table, i.fqdn_table)
         self:_union(self.sld_table, i.sld_table)
+    end
+    if self.BLLIST_CIDR_EXCLUDED_ENABLE then
+        self:_exclude_nets()
     end
     self:_remove_subdomains()
     self:_optimize_fqdn_table()
@@ -1146,6 +1213,7 @@ if parser_classes then
     for _, i in ipairs(parser_instances) do
         ret_list[i:run()] = true
     end
+
     local return_sum = 0
     for i, _ in pairs(ret_list) do
         return_sum = return_sum + i
@@ -1161,4 +1229,5 @@ if parser_classes then
 else
     error("Wrong configuration! (Config.BLLIST_MODE, Config.BLLIST_SOURCE)")
 end
+
 os.exit(ret_list[1] and 1 or (ret_list[2] and 2 or 0))

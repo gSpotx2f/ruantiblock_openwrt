@@ -62,11 +62,12 @@ NftRouteAdd() {
             echo 0 > "/proc/sys/net/ipv4/conf/${_if_vpn}/rp_filter"
             NftRouteDelete "$_route_table_id" 2> /dev/null
             $IP_CMD rule add fwmark "$_pkts_mark" table "$_route_table_id" priority "$VPN_RULE_PRIO"
-            $IP_CMD route add default via "$_vpn_ip" table "$_route_table_id"
+            $IP_CMD route add default via "$_vpn_ip" table "$_route_table_id" metric 100
             if [ $? -ne 0 ]; then
                 echo "  Error! An error occurred while adding the route. Routing table id=${_route_table_id}, VPN gateway IP=${_vpn_ip}" >&2
                 MakeLogRecord "err" "Error! An error occurred while adding the route. Routing table id=${_route_table_id}, VPN gateway IP=${_vpn_ip}"
             fi
+            $IP_CMD route add blackhole default table "$_route_table_id" metric 200
 
             if [ $DEBUG -ge 1 ]; then
                 echo "  nft_functions.NftRouteAdd: ${IP_CMD} rule add fwmark ${_pkts_mark} table ${_route_table_id} priority ${VPN_RULE_PRIO}" >&2
@@ -80,7 +81,7 @@ NftRouteAdd() {
 
 NftRouteStatus() {
     local _route_table_id=$1
-    [ -n "$($IP_CMD route show table "$_route_table_id" 2> /dev/null)" ] && return 0
+    $IP_CMD route show table $_route_table_id 2> /dev/null | $AWK_CMD 'BEGIN {code=1} /^(default|local)/ {code=0} END {exit code}' && return 0
     return 1
 }
 
@@ -90,7 +91,9 @@ NftAddBaseChains() {
     $NFT_CMD add chain $NFT_TABLE "$NFT_BLLIST_CHAIN"
     $NFT_CMD add chain $NFT_TABLE "$NFT_FPROXY_CHAIN" { type filter hook prerouting priority ${_chain_prio_fproxy}\; policy accept\; }
     $NFT_CMD add chain $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" { type filter hook prerouting priority ${_chain_prio_first}\; policy accept\; }
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_CHAIN" meta iif lo return
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_CHAIN" ip daddr "@${NFTSET_FPROXY_PRIVATE}" return
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" meta iif lo return
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" "$NFT_ALLOWED_HOSTS_PATTERN"
     if [ "$BYPASS_MODE" = "1" ]; then
         for _set in "$NFTSET_BYPASS_IP" "$NFTSET_BYPASS_FQDN"

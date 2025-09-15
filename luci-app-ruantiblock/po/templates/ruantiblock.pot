@@ -43,9 +43,6 @@ msgstr ""
 msgid "Blacklist module"
 msgstr ""
 
-msgid "Blacklist settings"
-msgstr ""
-
 msgid "Blacklist sources"
 msgstr ""
 
@@ -179,6 +176,9 @@ msgstr ""
 msgid "Filter settings"
 msgstr ""
 
+msgid "General settings"
+msgstr ""
+
 msgid "Get all entries"
 msgstr ""
 
@@ -258,6 +258,9 @@ msgid "Logging levels"
 msgstr ""
 
 msgid "Logread not found"
+msgstr ""
+
+msgid "Main blacklist"
 msgstr ""
 
 msgid "Main settings"
@@ -373,7 +376,7 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
-msgid "Restriction of hosts that are allowed to bypass blocking"
+msgid "Restriction the local network hosts that are allowed to bypass blocking"
 msgstr ""
 
 msgid "Ruantiblock"

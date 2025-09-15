@@ -58,9 +58,6 @@ msgstr "Автообновление"
 msgid "Blacklist module"
 msgstr "Модуль блэклиста"
 
-msgid "Blacklist settings"
-msgstr "Настройки блэклиста"
-
 msgid "Blacklist sources"
 msgstr "Источники блэклиста"
 
@@ -194,6 +191,9 @@ msgstr "Не удалось получить статус инициализац
 msgid "Filter settings"
 msgstr "Настройки фильтра"
 
+msgid "General settings"
+msgstr "Общие настройки"
+
 msgid "Get all entries"
 msgstr "Все записи"
 
@@ -277,6 +277,9 @@ msgstr "Уровни логирования"
 
 msgid "Logread not found"
 msgstr "Logread не найден"
+
+msgid "Main blacklist"
+msgstr "Основной блэклист"
 
 msgid "Main settings"
 msgstr "Основные настройки"
@@ -403,8 +406,8 @@ msgstr "Обновить лог"
 msgid "Reset"
 msgstr "Сбросить"
 
-msgid "Restriction of hosts that are allowed to bypass blocking"
-msgstr "Ограничение хостов, которым разрешено обходить блокировки"
+msgid "Restriction the local network hosts that are allowed to bypass blocking"
+msgstr "Ограничение хостов локальной сети, которым разрешено обходить блокировки"
 
 msgid "Ruantiblock"
 msgstr "Ruantiblock"

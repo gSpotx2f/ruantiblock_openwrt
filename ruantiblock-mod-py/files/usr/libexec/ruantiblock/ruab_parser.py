@@ -8,7 +8,8 @@
 """
 
 from contextlib import contextmanager
-from ipaddress import IPv4Address, IPv4Network, summarize_address_range
+from ipaddress import (IPv4Address, IPv4Network, summarize_address_range,
+                       AddressValueError, NetmaskValueError)
 import os
 import re
 import socket
@@ -68,14 +69,17 @@ class Config:
         "BLLIST_FQDN_EXCLUDED_FILE",
         "BLLIST_IP_EXCLUDED_ENABLE",
         "BLLIST_IP_EXCLUDED_FILE",
+        "BLLIST_CIDR_EXCLUDED_ENABLE",
+        "BLLIST_CIDR_EXCLUDED_FILE",
     ]
-    BLLIST_FQDN_FILTER_PATTERNS = set()
-    BLLIST_IP_FILTER_PATTERNS = set()
+    BLLIST_FQDN_FILTER_PATTERNS = []
+    BLLIST_IP_FILTER_PATTERNS = []
     BLLIST_GR_EXCLUDED_SLD_PATTERNS = set()
     BLLIST_GR_EXCLUDED_SLD_MASKS_PATTERNS = []
     BLLIST_GR_EXCLUDED_NETS_PATTERNS = set()
     BLLIST_FQDN_EXCLUDED_ITEMS = set()
     BLLIST_IP_EXCLUDED_ITEMS = set()
+    BLLIST_CIDR_EXCLUDED_ITEMS = []
 
     @classmethod
     def _load_config(cls, cfg_dict):
@@ -119,15 +123,20 @@ class Config:
         })
 
     @classmethod
-    def _load_filter(cls, file_path, filter_patterns, is_array=False):
+    def _load_filter(cls, file_path, filter_patterns, is_array=False, func=None):
         try:
             with open(file_path, "rt") as file_handler:
                 for line in file_handler:
-                    if line and re.match("[^#]", line):
+                    if line and not re.match(r"(^#|^$)", line):
+                        value = line.strip()
+                        if func:
+                            value = func(value)
+                            if value is None:
+                                continue
                         if is_array:
-                            filter_patterns.append(line.strip())
+                            filter_patterns.append(value)
                         else:
-                            filter_patterns.add(line.strip())
+                            filter_patterns.add(value)
         except OSError:
             pass
 
@@ -135,13 +144,13 @@ class Config:
     def load_fqdn_filter(cls, file_path=None):
         if cls.BLLIST_FQDN_FILTER:
             cls._load_filter(file_path or cls.BLLIST_FQDN_FILTER_FILE,
-                             cls.BLLIST_FQDN_FILTER_PATTERNS)
+                             cls.BLLIST_FQDN_FILTER_PATTERNS, is_array=True)
 
     @classmethod
     def load_ip_filter(cls, file_path=None):
         if cls.BLLIST_IP_FILTER:
             cls._load_filter(file_path or cls.BLLIST_IP_FILTER_FILE,
-                             cls.BLLIST_IP_FILTER_PATTERNS)
+                             cls.BLLIST_IP_FILTER_PATTERNS, is_array=True)
 
     @classmethod
     def load_gr_excluded_sld(cls, file_path=None):
@@ -173,11 +182,47 @@ class Config:
             cls._load_filter(file_path or cls.BLLIST_IP_EXCLUDED_FILE,
                              cls.BLLIST_IP_EXCLUDED_ITEMS)
 
+    @staticmethod
+    def makeIPv4Network(s):
+        net = None
+        try:
+            net = IPv4Network(s)
+        except (AddressValueError, NetmaskValueError):
+            pass
+        return net
+
+    @classmethod
+    def load_cidr_excluded(cls, file_path=None):
+        if cls.BLLIST_CIDR_EXCLUDED_ENABLE:
+            cls._load_filter(file_path or cls.BLLIST_CIDR_EXCLUDED_FILE,
+                             cls.BLLIST_CIDR_EXCLUDED_ITEMS, is_array=True,
+                             func=cls.makeIPv4Network)
+
+    @staticmethod
+    def _check_filter(string, filter_patterns, reverse=False):
+        if filter_patterns and string:
+            for pattern in filter_patterns:
+                if pattern and pattern.search(string):
+                    return not reverse
+        return reverse
+
     def check_sld_masks(self, sld):
         if self.BLLIST_GR_EXCLUDED_SLD_MASKS_PATTERNS:
             for pattern in self.BLLIST_GR_EXCLUDED_SLD_MASKS_PATTERNS:
                 if re.fullmatch(pattern, sld):
                     return True
+        return False
+
+    def check_cidr_overlap(self, ip):
+        if self.BLLIST_CIDR_EXCLUDED_ITEMS:
+            try:
+                ip_obj = IPv4Network(ip)
+            except (AddressValueError, NetmaskValueError):
+                pass
+            else:
+                for net in self.BLLIST_CIDR_EXCLUDED_ITEMS:
+                    if net.overlaps(ip_obj):
+                        return True
         return False
 
 
@@ -212,7 +257,7 @@ class BlackListParser(Config):
         self.output_fqdn_count = 0
         self.ssl_unverified = False
         self.send_headers_dict = {
-            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0",
+            "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/142.0",
         }
         ### Proxies (ex.: self.proxies = {"http": "http://192.168.0.1:8080", "https": "http://192.168.0.1:8080"})
         self.proxies = None
@@ -302,14 +347,6 @@ class BlackListParser(Config):
                         self.site_encoding or self.default_site_encoding)
                 except UnicodeError:
                     pass
-
-    @staticmethod
-    def _check_filter(string, filter_patterns, reverse=False):
-        if filter_patterns and string:
-            for pattern in filter_patterns:
-                if pattern and pattern.search(string):
-                    return not reverse
-        return reverse
 
     def _get_subnet(self, ip_addr):
         regexp_obj = self.ip_pattern.fullmatch(ip_addr)
@@ -511,6 +548,19 @@ class OptimizeConfig(Config):
         self.ip_count = 0
         self.output_fqdn_count = 0
 
+    def _exclude_nets(self):
+        if self.BLLIST_CIDR_EXCLUDED_ENABLE:
+            ip_dict = {}
+            for ip, subnet in self.ip_dict.items():
+                if not self.check_cidr_overlap(ip):
+                    ip_dict[ip] = subnet
+            self.ip_dict = ip_dict
+            cidr_set = set()
+            for net in self.cidr_set:
+                if not self.check_cidr_overlap(net):
+                    cidr_set.add(net)
+            self.cidr_set = cidr_set
+
     def _remove_subdomains(self):
         tld_dict = {}
         for fqdn, sld in self.fqdn_dict.items():
@@ -571,6 +621,7 @@ class OptimizeConfig(Config):
             self.ip_subnet_dict.update(i.ip_subnet_dict)
             self.fqdn_dict.update(i.fqdn_dict)
             self.sld_dict.update(i.sld_dict)
+        self._exclude_nets()
         self._remove_subdomains()
         self._optimize_fqdn_dict()
         self._optimize_ip_dict()
@@ -831,6 +882,7 @@ if __name__ == "__main__":
     Config.load_gr_excluded_nets()
     Config.load_fqdn_excluded()
     Config.load_ip_excluded()
+    Config.load_cidr_excluded()
     parsers_dict = {
         "ip": {"rublacklist": [RblIp], "zapret-info": [ZiIp], "antifilter": [AfIp], "fz": [FzIp], "ruantiblock": [Ra]},
         "fqdn": {"rublacklist": [RblFQDN, RblDPI], "zapret-info": [ZiFQDN], "antifilter": [AfFQDN], "fz": [FzFQDN], "ruantiblock": [Ra]},
