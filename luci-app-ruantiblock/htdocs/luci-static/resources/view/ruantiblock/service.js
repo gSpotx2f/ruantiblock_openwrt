@@ -53,8 +53,8 @@ return view.extend({
 					if(v.mount) {
 						for(let i of Object.keys(v.mount)) {
 							if(!ubus_dirs.has(i) && i.startsWith('/tmp/dnsmasq.')) {
-								if(i == "/tmp/dnsmasq.d") {
-									k = _("default");
+								if(i == '/tmp/dnsmasq.d') {
+									k = _('default');
 								};
 								available_cfg_dirs.push([ `${i} [ ${k} ]`, i ]);
 								ubus_dirs.add(i);
@@ -81,7 +81,7 @@ return view.extend({
 
 			this.dnsmasqCfgDirsSelect = E('select', {
 				'id'   : 'dnsmasq_confdirs_list',
-				'class': "cbi-input-select",
+				'class': 'cbi-input-select',
 			}),
 
 			available_cfg_dirs.forEach(e => {
@@ -160,10 +160,10 @@ return view.extend({
 	}),
 
 	disableButtons(bool, btn, elems=[]) {
-		let btn_start   = elems[1] || document.getElementById("btn_start");
-		let btn_destroy = elems[4] || document.getElementById("btn_destroy");
-		let btn_enable  = elems[2] || document.getElementById("btn_enable");
-		let btn_update  = elems[3] || document.getElementById("btn_update");
+		let btn_start   = elems[1] || document.getElementById('btn_start');
+		let btn_destroy = elems[4] || document.getElementById('btn_destroy');
+		let btn_enable  = elems[2] || document.getElementById('btn_enable');
+		let btn_update  = elems[3] || document.getElementById('btn_update');
 
 		btn_start.disabled   = bool;
 		btn_update.disabled  = bool;
@@ -191,9 +191,11 @@ return view.extend({
 	},
 
 	setAppStatus(status_array, elems=[], force_app_code) {
+		let status_elem       = elems[0] || document.getElementById('status');
+		status_elem.innerHTML = '';
 		let section = uci.get(tools.appName, 'config');
 		if(!status_array || typeof(section) !== 'object') {
-			(elems[0] || document.getElementById("status")).innerHTML = tools.makeStatusString(1);
+			status_elem.append(tools.makeStatusString(1));
 			ui.addNotification(null, E('p', _('Unable to read the contents')
 				+ ': setAppStatus()'));
 			this.disableButtons(true, null, elems);
@@ -263,11 +265,12 @@ return view.extend({
 			this.disableButtons(true, null, elems);
 		};
 
-		(elems[0] || document.getElementById("status")).innerHTML = tools.makeStatusString(
-								app_status_code,
-								bllist_preset,
-								bllist_module,
-								vpn_route_status_code);
+		status_elem.append(tools.makeStatusString(
+			app_status_code,
+			bllist_preset,
+			bllist_module,
+			vpn_route_status_code)
+		);
 
 		if(!poll.active()) {
 			poll.start();
@@ -337,11 +340,10 @@ return view.extend({
 			return;
 		};
 
-		let section	          = uci.get(tools.appName, 'config');
+		let section           = uci.get(tools.appName, 'config');
 		this.statusTokenValue = (Array.isArray(status_array)) ?
-								tools.normalizeValue(status_array[4]) : null;
-
-		let dialog_destroy = new this.dialogDestroy(this);
+			tools.normalizeValue(status_array[4]) : null;
+		let dialog_destroy    = new this.dialogDestroy(this);
 
 		let status_string = E('div', {
 			'id'   : 'status',

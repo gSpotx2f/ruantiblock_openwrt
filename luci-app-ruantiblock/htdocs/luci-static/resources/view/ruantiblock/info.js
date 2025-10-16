@@ -46,7 +46,10 @@ return view.extend({
 		let output = { 'rules': [] };
 		if(data.rules.nftables && data.rules.nftables.length > 1) {
 			for(let i of data.rules.nftables) {
-				if(!i.rule) continue;
+				if(!i.rule) {
+					continue;
+				};
+
 				let set, bytes;
 				i.rule.expr.forEach(e => {
 					if(e.match && e.match.left && e.match.left.payload) {
@@ -97,7 +100,6 @@ return view.extend({
 					};
 				};
 			};
-
 		};
 		return output;
 	},
@@ -122,7 +124,7 @@ return view.extend({
 
 			ipTable.append(
 				E('tr', { 'class': 'tr table-titles' }, [
-					E('th', { 'class': 'th left', 'style': 'min-width:33%' }, _('IP address')),
+					E('th', { 'class': 'th left', 'style': 'width:33%' }, _('IP address')),
 					E('th', { 'class': 'th left' }, _('Timeout')),
 				])
 			);
@@ -266,7 +268,7 @@ return view.extend({
 				if(data.last_blacklist_update.status) {
 					update_status.append(
 						E('tr', { 'class': 'tr' }, [
-							E('td', { 'class': 'td left', 'style': 'min-width:33%' },
+							E('td', { 'class': 'td left', 'style': 'width:33%' },
 								_('Last blacklist update') + ':'),
 							E('td', { 'class': 'td left',
 										'id' : 'last_blacklist_update.date' },
@@ -306,7 +308,7 @@ return view.extend({
 					for(let i of data.user_entries) {
 						user_entries.append(
 							E('tr', { 'class': 'tr' }, [
-								E('td', { 'class': 'td left', 'style': 'min-width:33%' },
+								E('td', { 'class': 'td left', 'style': 'word-wrap:break-word' },
 									i.id),
 								E('td', { 'class': 'td left',
 											'id' : 'user_entries_' + i },
@@ -321,7 +323,7 @@ return view.extend({
 				if(nft_data.rules) {
 					let table_rules = E('table', { 'class': 'table' }, [
 						E('tr', { 'class': 'tr table-titles' }, [
-							E('th', { 'class': 'th left', 'style': 'min-width:33%' },
+							E('th', { 'class': 'th left', 'style': 'width:33%' },
 								_('Match-set')),
 							E('th', { 'class': 'th left' }, _('Description')),
 							E('th', { 'class': 'th left' }, _('Bytes')),
@@ -360,18 +362,15 @@ return view.extend({
 				if(nft_data.dnsmasq) {
 					let rdTableWrapper = E('div', {
 						'id'   : 'rdTableWrapper',
-						'style': 'width:100%'
+						'style': 'width:100%',
 					}, this.makeDnsmasqTable(nft_data.dnsmasq, _('Dnsmasq')));
-
-					dnsmasq = E([
-						rdTableWrapper,
-					]);
+					dnsmasq = rdTableWrapper;
 				};
 
 				if(nft_data.dnsmasq_user_instances) {
 					let rdsTableWrapper = E('div', {
 						'id'   : 'rdsTableWrapper',
-						'style': 'width:100%'
+						'style': 'width:100%',
 					});
 
 					for(let i of nft_data.dnsmasq_user_instances) {
@@ -379,21 +378,16 @@ return view.extend({
 					};
 
 					if(nft_data.dnsmasq_user_instances.length > 0) {
-						dnsmasqUserInstances = E([
-							rdsTableWrapper,
-						]);
+						dnsmasqUserInstances = rdsTableWrapper;
 					};
 				};
 
 				if(nft_data.dnsmasq_bypass) {
 					let rdbTableWrapper = E('div', {
 						'id'   : 'rdbTableWrapper',
-						'style': 'width:100%'
+						'style': 'width:100%',
 					}, this.makeDnsmasqTable(nft_data.dnsmasq_bypass, _('Dnsmasq bypass')));
-
-					dnsmasqBypass = E([
-						rdbTableWrapper,
-					]);
+					dnsmasqBypass = rdbTableWrapper;
 				};
 
 				poll.add(L.bind(this.pollInfo, this), this.pollInterval);

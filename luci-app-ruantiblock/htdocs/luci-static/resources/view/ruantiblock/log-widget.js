@@ -10,6 +10,7 @@ document.head.append(E('style', {'type': 'text/css'},
 }
 .log-entry-time-cell {
 	min-width: 14em !important;
+	white-space: pre-wrap !important;
 }
 .log-entry-host-cell {
 	min-width: 10em !important;

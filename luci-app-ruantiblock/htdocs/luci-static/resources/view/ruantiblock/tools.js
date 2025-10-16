@@ -7,14 +7,15 @@
 document.head.append(E('style', {'type': 'text/css'},
 `
 .label-status {
-	display: inline;
-	margin: 0 2px 0 0 !important;
+	display: inline-block;
+	margin: 2px !important;
 	padding: 2px 4px;
 	-webkit-border-radius: 3px;
 	-moz-border-radius: 3px;
 	border-radius: 3px;
 	font-weight: bold;
 	color: #fff !important;
+	word-wrap: break-word !important;
 }
 .starting {
 	background-color: #9c994c !important;
@@ -47,11 +48,11 @@ return baseclass.extend({
 	grExcludedNetsFile  : '/etc/ruantiblock/gr_excluded_nets',
 	grExcludedSldFile   : '/etc/ruantiblock/gr_excluded_sld',
 	crontabFile         : '/etc/crontabs/root',
-	infoLabelStarting   : '<span class="label-status starting">' + _('Starting') + '</span>',
-	infoLabelRunning    : '<span class="label-status running">' + _('Enabled') + '</span>',
-	infoLabelUpdating   : '<span class="label-status updating">' + _('Updating') + '</span>',
-	infoLabelStopped    : '<span class="label-status stopped">' + _('Disabled') + '</span>',
-	infoLabelError      : '<span class="label-status error">' + _('Error') + '</span>',
+	infoLabelStarting   : E('span', { 'class': 'label-status starting' }, _('Starting')),
+	infoLabelRunning    : E('span', { 'class': 'label-status running' }, _('Enabled')),
+	infoLabelUpdating   : E('span', { 'class': 'label-status updating' }, _('Updating')),
+	infoLabelStopped    : E('span', { 'class': 'label-status stopped' }, _('Disabled')),
+	infoLabelError      : E('span', { 'class': 'label-status error' }, _('Error')),
 
 	blacklistPresets: {
 		'ruantiblock-fqdn': [ 'ruantiblock', 'fqdn', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
@@ -140,48 +141,43 @@ return baseclass.extend({
 				break;
 			default:
 				app_status_label = this.infoLabelError;
-				return `<table class="table">
-							<tr class="tr">
-								<td class="td left" style="min-width:33%%">
-									${_('Status')}:
-								</td>
-								<td class="td left">
-									${app_status_label}
-								</td>
-							</tr>
-						</table>`
+				return E('table', { 'class': 'table' }, [
+					E('tr', { 'class': 'tr' }, [
+						E('td', { 'class': 'td left', 'style': 'width:33%' }, _('Status')),
+						E('td', { 'class': 'td left' }, app_status_label),
+					]),
+				]);
 		};
 
-		return `<table class="table">
-					<tr class="tr">
-						<td class="td left" style="min-width:33%%">
-							${_('Status')}:
-						</td>
-						<td class="td left%s">
-							%s %s
-						</td>
-					</tr>
-					<tr class="tr">
-						<td class="td left">
-							${_('Blacklist update mode')}:
-						</td>
-						<td class="td left">
-							%s
-						</td>
-					</tr>
-				</table>
-		`.format(
-			spinning,
-			app_status_label,
-			(app_status_code != 2 && vpn_route_status_code != 0)
-				? '<span class="label-status error">'
-					+ _('VPN routing error! Need restart') + '</span>' : '',
-			(!bllist_preset || bllist_preset === '') ? _('user entries only') :
-				(this.blacklistPresets[bllist_preset]) ?
-					`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${this.blacklistPresets[bllist_preset][2]}">
-						${this.blacklistPresets[bllist_preset][0]}</span> - ${this.blacklistPresets[bllist_preset][1]}`
-				: _('Error') + '!'
-		);
+		return E('table', { 'class': 'table' }, [
+			E('tr', { 'class': 'tr' }, [
+				E('td', { 'class': 'td left', 'style': 'width:33%' }, _('Status')),
+				E('td', { 'class': 'td left' + spinning }, [
+					app_status_label,
+					(app_status_code != 2 && vpn_route_status_code != 0)
+						? E('span', { 'class': 'label-status error' },
+							_('VPN routing error! Need restart'))
+						: '',
+				]),
+			]),
+			E('tr', { 'class': 'tr' }, [
+				E('td', { 'class': 'td left' }, _('Blacklist update mode')),
+				E('td', { 'class': 'td left' },
+					(!bllist_preset || bllist_preset === '') ? _('user entries only') :
+						(this.blacklistPresets[bllist_preset]) ?
+							[
+								E('span', {
+									'style'       : 'cursor:help; border-bottom:1px dotted',
+									'data-tooltip': this.blacklistPresets[bllist_preset][2],
+								}, this.blacklistPresets[bllist_preset][0]),
+								' - ',
+								this.blacklistPresets[bllist_preset][1],
+							]
+						:
+							_('Error') + '!'
+				),
+			]),
+		]);
 	},
 
 	fileEditDialog: baseclass.extend({
