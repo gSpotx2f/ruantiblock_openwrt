@@ -6,10 +6,13 @@ export RBL_DPI_URL="https://reestr.rublacklist.net/api/v3/dpi/"
 export RBL_ENCODING=""
 ## zapret-info
 export ZI_ALL_URL="https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-00.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-01.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-02.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-03.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-04.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-05.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-06.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-07.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-08.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-09.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-10.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-11.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-12.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-13.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-14.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-15.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-16.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-17.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-18.csv https://raw.githubusercontent.com/zapret-info/z-i/refs/heads/master/dump-19.csv"
+# export ZI_ALL_URL="https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-00.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-01.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-02.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-03.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-04.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-05.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-06.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-07.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-08.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-09.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-10.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-11.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-12.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-13.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-14.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-15.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-16.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-17.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-18.csv?format=raw https://sourceforge.net/p/zapret-info/code/HEAD/tree/dump-19.csv?format=raw"
 #export ZI_ALL_URL="https://app.assembla.com/spaces/z-i/git/source/master/dump.csv?_format=raw"
 export ZI_ENCODING="CP1251"
 ## antifilter
-export AF_IP_URL="https://antifilter.download/list/allyouneed.lst"
+export AF_IP_FULL_URL="https://antifilter.download/list/ipresolve.lst"
+export AF_IP_URL="https://antifilter.download/list/ip.lst"
+export AF_NET_URL="https://antifilter.download/list/subnet.lst"
 export AF_FQDN_URL="https://antifilter.download/list/domains.lst"
 export AF_ENCODING=""
 ## fz
@@ -21,12 +24,16 @@ case "$BLLIST_PRESET" in
     zapret-info-ip)
         ### Источник для обновления списка блокировок (zapret-info, rublacklist, antifilter, fz, ruantiblock)
         export BLLIST_SOURCE="zapret-info"
-        ### Режим обхода блокировок: ip, fqdn
+        ### Режим обхода блокировок: ip, fqdn, fqdn-only
         export BLLIST_MODE="ip"
     ;;
     zapret-info-fqdn)
         export BLLIST_SOURCE="zapret-info"
         export BLLIST_MODE="fqdn"
+    ;;
+    zapret-info-fqdn-only)
+        export BLLIST_SOURCE="zapret-info"
+        export BLLIST_MODE="fqdn-only"
     ;;
     rublacklist-ip)
         export BLLIST_SOURCE="rublacklist"
@@ -36,9 +43,21 @@ case "$BLLIST_PRESET" in
         export BLLIST_SOURCE="rublacklist"
         export BLLIST_MODE="fqdn"
     ;;
+    rublacklist-fqdn-only)
+        export BLLIST_SOURCE="rublacklist"
+        export BLLIST_MODE="fqdn-only"
+    ;;
     antifilter-ip)
         export BLLIST_SOURCE="antifilter"
         export BLLIST_MODE="ip"
+    ;;
+    antifilter-fqdn)
+        export BLLIST_SOURCE="antifilter"
+        export BLLIST_MODE="fqdn"
+    ;;
+    antifilter-fqdn-only)
+        export BLLIST_SOURCE="antifilter"
+        export BLLIST_MODE="fqdn-only"
     ;;
     fz-ip)
         export BLLIST_SOURCE="fz"
@@ -47,6 +66,10 @@ case "$BLLIST_PRESET" in
     fz-fqdn)
         export BLLIST_SOURCE="fz"
         export BLLIST_MODE="fqdn"
+    ;;
+    fz-fqdn-only)
+        export BLLIST_SOURCE="fz"
+        export BLLIST_MODE="fqdn-only"
     ;;
     ruantiblock-ip)
         export BLLIST_SOURCE="ruantiblock"

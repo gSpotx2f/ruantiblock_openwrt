@@ -67,7 +67,9 @@ local Config = Class(nil, {
         ["RBL_IP_URL"] = true,
         ["RBL_DPI_URL"] = true,
         ["ZI_ALL_URL"] = true,
+        ["AF_IP_FULL_URL"] = true,
         ["AF_IP_URL"] = true,
+        ["AF_NET_URL"] = true,
         ["AF_FQDN_URL"] = true,
         ["FZ_URL"] = true,
         ["DL_IPSET_URL"] = true,
@@ -85,6 +87,8 @@ local Config = Class(nil, {
         ["BLLIST_IP_EXCLUDED_FILE"] = true,
         ["BLLIST_CIDR_EXCLUDED_ENABLE"] = true,
         ["BLLIST_CIDR_EXCLUDED_FILE"] = true,
+        ["BLLIST_ORG_EXCLUDED_ENABLE"] = true,
+        ["BLLIST_ORG_EXCLUDED_FILE"] = true,
     },
     BLLIST_FQDN_FILTER_PATTERNS = {},
     BLLIST_IP_FILTER_PATTERNS = {},
@@ -94,6 +98,7 @@ local Config = Class(nil, {
     BLLIST_FQDN_EXCLUDED_ITEMS = {},
     BLLIST_IP_EXCLUDED_ITEMS = {},
     BLLIST_CIDR_EXCLUDED_ITEMS = {},
+    BLLIST_ORG_EXCLUDED_ITEMS = {},
     -- iconv type: standalone iconv or lua-iconv (standalone, lua)
     ICONV_TYPE = "standalone",
     -- standalone iconv
@@ -102,7 +107,7 @@ local Config = Class(nil, {
     encoding = "UTF-8",
     site_encoding = "",
     http_send_headers = {
-        ["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/142.0",
+        ["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0",
     },
     connect_timeout = nil,
 })
@@ -117,7 +122,9 @@ function Config:load_config(t)
         ["RBL_IP_URL"] = true,
         ["RBL_DPI_URL"] = true,
         ["ZI_ALL_URL"] = true,
+        ["AF_IP_FULL_URL"] = true,
         ["AF_IP_URL"] = true,
+        ["AF_NET_URL"] = true,
         ["AF_FQDN_URL"] = true,
         ["FZ_URL"] = true,
         ["DL_IPSET_URL"] = true,
@@ -172,6 +179,7 @@ Config.BLLIST_SUMMARIZE_CIDR = remap_bool(Config.BLLIST_SUMMARIZE_CIDR)
 Config.BLLIST_FQDN_EXCLUDED_ENABLE = remap_bool(Config.BLLIST_FQDN_EXCLUDED_ENABLE)
 Config.BLLIST_IP_EXCLUDED_ENABLE = remap_bool(Config.BLLIST_IP_EXCLUDED_ENABLE)
 Config.BLLIST_CIDR_EXCLUDED_ENABLE = remap_bool(Config.BLLIST_CIDR_EXCLUDED_ENABLE)
+Config.BLLIST_ORG_EXCLUDED_ENABLE = remap_bool(Config.BLLIST_ORG_EXCLUDED_ENABLE)
 
 -- Importing packages
 
@@ -281,6 +289,9 @@ function Config:load_filter_files()
             end
         )
     end
+    if self.BLLIST_ORG_EXCLUDED_ENABLE then
+        load_file(self.BLLIST_ORG_EXCLUDED_FILE, self.BLLIST_ORG_EXCLUDED_ITEMS)
+    end
 end
 
 function Config:check_filter(str, filter_patterns, reverse)
@@ -329,7 +340,6 @@ end
 
 Config:load_filter_files()
 
-
 ------------------------------ Classes -------------------------------
 
 local BlackListParser = Class(Config, {
@@ -356,27 +366,42 @@ function BlackListParser:new(t)
     instance.fqdn_count = 0
     instance.fqdn_records_count = 0
     instance.fqdn_table = {}
-    instance.iconv_handler = iconv and iconv.open(instance.encoding, instance.site_encoding) or nil
+    instance.iconv_handler_fqdn = iconv and iconv.open(instance.encoding, instance.site_encoding) or nil
+    instance.iconv_handler_org = iconv and iconv.open(instance.site_encoding, instance.encoding) or nil
     instance.buff = ""
     instance.http_codes = {}
     return instance
 end
 
-function BlackListParser:convert_encoding(input)
+function BlackListParser:encoding_iconv(input, from, to)
     local output
-    if self.ICONV_TYPE == "lua" and self.iconv_handler then
-        output = self.iconv_handler:iconv(input)
+    local handler = assert(io.popen('printf \'%s\' \'' .. input .. '\' | ' .. self.ICONV_CMD .. ' -f "' .. from .. '" -t "' .. to .. '"', 'r'))
+    output = handler:read("*a")
+    handler:close()
+    return (output)
+end
+
+function BlackListParser:encoding_lua(input, handler)
+    local output
+    if handler then
+        output = handler:iconv(input)
+    end
+    return (output)
+end
+
+function BlackListParser:convert_encoding(input, handler, from, to)
+    local output
+    if self.ICONV_TYPE == "lua" then
+        output = self:encoding_lua(input, handler)
     elseif self.ICONV_TYPE == "standalone" and self.ICONV_CMD then
-        local iconv_handler = assert(io.popen('printf \'%s\' \'' .. input .. '\' | ' .. self.ICONV_CMD .. ' -f "' .. self.site_encoding .. '" -t "' .. self.encoding .. '"', 'r'))
-        output = iconv_handler:read("*a")
-        iconv_handler:close()
+        output = self:encoding_iconv(input, from, to)
     end
     return (output)
 end
 
 function BlackListParser:convert_to_punycode(input)
     if self.site_encoding and self.site_encoding ~= "" then
-        input = self:convert_encoding(input)
+        input = self:convert_encoding(input, self.iconv_handler_fqdn, self.site_encoding, self.encoding)
     end
     return input and (idn.encode(input))
 end
@@ -422,7 +447,7 @@ function BlackListParser:fqdn_value_processing(value)
     end
     if not self.BLLIST_FQDN_FILTER or (self.BLLIST_FQDN_FILTER and not self:check_filter(value, self.BLLIST_FQDN_FILTER_PATTERNS, self.BLLIST_FQDN_FILTER_TYPE)) then
         if value:match("^" .. self.fqdn_pattern .. "$") then
-        elseif self.BLLIST_ENABLE_IDN and value:match("^[^\\/&%?]-[^\\/&%?%.]+%.[^\\/&%?%.]+%.?$") then
+        elseif self.BLLIST_ENABLE_IDN and value:match('^[^",%%\\/&%?]-[^",%%\\/&%?%.]+%.[^",%%\\/&%?%.]+%.?$') then
             value = self:convert_to_punycode(value)
             if not value then
                 return false
@@ -438,6 +463,16 @@ function BlackListParser:fqdn_value_processing(value)
         end
     end
     return true
+end
+
+function BlackListParser:org_value_processing(value)
+    if value == "" then
+        return false
+    end
+    if self.BLLIST_ORG_EXCLUDED_ENABLE and self.BLLIST_ORG_EXCLUDED_ITEMS[value] then
+        return true
+    end
+    return false
 end
 
 function BlackListParser:parser_func()
@@ -519,6 +554,16 @@ end
 
 function BlackListParser:run()
     local return_code = 0
+    if self.site_encoding and self.site_encoding ~= "" then
+        local t = {}
+        for i in pairs(self.BLLIST_ORG_EXCLUDED_ITEMS) do
+            local v = self:convert_encoding(i, self.iconv_handler_org, self.encoding, self.site_encoding)
+            if v then
+                t[v] = true
+            end
+        end
+        self.BLLIST_ORG_EXCLUDED_ITEMS = t
+    end
     if self:download_files(self.url) then
         if (self.fqdn_count + self.ip_count + self.cidr_count) > self.BLLIST_MIN_ENTRIES then
             return_code = 0
@@ -969,8 +1014,26 @@ local Rbl = Class(BlackListParser, {
 function Rbl:parser_func()
     return function(chunk)
         if chunk and chunk ~= "" then
-            for fqdn_str, ip_str in chunk:gmatch('"domains": %["?(.-)"?%].-"ips": %[([a-f0-9/.:", ]*)%].-') do
-                fqdn_parser_func(self, ip_str, fqdn_str)
+            for org_str, fqdn_str, ip_str in chunk:gmatch('"name": "(.-)".-"domains": %["?(.-)"?%].-"ips": %[([a-f0-9/.:", ]*)%].-') do
+                if org_str == "" or not self:org_value_processing(org_str) then
+                    fqdn_parser_func(self, ip_str, fqdn_str)
+                end
+            end
+        end
+        return true
+    end
+end
+
+local RblFQDN = Class(Rbl, {
+})
+
+function RblFQDN:parser_func()
+    return function(chunk)
+        if chunk and chunk ~= "" then
+            for org_str, fqdn_str in chunk:gmatch('"name": "(.-)".-"domains": %["?(.-)"?%].-') do
+                if org_str == "" or not self:org_value_processing(org_str) then
+                    fqdn_parser_func(self, nil, fqdn_str)
+                end
             end
         end
         return true
@@ -978,11 +1041,20 @@ function Rbl:parser_func()
 end
 
 local RblIp = Class(Rbl, {
-    url = Config.RBL_IP_URL,
-    records_separator = ",",
-    ip_string_pattern = "([a-f0-9/.:]+)",
-    parser_func = ip_parser_func,
 })
+
+function RblIp:parser_func()
+    return function(chunk)
+        if chunk and chunk ~= "" then
+            for org_str, ip_str in chunk:gmatch('"name": "(.-)".-"domains": %["?.-"?%].-"ips": %[([a-f0-9/.:", ]*)%].-') do
+                if org_str == "" or not self:org_value_processing(org_str) then
+                    self:ip_value_processing(ip_str)
+                end
+            end
+        end
+        return true
+    end
+end
 
 local RblDPI = Class(BlackListParser, {
     url = Config.RBL_DPI_URL,
@@ -1050,8 +1122,26 @@ end
 function Zi:parser_func()
     return function(chunk)
         if chunk and chunk ~= "" then
-            for ip_str, fqdn_str in chunk:gmatch("([^;]-);([^;]-);.-" .. self.records_separator) do
-                fqdn_parser_func(self, ip_str, fqdn_str)
+            for ip_str, fqdn_str, org_str in chunk:gmatch("([^;]-);([^;]-);[^;]-;([^;]-);.-" .. self.records_separator) do
+                if org_str == "" or not self:org_value_processing(org_str) then
+                    fqdn_parser_func(self, ip_str, fqdn_str)
+                end
+            end
+        end
+        return true
+    end
+end
+
+local ZiFQDN = Class(Zi, {
+})
+
+function ZiFQDN:parser_func()
+    return function(chunk)
+        if chunk and chunk ~= "" then
+            for fqdn_str, org_str in chunk:gmatch("[^;]-;([^;]-);[^;]-;([^;]-);.-" .. self.records_separator) do
+                if org_str == "" or not self:org_value_processing(org_str) then
+                    fqdn_parser_func(self, nil, fqdn_str)
+                end
             end
         end
         return true
@@ -1059,9 +1149,20 @@ function Zi:parser_func()
 end
 
 local ZiIp = Class(Zi, {
-    ip_string_pattern = "([a-f0-9%.:/ |]+);.-\n",
-    parser_func = ip_parser_func,
 })
+
+function ZiIp:parser_func()
+    return function(chunk)
+        if chunk and chunk ~= "" then
+            for ip_str, org_str in chunk:gmatch("([^;]-);[^;]-;[^;]-;([^;]-);.-" .. self.records_separator) do
+                if org_str == "" or not self:org_value_processing(org_str) then
+                    self:ip_value_processing(ip_str)
+                end
+            end
+        end
+        return true
+    end
+end
 
     -- antifilter
 
@@ -1081,8 +1182,32 @@ function Af:parser_func()
     end
 end
 
-local AfIp = Class(Af, {
+local AfIpFull = Class(BlackListParser, {
+    url = Config.AF_IP_FULL_URL,
+    ip_string_pattern = "(.-)\n",
+})
+
+function AfIpFull:parser_func()
+    return function(chunk)
+        if chunk and chunk ~= "" then
+            chunk = chunk:gsub("/32", "")
+            for ip_string in chunk:gmatch(self.ip_string_pattern) do
+                self:ip_value_processing(ip_string)
+            end
+        end
+        return true
+    end
+end
+
+local AfIp = Class(BlackListParser, {
     url = Config.AF_IP_URL,
+    ip_string_pattern = "(.-)\n",
+    parser_func = ip_parser_func,
+})
+
+local AfNet = Class(BlackListParser, {
+    url = Config.AF_NET_URL,
+    BLLIST_MIN_ENTRIES = 0,
     ip_string_pattern = "(.-)\n",
     parser_func = ip_parser_func,
 })
@@ -1099,14 +1224,37 @@ function Fz:parser_func()
     return function(chunk)
         if chunk and chunk ~= "" then
             for entry in chunk:gmatch("(.-)" .. self.records_separator) do
-                local fqdn_str = entry:match("<domain><%!%[CDATA%[(.-)%]%]></domain>")
-                if fqdn_str ~= nil and #fqdn_str > 0 and not fqdn_str:match("^" .. self.ip_pattern .. "$") and self:fqdn_value_processing(fqdn_str) then
-                else
-                    for ip_str in entry:gmatch("<ip>(.-)</ip>") do
-                        self:ip_value_processing(ip_str)
+                local org_str = entry:match('org="(.-)"')
+                if org_str == "" or not self:org_value_processing(org_str) then
+                    local fqdn_str = entry:match("<domain><%!%[CDATA%[(.-)%]%]></domain>")
+                    if fqdn_str ~= nil and #fqdn_str > 0 and not fqdn_str:match("^" .. self.ip_pattern .. "$") and self:fqdn_value_processing(fqdn_str) then
+                    else
+                        for ip_str in entry:gmatch("<ip>(.-)</ip>") do
+                            self:ip_value_processing(ip_str)
+                        end
+                        for ip_str in entry:gmatch("<ipSubnet>(.-)</ipSubnet>") do
+                            self:ip_value_processing(ip_str)
+                        end
                     end
-                    for ip_str in entry:gmatch("<ipSubnet>(.-)</ipSubnet>") do
-                        self:ip_value_processing(ip_str)
+                end
+            end
+        end
+        return true
+    end
+end
+
+local FzFQDN = Class(Fz, {
+})
+
+function FzFQDN:parser_func()
+    return function(chunk)
+        if chunk and chunk ~= "" then
+            for entry in chunk:gmatch("(.-)" .. self.records_separator) do
+                local org_str = entry:match('org="(.-)"')
+                if org_str == "" or not self:org_value_processing(org_str) then
+                    local fqdn_str = entry:match("<domain><%!%[CDATA%[(.-)%]%]></domain>")
+                    if fqdn_str ~= nil and #fqdn_str > 0 and not fqdn_str:match("^" .. self.ip_pattern .. "$") then
+                        self:fqdn_value_processing(fqdn_str)
                     end
                 end
             end
@@ -1122,11 +1270,14 @@ function FzIp:parser_func()
     return function(chunk)
         if chunk and chunk ~= "" then
             for entry in chunk:gmatch("(.-)" .. self.records_separator) do
-                for ip_str in entry:gmatch("<ip>(.-)</ip>") do
-                    self:ip_value_processing(ip_str)
-                end
-                for ip_str in entry:gmatch("<ipSubnet>(.-)</ipSubnet>") do
-                    self:ip_value_processing(ip_str)
+                local org_str = entry:match('org="(.-)"')
+                if org_str == "" or not self:org_value_processing(org_str) then
+                    for ip_str in entry:gmatch("<ip>(.-)</ip>") do
+                        self:ip_value_processing(ip_str)
+                    end
+                    for ip_str in entry:gmatch("<ipSubnet>(.-)</ipSubnet>") do
+                        self:ip_value_processing(ip_str)
+                    end
                 end
             end
         end
@@ -1199,8 +1350,18 @@ end
 ----------------------------- Main section ------------------------------
 
 local parsers_table = {
-    ["ip"] = {["rublacklist"] = {RblIp}, ["zapret-info"] = {ZiIp}, ["antifilter"] = {AfIp}, ["fz"] = {FzIp}, ["ruantiblock"] = {Ra}},
-    ["fqdn"] = {["rublacklist"] = {Rbl, RblDPI}, ["zapret-info"] = {Zi}, ["antifilter"] = {Af}, ["fz"] = {Fz}, ["ruantiblock"] = {Ra}},
+    ["ip"] = {
+        ["rublacklist"] = {RblIp}, ["zapret-info"] = {ZiIp},
+        ["antifilter"] = {AfIpFull, AfNet}, ["fz"] = {FzIp}, ["ruantiblock"] = {Ra},
+    },
+    ["fqdn"] = {
+        ["rublacklist"] = {Rbl, RblDPI}, ["zapret-info"] = {Zi},
+        ["antifilter"] = {Af, AfNet}, ["fz"] = {Fz}, ["ruantiblock"] = {Ra},
+    },
+    ["fqdn-only"] = {
+        ["rublacklist"] = {RblFQDN, RblDPI}, ["zapret-info"] = {ZiFQDN},
+        ["antifilter"] = {Af}, ["fz"] = {FzFQDN}, ["ruantiblock"] = {Ra},
+    },
 }
 
 local ret_list = {}
@@ -1213,7 +1374,6 @@ if parser_classes then
     for _, i in ipairs(parser_instances) do
         ret_list[i:run()] = true
     end
-
     local return_sum = 0
     for i, _ in pairs(ret_list) do
         return_sum = return_sum + i
@@ -1229,5 +1389,4 @@ if parser_classes then
 else
     error("Wrong configuration! (Config.BLLIST_MODE, Config.BLLIST_SOURCE)")
 end
-
 os.exit(ret_list[1] and 1 or (ret_list[2] and 2 or 0))

@@ -55,13 +55,17 @@ return baseclass.extend({
 	infoLabelError      : E('span', { 'class': 'label-status error' }, _('Error')),
 
 	blacklistPresets: {
-		'ruantiblock-fqdn': [ 'ruantiblock', 'fqdn', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
-		'ruantiblock-ip'  : [ 'ruantiblock', 'ip', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
-		'zapret-info-fqdn': [ '*zapret-info', 'fqdn', 'https://github.com/zapret-info/z-i' ],
-		'zapret-info-ip'  : [ '*zapret-info', 'ip', 'https://github.com/zapret-info/z-i' ],
-		'rublacklist-fqdn': [ '*rublacklist', 'fqdn', 'https://rublacklist.net' ],
-		'rublacklist-ip'  : [ '*rublacklist', 'ip', 'https://rublacklist.net' ],
-		'antifilter-ip'   : [ '*antifilter', 'ip', 'https://antifilter.download' ],
+		'ruantiblock-fqdn'     : [ 'ruantiblock', 'fqdn', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
+		'ruantiblock-ip'       : [ 'ruantiblock', 'ip', 'https://github.com/gSpotx2f/ruantiblock_blacklist' ],
+		'zapret-info-fqdn'     : [ '*zapret-info', 'fqdn', 'https://github.com/zapret-info/z-i' ],
+		'zapret-info-fqdn-only': [ '*zapret-info', 'fqdn-only', 'https://github.com/zapret-info/z-i' ],
+		'zapret-info-ip'       : [ '*zapret-info', 'ip', 'https://github.com/zapret-info/z-i' ],
+		'rublacklist-fqdn'     : [ '*rublacklist', 'fqdn', 'https://rublacklist.net' ],
+		'rublacklist-fqdn-only': [ '*rublacklist', 'fqdn-only', 'https://rublacklist.net' ],
+		'rublacklist-ip'       : [ '*rublacklist', 'ip', 'https://rublacklist.net' ],
+		'antifilter-fqdn'      : [ '*antifilter', 'fqdn', 'https://antifilter.download' ],
+		'antifilter-fqdn-only' : [ '*antifilter', 'fqdn-only', 'https://antifilter.download' ],
+		'antifilter-ip'        : [ '*antifilter', 'ip', 'https://antifilter.download' ],
 	},
 
 	defaultConfig: {

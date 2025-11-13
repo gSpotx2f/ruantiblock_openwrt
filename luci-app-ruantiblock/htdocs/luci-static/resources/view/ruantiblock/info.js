@@ -296,8 +296,8 @@ return view.extend({
 				} else {
 					update_status.append(
 						E('tr', { 'class': 'tr' }, [
-							E('td', { 'class': 'td left' },
-								_('Last blacklist update')),
+							E('td', { 'class': 'td left', 'style': 'width:33%' },
+								_('Last blacklist update') + ':'),
 							E('td', { 'class': 'td left' }, _('No data')),
 						])
 					);
