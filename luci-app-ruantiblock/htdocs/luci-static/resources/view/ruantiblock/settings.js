@@ -138,21 +138,21 @@ return view.extend({
 		let ip_filter_edit = new tools.fileEditDialog(
 			tools.ipFilterFile,
 			_('IP filter'),
-			_('Patterns can be strings or regular expressions. Each pattern in a separate line, the symbol <code>#</code> in the first position of the line - comments on the line.<br />Examples (dot is a special character):') +
-				'<br /><code>128[.]199[.]0[.]0/16<br />34[.]217[.]90[.]52<br />162[.]13[.]190[.]</code>'
+			_('Patterns can be strings or regular expressions. Each pattern in a separate line, the <code>#</code> symbol in the first position of a line will comment out the line.<br />Examples (dot is a special character):') +
+				'<br /><code>#comment<br /><code>128[.]199[.]0[.]0/16<br />34[.]217[.]90[.]52<br />162[.]13[.]190[.]</code>'
 		);
 
 		let fqdn_filter_edit = new tools.fileEditDialog(
 			tools.fqdnFilterFile,
 			_('FQDN filter'),
-			_('Patterns can be strings or regular expressions. Each pattern in a separate line, the symbol <code>#</code> in the first position of the line - comments on the line.<br />Examples:') +
-				'<br /><code>poker<br />[ck]?a[sz]ino?<br />[vw]ulkan<br />slots?</code>'
+			_('Patterns can be strings or regular expressions. Each pattern in a separate line, the <code>#</code> symbol in the first position of a line will comment out the line.<br />Examples:') +
+				'<br /><code>#comment<br /><code>poker<br />[ck]?a[sz]ino?<br />[vw]ulkan<br />slots?</code>'
 		);
 
 		let bypass_entries_edit = new tools.fileEditDialog(
 			tools.bypassEntriesFile,
 			_('Exclusion list'),
-			_('One entry (IP, CIDR or FQDN) per line. In the FQDN records, you can specify the DNS server for resolving this domain (separated by a space). You can also comment on lines (<code>#</code> is the first character of a line).<br />Examples:') +
+			_('One entry (IP, CIDR or FQDN) per line. In the FQDN records, you can specify the DNS server for resolving this domain (separated by a space). You can also comment out the lines (<code>#</code> is the first character of a line).<br />Examples:') +
 				'<br /><code>#comment<br />domain.net<br />sub.domain.com 8.8.8.8<br />sub.domain.com 8.8.8.8#53<br />74.125.131.19<br />74.125.0.0/16</code>'
 		);
 
@@ -172,14 +172,14 @@ return view.extend({
 		let gr_excluded_nets_edit = new tools.fileEditDialog(
 			tools.grExcludedNetsFile,
 			_('IP subnet patterns (/24) that are excluded from optimization'),
-			_('One IP subnet pattern (/24) per line. You can also comment on lines (<code>#</code> is the first character of a line).<br />Examples:') +
+			_('One IP subnet pattern (/24) per line. You can also comment out the lines (<code>#</code> is the first character of a line).<br />Examples:') +
 				'<br /><code>#comment<br />74.125.131.<br />74.125.0.</code>'
 		);
 
 		let gr_excluded_sld_edit = new tools.fileEditDialog(
 			tools.grExcludedSldFile,
 			_('2nd level domains that are excluded from optimization'),
-			_('One FQDN entry per line. You can also comment on lines (<code>#</code> is the first character of a line).<br />Examples:') +
+			_('One FQDN entry per line. You can also comment out the lines (<code>#</code> is the first character of a line).<br />Examples:') +
 				'<br /><code>#comment<br />domain.net<br />anotherdomain.com</code>'
 		);
 
@@ -305,6 +305,12 @@ return view.extend({
 		Object.entries(this.parsers).forEach(
 			e => bllist_module.value(e[1], e[0]));
 
+		// ENABLE_BLLIST_PROXY
+		o = ss.taboption('b_settings_tab', form.Flag, 'enable_bllist_proxy',
+			_('Downloading a blacklist via proxy'), _('Turn on if blacklist source is blocked'));
+		o.rmempty = false;
+		o.default = 0;
+
 		// ENABLE_FPROXY
 		o = ss.taboption('b_settings_tab', form.Flag, 'enable_fproxy',
 			_('Enable full proxy mode'));
@@ -316,12 +322,6 @@ return view.extend({
 		o = ss.taboption('b_settings_tab', form.DynamicList, 'fproxy_list',
 			_('IP addresses for full proxy mode'));
 		o.datatype = 'ip4addr';
-
-		// ENABLE_BLLIST_PROXY
-		o = ss.taboption('b_settings_tab', form.Flag, 'enable_bllist_proxy',
-			_('Downloading a blacklist via proxy'), _('Turn on if blacklist source is blocked'));
-		o.rmempty = false;
-		o.default = 0;
 
 
 		/* Tor tab */
