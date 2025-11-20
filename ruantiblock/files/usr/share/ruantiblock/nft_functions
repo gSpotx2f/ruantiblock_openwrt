@@ -74,6 +74,8 @@ NftRouteAdd() {
                 MakeLogRecord "debug" "nft_functions.NftRouteAdd: ${IP_CMD} rule add fwmark ${_pkts_mark} table ${_route_table_id} priority ${VPN_RULE_PRIO}"
                 echo "  nft_functions.NftRouteAdd: ${IP_CMD} route add default via ${_vpn_ip} table ${_route_table_id}" >&2
                 MakeLogRecord "debug" "nft_functions.NftRouteAdd: ${IP_CMD} route add default via ${_vpn_ip} table ${_route_table_id}"
+                echo "  nft_functions.NftRouteAdd: ${IP_CMD} route add blackhole default table ${_route_table_id} metric 200" >&2
+                MakeLogRecord "debug" "nft_functions.NftRouteAdd: ${IP_CMD} route add blackhole default table ${_route_table_id} metric 200"
             fi
         fi
     fi
@@ -92,8 +94,11 @@ NftAddBaseChains() {
     $NFT_CMD add chain $NFT_TABLE "$NFT_FPROXY_CHAIN" { type filter hook prerouting priority ${_chain_prio_fproxy}\; policy accept\; }
     $NFT_CMD add chain $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" { type filter hook prerouting priority ${_chain_prio_first}\; policy accept\; }
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_CHAIN" meta iif lo return
-    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_CHAIN" ip daddr "@${NFTSET_FPROXY_PRIVATE}" return
+    NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_FPROXY_CHAIN" ip daddr "@${NFTSET_FPROXY_LOCAL}" return
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" meta iif lo return
+    if [ "$IGNORE_LOCAL_IP" = "1" ]; then
+        NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" ip daddr "@${NFTSET_LOCAL_IP}" return
+    fi
     NftCmdWrapper $NFT_CMD add rule $NFT_TABLE "$NFT_ALLOWED_HOSTS_CHAIN" "$NFT_ALLOWED_HOSTS_PATTERN"
     if [ "$BYPASS_MODE" = "1" ]; then
         for _set in "$NFTSET_BYPASS_IP" "$NFTSET_BYPASS_FQDN"
