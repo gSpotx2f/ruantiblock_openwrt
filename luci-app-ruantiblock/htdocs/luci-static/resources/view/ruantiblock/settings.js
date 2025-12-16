@@ -26,7 +26,7 @@ return view.extend({
 	},
 
 	validateUrl(section, value) {
-		return (/^$|^https?:\/\/[\w.-]+(:[0-9]{2,5})?[\w\/~.&?+=-]*$/.test(value)) ? true : _('Expecting:')
+		return (/^$|^https?:\/\/[\w.-]+(:[0-9]{2,5})?((\/|\?).*)?$/.test(value)) ? true : _('Expecting:')
 			+ ` ${_('valid URL')}\n`;
 	},
 
@@ -653,7 +653,7 @@ return view.extend({
 				'user-entries',
 				tools.userListsDir + '/' + s.section,
 				_('Edit entries'),
-				_('One entry (IP, CIDR or FQDN) per line. In the FQDN records, you can specify the DNS server for resolving this domain (separated by a space). You can also comment on lines (<code>#</code> is the first character of a line).<br />Examples:') +
+				_('One entry (IP, CIDR or FQDN) per line. In the FQDN records, you can specify the DNS server for resolving this domain (separated by a space). You can also comment out the lines (<code>#</code> is the first character of a line).<br />Examples:') +
 				'<br /><code>#comment<br />domain.net<br />sub.domain.com 8.8.8.8<br />sub.domain.com 8.8.8.8#53<br />74.125.131.19<br />74.125.0.0/16</code>'
 			);
 
