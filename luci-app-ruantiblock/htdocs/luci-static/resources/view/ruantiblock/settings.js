@@ -218,6 +218,13 @@ return view.extend({
 		o.description = _('Reduces RAM consumption during update');
 		o.rmempty = false;
 
+		// ENABLE_TMP_DOWNLOADS
+		o = s.taboption('general_tab', form.Flag, 'enable_tmp_downloads',
+			_('Safe blacklist update'),
+			_('If update fails, the old blacklist configuration will be retained. Temporary files are used, when updating the blacklist (increases memory consumption).'));
+		o.rmempty = false;
+		o.default = 0;
+
 		// ALLOWED_HOSTS_MODE
 		o = s.taboption('general_tab', form.ListValue, 'allowed_hosts_mode',
 			_('Host filter'));
@@ -230,13 +237,6 @@ return view.extend({
 		o = s.taboption('general_tab', form.DynamicList, 'allowed_hosts_list',
 			_('IP addresses for host filter'));
 		o.datatype = 'ip4addr';
-
-		// ENABLE_TMP_DOWNLOADS
-		o = s.taboption('general_tab', form.Flag, 'enable_tmp_downloads',
-			_('Safe blacklist update'),
-			_('If update fails, the old blacklist configuration will be retained. Temporary files are used, when updating the blacklist (increases memory consumption).'));
-		o.rmempty = false;
-		o.default = 0;
 
 		// BYPASS_MODE
 		o = s.taboption('general_tab', form.Flag, 'bypass_mode',

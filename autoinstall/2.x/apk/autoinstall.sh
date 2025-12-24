@@ -9,7 +9,7 @@ LUA_MODULE=0
 LUCI_APP=1
 HTTPS_DNS_PROXY=1
 
-OWRT_VERSION="24.10"
+OWRT_VERSION="25.12"
 RUAB_VERSION="2.1.10-r1"
 RUAB_MOD_LUA_VERSION="2.1.10-r1"
 RUAB_LUCI_APP_VERSION="2.1.10-r2"
@@ -23,10 +23,10 @@ fi
 ### URLs
 
 ### packages
-URL_RUAB_PKG="${BASE_URL}/${OWRT_VERSION}/ruantiblock_${RUAB_VERSION}_all.ipk"
-URL_MOD_LUA_PKG="${BASE_URL}/${OWRT_VERSION}/ruantiblock-mod-lua_${RUAB_MOD_LUA_VERSION}_all.ipk"
-URL_LUCI_APP_PKG="${BASE_URL}/${OWRT_VERSION}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
-URL_LUCI_APP_RU_PKG="${BASE_URL}/${OWRT_VERSION}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
+URL_RUAB_PKG="${BASE_URL}/${OWRT_VERSION}/ruantiblock-${RUAB_VERSION}.apk"
+URL_MOD_LUA_PKG="${BASE_URL}/${OWRT_VERSION}/ruantiblock-mod-lua-${RUAB_MOD_LUA_VERSION}.apk"
+URL_LUCI_APP_PKG="${BASE_URL}/${OWRT_VERSION}/luci-app-ruantiblock-${RUAB_LUCI_APP_VERSION}.apk"
+URL_LUCI_APP_RU_PKG="${BASE_URL}/${OWRT_VERSION}/luci-i18n-ruantiblock-ru-${RUAB_LUCI_APP_VERSION}.apk"
 ### tor
 URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master/tor/etc/tor/torrc"
 
@@ -37,10 +37,10 @@ USER_LISTS_DIR="${CONFIG_DIR}/user_lists"
 EXEC_DIR="${PREFIX}/usr/bin"
 BACKUP_DIR="${CONFIG_DIR}/autoinstall.bak.$(date +%s)"
 ### packages
-FILE_RUAB_PKG="${PKG_DIR}/ruantiblock_${RUAB_VERSION}_all.ipk"
-FILE_MOD_LUA_PKG="${PKG_DIR}/ruantiblock-mod-lua_${RUAB_MOD_LUA_VERSION}_all.ipk"
-FILE_LUCI_APP_PKG="${PKG_DIR}/luci-app-ruantiblock_${RUAB_LUCI_APP_VERSION}_all.ipk"
-FILE_LUCI_APP_RU_PKG="${PKG_DIR}/luci-i18n-ruantiblock-ru_${RUAB_LUCI_APP_VERSION}_all.ipk"
+FILE_RUAB_PKG="${PKG_DIR}/ruantiblock-${RUAB_VERSION}.apk"
+FILE_MOD_LUA_PKG="${PKG_DIR}/ruantiblock-mod-lua-${RUAB_MOD_LUA_VERSION}.apk"
+FILE_LUCI_APP_PKG="${PKG_DIR}/luci-app-ruantiblock-${RUAB_LUCI_APP_VERSION}.apk"
+FILE_LUCI_APP_RU_PKG="${PKG_DIR}/luci-i18n-ruantiblock-ru-${RUAB_LUCI_APP_VERSION}.apk"
 ### ruantiblock
 FILE_CONFIG="${CONFIG_DIR}/ruantiblock.conf"
 FILE_FQDN_FILTER="${CONFIG_DIR}/fqdn_filter"
@@ -62,9 +62,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 WGET_PARAMS="--no-check-certificate -q -O "
-OPKG_CMD="$(which opkg)"
+APK_CMD="$(which apk)"
 if [ $? -ne 0 ]; then
-    echo " Error! opkg doesn't exists" >&2
+    echo " Error! apk doesn't exists" >&2
     exit 1
 fi
 UCI_CMD="$(which uci)"
@@ -153,15 +153,15 @@ Reboot() {
 }
 
 UpdatePackagesList() {
-    $OPKG_CMD update
+    $APK_CMD update
 }
 
 InstallPackages() {
     local _pkg
     for _pkg in $@
     do
-        if [ -z "$($OPKG_CMD list-installed $_pkg)" ]; then
-            $OPKG_CMD --force-overwrite install $_pkg
+        if [ -z "$($APK_CMD list --installed $_pkg)" ]; then
+            $APK_CMD add --force-overwrite $_pkg
             if [ $? -ne 0 ]; then
                 echo "Error during installation of the package (${_pkg})" >&2
                 exit 1
@@ -174,7 +174,7 @@ InstallBaseConfig() {
     _return_code=1
     InstallPackages "dnsmasq-full" "kmod-nft-tproxy"
     RemoveFile "$FILE_RUAB_PKG" > /dev/null
-    DlFile "$URL_RUAB_PKG" "$FILE_RUAB_PKG" && $OPKG_CMD install "$FILE_RUAB_PKG" > /dev/null
+    DlFile "$URL_RUAB_PKG" "$FILE_RUAB_PKG" && $APK_CMD add --allow-untrusted "$FILE_RUAB_PKG" > /dev/null
     _return_code=$?
     AppStop
     return $_return_code
@@ -227,7 +227,7 @@ InstallTorConfig() {
 InstallLuaModule() {
     InstallPackages "lua" "luasocket" "luasec" "luabitop"
     RemoveFile "$FILE_MOD_LUA_PKG" > /dev/null
-    DlFile "$URL_MOD_LUA_PKG" "$FILE_MOD_LUA_PKG" && $OPKG_CMD install "$FILE_MOD_LUA_PKG"
+    DlFile "$URL_MOD_LUA_PKG" "$FILE_MOD_LUA_PKG" && $APK_CMD add --allow-untrusted "$FILE_MOD_LUA_PKG"
     $UCI_CMD set ruantiblock.config.bllist_module="/usr/libexec/ruantiblock/ruab_parser.lua"
     $UCI_CMD commit ruantiblock
 }
@@ -235,8 +235,8 @@ InstallLuaModule() {
 InstallLuciApp() {
     RemoveFile "$FILE_LUCI_APP_PKG" > /dev/null
     RemoveFile "$FILE_LUCI_APP_RU_PKG" > /dev/null
-    DlFile "$URL_LUCI_APP_PKG" "$FILE_LUCI_APP_PKG" && $OPKG_CMD install "$FILE_LUCI_APP_PKG" && \
-    DlFile "$URL_LUCI_APP_RU_PKG" "$FILE_LUCI_APP_RU_PKG" && $OPKG_CMD install "$FILE_LUCI_APP_RU_PKG"
+    DlFile "$URL_LUCI_APP_PKG" "$FILE_LUCI_APP_PKG" && $APK_CMD add --allow-untrusted "$FILE_LUCI_APP_PKG" && \
+    DlFile "$URL_LUCI_APP_RU_PKG" "$FILE_LUCI_APP_RU_PKG" && $APK_CMD add --allow-untrusted "$FILE_LUCI_APP_RU_PKG"
     rm -f /tmp/luci-modulecache/* /tmp/luci-indexcache*
     /etc/init.d/rpcd restart
     /etc/init.d/uhttpd restart
