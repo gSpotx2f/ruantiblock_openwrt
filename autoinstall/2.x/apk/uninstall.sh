@@ -88,6 +88,20 @@ RemoveCronTask() {
     fi
 }
 
+RemovePackages() {
+    local _pkg
+    for _pkg in $@
+    do
+        if [ -n "$($APK_CMD list --installed $_pkg)" ]; then
+            $APK_CMD del $_pkg
+            if [ $? -ne 0 ]; then
+                echo "An error occurred while removing package (${_pkg})" >&2
+                exit 1
+            fi
+        fi
+    done
+}
+
 RestoreTorConfig() {
     [ -e "${FILE_TORRC}.bak" ] && mv -f "${FILE_TORRC}.bak" "$FILE_TORRC"
     if [ -x "/etc/init.d/tor" ]; then
@@ -99,7 +113,7 @@ RestoreTorConfig() {
 
 RemoveAppFiles() {
     RestoreTorConfig
-    $APK_CMD del ruantiblock-mod-py ruantiblock-mod-lua luci-i18n-ruantiblock-ru luci-app-ruantiblock ruantiblock
+    RemovePackages ruantiblock-mod-py ruantiblock-mod-lua luci-i18n-ruantiblock-ru luci-app-ruantiblock ruantiblock
     RemoveFile "$FILE_UCI_CONFIG"
     RemoveFile "$FILE_CONFIG"
     RemoveFile "$FILE_FQDN_FILTER"
@@ -108,18 +122,17 @@ RemoveAppFiles() {
     RemoveFile "$FILE_BYPASS_ENTRIES"
     RemoveFile "$FILE_GR_EXCLUDED_SLD"
     RemoveFile "$FILE_GR_EXCLUDED_NETS"
-    RemoveFile "${FILE_UCI_CONFIG}.opkg"
-    RemoveFile "${FILE_CONFIG}.opkg"
-    RemoveFile "${FILE_FQDN_FILTER}.opkg"
-    RemoveFile "${FILE_IP_FILTER}.opkg"
-    RemoveFile "${FILE_USER_ENTRIES}.opkg"
-    RemoveFile "${FILE_BYPASS_ENTRIES}.opkg"
+    RemoveFile "${FILE_UCI_CONFIG}.apk-new"
+    RemoveFile "${FILE_CONFIG}.apk-new"
+    RemoveFile "${FILE_FQDN_FILTER}.apk-new"
+    RemoveFile "${FILE_IP_FILTER}.apk-new"
+    RemoveFile "${FILE_USER_ENTRIES}.apk-new"
+    RemoveFile "${FILE_BYPASS_ENTRIES}.apk-new"
     rm -f "$DNSMASQ_DATA_FILE"
     rm -f "$DNSMASQ_DATA_FILE_BYPASS"
     rm -f "$DNSMASQ_DATA_FILE_USER_INSTANCES"
     rm -rf "$DATA_DIR"/*
     rm -rf "$USER_LISTS_DIR"
-
     rmdir "$SCRIPTS_DIR" "$MODULES_DIR" 2> /dev/null
     rmdir "$HTDOCS_RUAB" 2> /dev/null
     rm -f /tmp/luci-modulecache/* /tmp/luci-indexcache*
