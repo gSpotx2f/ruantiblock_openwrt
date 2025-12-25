@@ -35,7 +35,8 @@ URL_TORRC="https://raw.githubusercontent.com/gSpotx2f/ruantiblock_openwrt/master
 CONFIG_DIR="${PREFIX}/etc/ruantiblock"
 USER_LISTS_DIR="${CONFIG_DIR}/user_lists"
 EXEC_DIR="${PREFIX}/usr/bin"
-BACKUP_DIR="${CONFIG_DIR}/autoinstall.bak.$(date +%s)"
+BACKUP_DIR_BASE="${CONFIG_DIR}/autoinstall.bak"
+BACKUP_DIR="${BACKUP_DIR_BASE}.$(date +%s)"
 ### packages
 FILE_RUAB_PKG="${PKG_DIR}/ruantiblock-${RUAB_VERSION}.apk"
 FILE_MOD_LUA_PKG="${PKG_DIR}/ruantiblock-mod-lua-${RUAB_MOD_LUA_VERSION}.apk"
@@ -120,7 +121,7 @@ BackupFile() {
 BackupCurrentConfig() {
     local _file
     MakeDir "$BACKUP_DIR"
-    for _file in $(ls -1 "$CONFIG_DIR" | grep -v "$(basename $BACKUP_DIR)")
+    for _file in $(ls -1 "$CONFIG_DIR" | grep -v "$(basename $BACKUP_DIR_BASE)*")
     do
         cp -af "${CONFIG_DIR}/${_file}" "${BACKUP_DIR}/${_file}"
     done
