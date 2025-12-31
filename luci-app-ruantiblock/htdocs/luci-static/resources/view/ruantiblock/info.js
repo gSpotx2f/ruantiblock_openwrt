@@ -49,7 +49,6 @@ return view.extend({
 				if(!i.rule) {
 					continue;
 				};
-
 				let set, bytes;
 				i.rule.expr.forEach(e => {
 					if(e.match && e.match.left && e.match.left.payload) {
@@ -309,9 +308,8 @@ return view.extend({
 						user_entries.append(
 							E('tr', { 'class': 'tr' }, [
 								E('td', { 'class': 'td left', 'style': 'word-wrap:break-word' },
-									i.id),
-								E('td', { 'class': 'td left',
-											'id' : 'user_entries_' + i },
+									i.id.slice(0, 114) + (i.id.length > 115 ? '...' : '')),
+								E('td', { 'class': 'td left' },
 									`CIDR: ${i.cidr}, IP: ${i.ip}, FQDN: ${i.fqdn}`),
 							])
 						);

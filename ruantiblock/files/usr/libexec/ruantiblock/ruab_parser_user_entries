@@ -1,0 +1,209 @@
+#!/bin/sh
+
+echo | $AWK_CMD -v WGET_CMD="$WGET_CMD" -v WGET_PARAMS="$WGET_PARAMS" \
+    -v LOGGER_CMD="$LOGGER_CMD" -v LOGGER_PARAMS="$LOGGER_PARAMS" '
+    BEGIN {
+        stderr = "/dev/stderr";
+        ENABLE_LOGGING = ENVIRON["ENABLE_LOGGING"];
+        ENABLE_TMP_DOWNLOADS = ENVIRON["ENABLE_TMP_DOWNLOADS"];
+        sleep = "sleep " ENVIRON["USER_ENTRIES_REMOTE_DOWNLOAD_TIMEOUT"];
+        DOWNLOAD_ATTEMPTS = ENVIRON["USER_ENTRIES_REMOTE_DOWNLOAD_ATTEMPTS"];
+        attempt_err_pattern = "User entries download attempt %s: failed [%s:%s]";
+        U_NAME = ENVIRON["U_NAME"];
+        U_ENTRIES_REMOTE = ENVIRON["U_ENTRIES_REMOTE"];
+        U_USER_ENTRIES_DNS = ENVIRON["U_ENTRIES_DNS"];
+        NFT_TABLE = ENVIRON["NFT_TABLE"];
+        NFTSET_CIDR_STRING = ENVIRON["I_NFTSET_CIDR_STRING"];
+        NFTSET_IP_STRING = ENVIRON["I_NFTSET_IP_STRING"];
+        NFTSET_DNSMASQ = ENVIRON["I_NFTSET_DNSMASQ"];
+        NFT_TABLE_DNSMASQ = ENVIRON["NFT_TABLE_DNSMASQ"];
+        IP_DATA_FILE = ENVIRON["I_IP_DATA_FILE"];
+        DNSMASQ_DATA_FILE = ENVIRON["I_DNSMASQ_DATA_FILE"];
+        USER_ENTRIES_STATUS_FILE = ENVIRON["I_USER_ENTRIES_STATUS_FILE"];
+        INSTANCE_ENTRIES_FILE = ENVIRON["I_INSTANCE_ENTRIES_FILE"];
+        exit_code = 0;
+
+        gsub("\042", "%22", U_ENTRIES_REMOTE);
+        gsub("\047", "%27", U_ENTRIES_REMOTE);
+        split(U_ENTRIES_REMOTE, urls, /[\040\011\012]+/);
+
+        delete ip_array;
+        delete cidr_array;
+        delete fqdn_array;
+        delete download_results;
+    }
+    function makeLogRecord(level, msg) {
+        if(ENABLE_LOGGING == 1) {
+            system(sprintf("%s %s -p \"user.%s\" \"%s\"", LOGGER_CMD, LOGGER_PARAMS, level, msg));
+        };
+    };
+    function writeIpList(array,  _str) {
+        for(i in array) {
+            _str = _str i ",";
+        };
+        return _str;
+    };
+    function writeDNSData(val, dns) {
+        if(length(dns) == 0 && length(U_USER_ENTRIES_DNS) > 0) {
+            dns = U_USER_ENTRIES_DNS;
+        };
+        if(length(dns) > 0) {
+            printf "server=/%s/%s\n", val, dns >> DNSMASQ_DATA_FILE;
+        };
+        printf "nftset=/%s/%s#%s\n", val, NFT_TABLE_DNSMASQ, NFTSET_DNSMASQ >> DNSMASQ_DATA_FILE;
+    };
+    function writeFqdnEntries() {
+        for(i in fqdn_array) {
+            split(i, a, " ");
+            writeDNSData(a[1], a[2]);
+        };
+    };
+    function trimEntry(str) {
+        sub("\015", "", str);
+        return str;
+    };
+    function checkEntry(str) {
+        if (str ~ /^([\040\011]*$|#)/) {
+            return 0;
+        }
+        else if(str ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/) {
+            return 2;
+        }
+        else if(str ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/) {
+            return 1;
+        }
+        else if(str ~ /^([a-z0-9._-]+[.])*([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
+            return 3;
+        };
+    };
+    function readFile(fpath, fname,  _line, _cidr_num, _ip_num, _fqdn_num, _ret) {
+        _cidr_num = 0; _ip_num = 0; _fqdn_num = 0;
+        while((getline _line <fpath) > 0) {
+            _line = trimEntry(_line);
+            _ret = checkEntry(_line);
+            if(_ret == 1) {
+                if(!(_line in cidr_array)) {
+                    cidr_array[_line];
+                    _cidr_num++;
+                };
+            }
+            else if(_ret == 2) {
+                if(!(_line in ip_array)) {
+                    ip_array[_line];
+                    _ip_num++;
+                };
+            }
+            else if(_ret == 3) {
+                if(!(_line in fqdn_array)) {
+                    fqdn_array[_line];
+                    _fqdn_num++;
+                };
+            };
+        };
+        close(fpath);
+        download_results[length(download_results)] = sprintf("%s %s %s %s:%s",
+            _cidr_num, _ip_num, _fqdn_num, U_NAME, fname);
+    };
+    function downloadFile(url,  _ret_code, _wget_call, _cidr_array, _ip_array, _fqdn_array, _val, _ret) {
+        if(length(url) == 0) {
+            return 1;
+        };
+
+        _ret_code = 1;
+        _wget_call = sprintf("%s %s - \"%s\"; printf \"\n$?\n\"", WGET_CMD, WGET_PARAMS, url);
+
+        delete _cidr_array;
+        delete _ip_array;
+        delete _fqdn_array;
+
+        for(i = 1; i <= DOWNLOAD_ATTEMPTS; i++) {
+            delete _cidr_array;
+            delete _ip_array;
+            delete _fqdn_array;
+
+            while((_wget_call | getline _val) > 0) {
+                if(_val ~ /^[0-9]{1,3}$/) {
+                    continue;
+                };
+                _val = trimEntry(_val);
+                _ret = checkEntry(_val);
+                if(_ret == 1) {
+                    _cidr_array[_val];
+                }
+                else if(_ret == 2) {
+                    _ip_array[_val];
+                }
+                else if(_ret == 3) {
+                    _fqdn_array[_val];
+                };
+            };
+            close(_wget_call);
+
+            if(_val ~ /^[0-9]{1,3}$/) {
+                _ret_code = _val;
+            };
+            if(_ret_code == 0) {
+                break;
+            };
+
+            makeLogRecord("err", sprintf(attempt_err_pattern, i, U_NAME, url));
+            printf(" " attempt_err_pattern "\n", i, U_NAME, url) > stderr;
+
+            if(i >= DOWNLOAD_ATTEMPTS) {
+                break;
+            };
+            sleep | getline _;
+            close(sleep);
+        };
+
+        if(_ret_code == 0 && (length(_cidr_array) > 0 || length(_ip_array) > 0 || length(_fqdn_array) > 0)) {
+            for(i in _cidr_array) {
+                cidr_array[i];
+            };
+            for(i in _ip_array) {
+                ip_array[i];
+            };
+            for(i in _fqdn_array) {
+                fqdn_array[i];
+            };
+        };
+
+        download_results[length(download_results)] = sprintf("%s %s %s %s:%s",
+            length(_cidr_array), length(_ip_array), length(_fqdn_array), U_NAME, url);
+
+        return _ret_code;
+    };
+    END {
+        readFile(INSTANCE_ENTRIES_FILE, "local");
+        dl_ret_code = 1;
+        for(i in urls) {
+            url = urls[i];
+            dl_ret_code = downloadFile(url);
+            if(dl_ret_code != 0) {
+                exit_code = dl_ret_code;
+                if(ENABLE_TMP_DOWNLOADS == 1) {
+                    break;
+                };
+            };
+        };
+        if(ENABLE_TMP_DOWNLOADS != 1 || (ENABLE_TMP_DOWNLOADS == 1 && exit_code == 0)) {
+            if(length(cidr_array) > 0 || length(ip_array) > 0) {
+                printf "table %s {\n%s", NFT_TABLE, NFTSET_CIDR_STRING >> IP_DATA_FILE;
+                if(length(cidr_array) > 0) {
+                    printf "elements={%s};", writeIpList(cidr_array) >> IP_DATA_FILE;
+                };
+                printf "}\n%s", NFTSET_IP_STRING >> IP_DATA_FILE;
+                if(length(ip_array) > 0) {
+                    printf "elements={%s};", writeIpList(ip_array) >> IP_DATA_FILE;
+                };
+                printf "}\n}\n" >> IP_DATA_FILE;
+            };
+            writeFqdnEntries();
+            for(i in download_results) {
+                print download_results[i] >> USER_ENTRIES_STATUS_FILE;
+            };
+        };
+        exit exit_code;
+    }'
+
+exit $?

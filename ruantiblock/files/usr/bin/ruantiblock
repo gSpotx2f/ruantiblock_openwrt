@@ -228,24 +228,24 @@ export DNSMASQ_DATA_FILE_USER_INSTANCES="${DNSMASQ_CONFDIR}/01-${NAME}_user_inst
 export DNSMASQ_DATA_FILE="${DNSMASQ_CONFDIR}/02-${NAME}.dnsmasq"
 
 ### Utilities
-AWK_CMD="awk"
+export AWK_CMD="awk"
 NFT_CMD="$(which nft)"
 if [ $? -ne 0 ]; then
     echo " Error! Nftables doesn't exists" >&2
     exit 1
 fi
-LOGGER_CMD="$(which logger)"
+export LOGGER_CMD="$(which logger)"
 if [ $ENABLE_LOGGING = "1" -a $? -ne 0 ]; then
     echo " Logger doesn't exists" >&2
     ENABLE_LOGGING=0
 fi
-LOGGER_PARAMS="-t ${APP_NAME}"
-WGET_CMD="$(which wget)"
+export LOGGER_PARAMS="-t ${APP_NAME}"
+export WGET_CMD="$(which wget)"
 if [ $? -ne 0 ]; then
     echo " Error! Wget doesn't exists" >&2
     exit 1
 fi
-WGET_PARAMS="--no-check-certificate -q -O"
+export WGET_PARAMS="--no-check-certificate -q -O"
 NSLOOKUP_CMD="$(which nslookup)"
 if [ $? -ne 0 ]; then
     echo " Error! Nslookup doesn't exists" >&2
@@ -256,6 +256,7 @@ if [ $? -ne 0 ]; then
     echo " Error! Iproute2 doesn't exists" >&2
     exit 1
 fi
+USER_ENTRIES_PARSER="${MODULES_DIR}/ruab_parser_user_entries"
 ROUTE_CHECK_EXEC="${MODULES_DIR}/ruab_route_check"
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
 export IP_DATA_FILE_BYPASS="${DATA_DIR}/${NAME}_bypass.ip"
@@ -298,7 +299,6 @@ NFT_FUNCTIONS="${SCRIPTS_DIR}/nft_functions"
 INFO_OUTPUT_FUNCTION="${SCRIPTS_DIR}/info_output"
 export IP_DATA_FILE_TMP="${IP_DATA_FILE}.tmp"
 export IP_DATA_FILE_USER_INSTANCES_TMP="${IP_DATA_FILE_USER_INSTANCES}.tmp"
-export DNSMASQ_DATA_FILE_TMP="${DNSMASQ_DATA_FILE}.tmp"
 export DNSMASQ_DATA_FILE_USER_INSTANCES_TMP="${DNSMASQ_DATA_FILE_USER_INSTANCES}.tmp"
 export DNSMASQ_DATA_FILE_TMP="${DNSMASQ_DATA_FILE}.tmp"
 export UPDATE_STATUS_FILE_TMP="${UPDATE_STATUS_FILE}.tmp"
@@ -313,9 +313,6 @@ INSTANCES_CACHE="${RUN_FILES_DIR}/${NAME}.instances"
 DL_IPSET_URL=""
 DL_DMASK_URL=""
 DL_STAT_URL=""
-### for compatibility with v1.x parsers
-export NFTSET_CIDR_CFG="$NFTSET_CIDR_STRING_MAIN"
-export NFTSET_IP_CFG="$NFTSET_IP_STRING_MAIN"
 
 ######################### External functions ###########################
 
@@ -447,11 +444,8 @@ FlushInstancesNftSets() {
             _name=".${_name}"
         fi
         case "$_arg" in
-            fqdn)
-                FlushNftSets "${NFTSET_DNSMASQ}${_name}" "${NFTSET_ONION}${_name}"
-            ;;
             bllist)
-                FlushNftSets "${NFTSET_CIDR}${_name}" "${NFTSET_IP}${_name}" "${NFTSET_DNSMASQ}${_name}"
+                FlushNftSets "${NFTSET_CIDR}${_name}" "${NFTSET_IP}${_name}" "${NFTSET_DNSMASQ}${_name}" "${NFTSET_ONION}${_name}"
             ;;
             *)
                 FlushNftSets "${NFTSET_FPROXY}${_name}" "${NFTSET_BLLIST_PROXY}${_name}" "${NFTSET_CIDR}${_name}" "${NFTSET_IP}${_name}" "${NFTSET_DNSMASQ}${_name}" "${NFTSET_ONION}${_name}"
@@ -532,7 +526,6 @@ UpdateBllistProxySet() {
     else
         _name=".${_name}"
     fi
-    FlushNftSets "${NFTSET_BLLIST_PROXY}${_name}"
     for _host in $(echo "$_urls" | $AWK_CMD '
         BEGIN {
             RS = " ";
@@ -746,12 +739,12 @@ AddBypassEntries() {
     FlushNftSets "$NFTSET_BYPASS_IP" "$NFTSET_BYPASS_FQDN"
     if [ "$BYPASS_MODE" = "1" ]; then
         if [ -f "$BYPASS_ENTRIES_FILE" ]; then
-            $AWK_CMD 'BEGIN {
-                    ip_array[0];
-                    fqdn_array[0];
+            $AWK_CMD '
+                BEGIN {
+                    delete ip_array;
+                    delete fqdn_array;
                 }
                 function writeIpList(array,  _str) {
-                    _str = "";
                     for(i in array) {
                         _str = _str i ",";
                     };
@@ -767,9 +760,8 @@ AddBypassEntries() {
                     printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], ENVIRON["NFTSET_BYPASS_FQDN"] >> ENVIRON["DNSMASQ_DATA_FILE_BYPASS"];
                 };
                 function writeFqdnEntries() {
-                    delete fqdn_array[0];
                     for(i in fqdn_array) {
-                        split(fqdn_array[i], a, " ");
+                        split(i, a, " ");
                         writeDNSData(a[1], a[2]);
                     };
                 };
@@ -779,12 +771,11 @@ AddBypassEntries() {
                         ip_array[$0];
                     }
                     else if($0 ~ /^([a-z0-9._-]+[.])*([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
-                        fqdn_array[length(fqdn_array)] = $1 " " $2;
+                        fqdn_array[$0];
                     };
                 }
                 END {
                     printf "table %s {\n%s", ENVIRON["NFT_TABLE"], ENVIRON["NFTSET_BYPASS_IP_STRING"] >> ENVIRON["IP_DATA_FILE_BYPASS"];
-                    delete ip_array[0];
                     if(length(ip_array) > 0) {
                         printf "elements={%s};", writeIpList(ip_array) >> ENVIRON["IP_DATA_FILE_BYPASS"];
                     };
@@ -793,77 +784,6 @@ AddBypassEntries() {
                 }' "$BYPASS_ENTRIES_FILE"
         fi
     fi
-}
-
-ParseUserEntries() {
-    $AWK_CMD -v NFTSET_IP_STRING="$1" -v NFTSET_CIDR_STRING="$2" -v NFTSET_DNSMASQ="$3" \
-        -v IP_DATA_FILE="$4" -v DNSMASQ_DATA_FILE="$5" -v USER_ENTRIES_STATUS_FILE="$6" \
-        -v ID="$7" -v USER_ENTRIES_DNS="$8" '
-        BEGIN {
-            ip_array[0];
-            cidr_array[0];
-            fqdn_array[0];
-        }
-        function writeIpList(array,  _str) {
-            _str = "";
-            for(i in array) {
-                _str = _str i ",";
-            };
-            return _str;
-        };
-        function writeDNSData(val, dns) {
-            if(length(dns) == 0 && length(USER_ENTRIES_DNS) > 0) {
-                dns = USER_ENTRIES_DNS;
-            };
-            if(length(dns) > 0) {
-                printf "server=/%s/%s\n", val, dns >> DNSMASQ_DATA_FILE;
-            };
-            printf "nftset=/%s/%s#%s\n", val, ENVIRON["NFT_TABLE_DNSMASQ"], NFTSET_DNSMASQ >> DNSMASQ_DATA_FILE;
-        };
-        function writeFqdnEntries() {
-            delete fqdn_array[0];
-            for(i in fqdn_array) {
-                split(fqdn_array[i], a, " ");
-                writeDNSData(a[1], a[2]);
-            };
-        };
-        ($0 !~ /^([\040\011]*$|#)/) {
-            sub("\015", "", $0);
-            if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}$/) {
-                ip_array[$0];
-            }
-            else if($0 ~ /^[0-9]{1,3}([.][0-9]{1,3}){3}[\057][0-9]{1,2}$/) {
-                cidr_array[$0];
-            }
-            else if($0 ~ /^([a-z0-9._-]+[.])*([a-z]{2,}|xn--[a-z0-9]+)([ ][0-9]{1,3}([.][0-9]{1,3}){3}([#][0-9]{2,5})?)?$/) {
-                fqdn_array[length(fqdn_array)] = $1 " " $2;
-            };
-        }
-        END {
-            ret_code = 0;
-            if($0 ~ /[0-9]+/) {
-                ret_code = $0;
-            };
-            delete cidr_array[0];
-            delete ip_array[0];
-            if(ret_code == 0 && (length(cidr_array) > 0 || length(ip_array) > 0)) {
-                printf "table %s {\n%s", ENVIRON["NFT_TABLE"], NFTSET_CIDR_STRING >> IP_DATA_FILE;
-                if(length(cidr_array) > 0) {
-                    printf "elements={%s};", writeIpList(cidr_array) >> IP_DATA_FILE;
-                };
-                printf "}\n%s", NFTSET_IP_STRING >> IP_DATA_FILE;
-
-                if(length(ip_array) > 0) {
-                    printf "elements={%s};", writeIpList(ip_array) >> IP_DATA_FILE;
-                };
-                printf "}\n}\n" >> IP_DATA_FILE;
-            };
-            writeFqdnEntries();
-            if(ret_code == 0) {
-                printf "%s %s %s %s\n", length(cidr_array), length(ip_array), length(fqdn_array), ID >> USER_ENTRIES_STATUS_FILE;
-            };
-            exit ret_code;
-        }' -
 }
 
 AddUserEntries() {
@@ -901,42 +821,44 @@ AddUserEntries() {
             ### Запись для .onion
             printf "server=/onion/%s\nnftset=/onion/%s#%s\n" "$U_ONION_DNS_ADDR" "$NFT_TABLE_DNSMASQ" "${NFTSET_ONION}.${U_NAME}" >> "$_dnsmasq_data_file_user_instances"
         fi
-        if [ -f "$_instance_entries_file" ]; then
-            { cat "$_instance_entries_file"; printf "\n0\n"; } | ParseUserEntries "$(printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}.${U_NAME}")" "$(printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}.${U_NAME}")" "${NFTSET_DNSMASQ}.${U_NAME}" "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file" "${U_NAME}:local" "$U_ENTRIES_DNS"
-        fi
-        if [ -n "$U_ENTRIES_REMOTE" ]; then
+
+        if [ "$U_ENABLE_ENTRIES_REMOTE_PROXY" = "1" ]; then
             for _url in $U_ENTRIES_REMOTE
             do
-                _instance_return_code=0
-                _attempt=1
-                while :
-                do
-                    if [ "$U_ENABLE_ENTRIES_REMOTE_PROXY" = "1" ]; then
-                        UpdateBllistProxySet "$U_NAME" "$_url"
-                    fi
-                    { Download - "$_url"; printf "\n$?\n"; } | ParseUserEntries "$(printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}.${U_NAME}")" "$(printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}.${U_NAME}")" "${NFTSET_DNSMASQ}.${U_NAME}" "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file" "${U_NAME}:${_url}" "$U_ENTRIES_DNS"
-                    if [ $? -eq 0 ]; then
-                        _instance_return_code=0
-                        break
-                    else
-                        _instance_return_code=1
-                        ### STDOUT
-                        echo " User entries download attempt ${_attempt}: failed [${U_NAME}:${_url}]" >&2
-                        MakeLogRecord "err" "User entries download attempt ${_attempt}: failed [${U_NAME}:${_url}]"
-                        _attempt=$(($_attempt + 1))
-                        [ $_attempt -gt $USER_ENTRIES_REMOTE_DOWNLOAD_ATTEMPTS ] && break
-                        sleep $USER_ENTRIES_REMOTE_DOWNLOAD_TIMEOUT
-                    fi
-                done
-                if [ $_instance_return_code -ne 0 ]; then
-                    _return_code=$_instance_return_code
-                    if [ "$ENABLE_TMP_DOWNLOADS" = "1" ]; then
-                        break 2
-                    fi
-                fi
+                UpdateBllistProxySet "$U_NAME" "$_url"
             done
-            if [ "$U_ENABLE_ENTRIES_REMOTE_PROXY" = "1" ]; then
-                FlushNftSets "${NFTSET_BLLIST_PROXY}.${U_NAME}"
+        fi
+
+        export U_NAME
+        export U_ENTRIES_REMOTE
+        export U_ENTRIES_DNS
+        export I_NFTSET_CIDR_STRING="$(printf "$NFTSET_CIDR_PATTERN" "${NFTSET_CIDR}.${U_NAME}")"
+        export I_NFTSET_IP_STRING="$(printf "$NFTSET_IP_PATTERN" "${NFTSET_IP}.${U_NAME}")"
+        export I_NFTSET_DNSMASQ="${NFTSET_DNSMASQ}.${U_NAME}"
+        export I_IP_DATA_FILE="$_ip_data_file_user_instances"
+        export I_DNSMASQ_DATA_FILE="$_dnsmasq_data_file_user_instances"
+        export I_USER_ENTRIES_STATUS_FILE="$_user_entries_status_file"
+        export I_INSTANCE_ENTRIES_FILE="$_instance_entries_file"
+
+        $USER_ENTRIES_PARSER
+        _instance_return_code=$?
+
+        unset I_NFTSET_CIDR_STRING
+        unset I_NFTSET_IP_STRING
+        unset I_NFTSET_DNSMASQ
+        unset I_IP_DATA_FILE
+        unset I_DNSMASQ_DATA_FILE
+        unset I_USER_ENTRIES_STATUS_FILE
+        unset I_INSTANCE_ENTRIES_FILE
+
+        if [ "$U_ENABLE_ENTRIES_REMOTE_PROXY" = "1" ]; then
+            FlushNftSets "${NFTSET_BLLIST_PROXY}.${U_NAME}"
+        fi
+
+        if [ $_instance_return_code -ne 0 ]; then
+            _return_code=$_instance_return_code
+            if [ "$ENABLE_TMP_DOWNLOADS" = "1" ]; then
+                break
             fi
         fi
         ClearUserInstanceVars
@@ -1139,7 +1061,7 @@ Update() {
             FlushInstancesNftSets bllist
         fi
         GetBlacklistFiles
-        FlushInstancesNftSets fqdn
+        FlushInstancesNftSets bllist
         UpdateBllistSets
         _return_code=$?
         RestartDnsmasq
