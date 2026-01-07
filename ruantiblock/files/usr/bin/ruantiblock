@@ -1040,12 +1040,6 @@ CheckDnsmasqConfDir() {
 
 Update() {
     local _arg="$1" _return_code=0
-    if CheckStatus; then
-        :
-    else
-        echo " ${NAME} ${_arg} - Error! ${NAME} does not running or another error has occurred" >&2
-        return 1
-    fi
     MakeToken
     if [ -e "$U_PID_FILE" ] && [ "$_arg" != "force-update" ]; then
         echo " ${NAME} ${_arg} - Error! Another instance of update is already running" >&2
@@ -1129,32 +1123,36 @@ Stop() {
 
 Reload() {
     local _i=0 _attempts=60
-    MakeToken
-    while [ -e "$START_PID_FILE" ]
-    do
-        if [ $_i -ge $_attempts ]; then
-            return 1
-        fi
-        _i=$(($_i + 1))
+    if CheckStatus; then
+        MakeToken
+        while [ -e "$START_PID_FILE" ]
+        do
+            if [ $_i -ge $_attempts ]; then
+                return 1
+            fi
+            _i=$(($_i + 1))
+
+            if [ $DEBUG -ge 1 ]; then
+                echo "  ruantiblock.Reload._i=${_i}" >&2
+                MakeLogRecord "debug" "ruantiblock.Reload._i ${_i}"
+            fi
+
+            sleep 1
+        done
 
         if [ $DEBUG -ge 1 ]; then
-            echo "  ruantiblock.Reload._i=${_i}" >&2
-            MakeLogRecord "debug" "ruantiblock.Reload._i ${_i}"
+            echo "  ruantiblock.Reload()" >&2
+            MakeLogRecord "debug" "ruantiblock.Reload()"
         fi
 
-        sleep 1
-    done
-
-    if [ $DEBUG -ge 1 ]; then
-        echo "  ruantiblock.Reload()" >&2
-        MakeLogRecord "debug" "ruantiblock.Reload()"
+        echo " ${NAME} reload..."
+        DeleteNftRules &> /dev/null
+        AddNftRules &> /dev/null
+        UpdateLocalIpSets
+        MakeToken
+    else
+        echo " ${NAME} does not running" >&2
     fi
-
-    echo " ${NAME} reload..."
-    DeleteNftRules &> /dev/null
-    AddNftRules &> /dev/null
-    UpdateLocalIpSets
-    MakeToken
 }
 
 Status() {
@@ -1274,6 +1272,12 @@ case "$1" in
     ;;
     update|force-update)
         Init
+        if CheckStatus; then
+            :
+        else
+            echo " ${NAME} ${_arg} - Error! ${NAME} does not running or another error has occurred" >&2
+            return 1
+        fi
         UpdateLocalIpSets
         if CheckDnsmasqConfDir; then
             Update "$1"
