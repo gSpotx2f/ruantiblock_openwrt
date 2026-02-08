@@ -153,7 +153,7 @@ end
 function Config:load_environ_config()
     local cfg_table = {}
     for var in pairs(self.environ_table) do
-        val = os.getenv(var)
+        local val = os.getenv(var)
         if val then
             cfg_table[var] = val
         end
@@ -234,7 +234,7 @@ end
 -- Loading filters
 
 function Config:load_filter_files()
-    function load_file(file, t, is_array, func)
+    local function load_file(file, t, is_array, func)
         local file_handler = io.open(file, "r")
         if file_handler then
             for line in file_handler:lines() do
@@ -604,11 +604,11 @@ function Summarize:_group_ip_ranges(ip_list, raw_list)
         for i = start, stop do
             if raw_list[i] then
                 raw_list[i] = nil
-                return
-            end
-            local item = it.int_to_ip(i)
-            if raw_list[item] then
-                raw_list[it.int_to_ip(i)] = nil
+            else
+                local item = it.int_to_ip(i)
+                if raw_list[item] then
+                    raw_list[item] = nil
+                end
             end
         end
     end

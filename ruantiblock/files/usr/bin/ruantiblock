@@ -36,7 +36,7 @@ export PROXY_MODE=1
 export PROXY_LOCAL_CLIENTS=0
 ### Удаление записей сетов перед началом обновления (для освобождения оперативной памяти перед обновлением сетов) (0 - выкл, 1 - вкл)
 export NFTSET_CLEAR_SETS=0
-### Искоючить из обхода блокировок пакеты, у которых адрес назначения совпадает с любым IP адресом любого из интерфейсов роутера (0 - выкл, 1 - вкл)
+### Исключить из обхода блокировок пакеты, у которых адрес назначения совпадает с любым IP адресом любого из интерфейсов роутера (0 - выкл, 1 - вкл)
 export IGNORE_LOCAL_IP=1
 ### Режим фильтра хостов которым разрешено обходить блокировки (0 - выкл., 1 - только адреса из списка, 2 - любые адреса кроме присутствующих в списке)
 export ALLOWED_HOSTS_MODE=0
@@ -234,11 +234,12 @@ if [ $? -ne 0 ]; then
     echo " Error! Nftables doesn't exists" >&2
     exit 1
 fi
-export LOGGER_CMD="$(which logger)"
-if [ $ENABLE_LOGGING = "1" -a $? -ne 0 ]; then
+LOGGER_CMD="$(which logger)"
+if [ "$ENABLE_LOGGING" = "1" -a $? -ne 0 ]; then
     echo " Logger doesn't exists" >&2
     ENABLE_LOGGING=0
 fi
+export LOGGER_CMD
 export LOGGER_PARAMS="-t ${APP_NAME}"
 export WGET_CMD="$(which wget)"
 if [ $? -ne 0 ]; then
@@ -251,11 +252,12 @@ if [ $? -ne 0 ]; then
     echo " Error! Nslookup doesn't exists" >&2
     exit 1
 fi
-export IP_CMD="ip"
+IP_CMD="$(which ip)"
 if [ $? -ne 0 ]; then
     echo " Error! Iproute2 doesn't exists" >&2
     exit 1
 fi
+export IP_CMD
 USER_ENTRIES_PARSER="${MODULES_DIR}/ruab_parser_user_entries"
 ROUTE_CHECK_EXEC="${MODULES_DIR}/ruab_route_check"
 export IP_DATA_FILE="${DATA_DIR}/${NAME}.ip"
@@ -791,7 +793,6 @@ AddUserEntries() {
 
     if [ "$ENABLE_TMP_DOWNLOADS" = "1" ]; then
         _ip_data_file_user_instances="$IP_DATA_FILE_USER_INSTANCES_TMP"
-        _dnsmasq_data_file="$DNSMASQ_DATA_FILE_TMP"
         _dnsmasq_data_file_user_instances="$DNSMASQ_DATA_FILE_USER_INSTANCES_TMP"
         _user_entries_status_file="$USER_ENTRIES_STATUS_FILE_TMP"
         rm -f "$_ip_data_file_user_instances" "$_dnsmasq_data_file_user_instances" "$_user_entries_status_file"
@@ -1221,7 +1222,7 @@ StatusOutput() {
 return_code=1
 case "$1" in
     start|force-start)
-        [ "$1" == "force-start" ] && rm -f "$START_PID_FILE"
+        [ "$1" = "force-start" ] && rm -f "$START_PID_FILE"
         Start "$1"
         return_code=$?
         StatusOutput
@@ -1233,7 +1234,7 @@ case "$1" in
         StatusOutput
     ;;
     restart|delayed-restart)
-        if [ "$1" == "delayed-restart" -a -n "$2" ]; then
+        if [ "$1" = "delayed-restart" -a -n "$2" ]; then
             {
                 echo "$$" > "$START_PID_FILE"
                 sleep $2 &> /dev/null
@@ -1276,7 +1277,7 @@ case "$1" in
             :
         else
             echo " ${NAME} ${_arg} - Error! ${NAME} does not running or another error has occurred" >&2
-            return 1
+            exit 1
         fi
         UpdateLocalIpSets
         if CheckDnsmasqConfDir; then
