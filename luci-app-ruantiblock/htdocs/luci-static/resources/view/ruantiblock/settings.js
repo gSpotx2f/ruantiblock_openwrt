@@ -116,7 +116,7 @@ return view.extend({
 		if(p_dir_arr) {
 			p_dir_arr.forEach(e => {
 				let fname = e.name;
-				if(fname.startsWith('ruab_parser')) {
+				if(fname.startsWith('ruab_parser.')) {
 					this.parsers[fname] = tools.parsersDir + '/' + fname;
 				};
 			});

@@ -89,6 +89,10 @@ RemoveCronTask() {
     fi
 }
 
+UpdatePackagesList() {
+    $APK_CMD update
+}
+
 RemovePackages() {
     local _pkg
     for _pkg in $@
@@ -167,6 +171,7 @@ AppStop
 BackupCurrentConfig
 DisableStartup
 RemoveCronTask
+UpdatePackagesList
 RemoveAppFiles
 
 exit 0
