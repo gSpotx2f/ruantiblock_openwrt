@@ -588,17 +588,15 @@ UpdateBllistSets() {
 }
 
 AddUserInstancesNftRules() {
-    local _pkts_mark=$PKTS_MARK_START _inst _vpn_route_table_id=$VPN_ROUTE_TABLE_ID_START _tproxy_route_table_id=$TPROXY_ROUTE_TABLE_ID_START _route_table_id
+    local _pkts_mark=$PKTS_MARK_START _inst _vpn_route_table_id=$VPN_ROUTE_TABLE_ID_START _tproxy_route_table_id=$TPROXY_ROUTE_TABLE_ID_START _route_table_id=0
     for _inst in $USER_INSTANCES_ALL_FNAMES
     do
         IncludeUserInstanceVars "$_inst"
         if [ "$U_PROXY_MODE" = "2" ]; then
             _vpn_route_table_id=$(($_vpn_route_table_id + 1))
             _route_table_id=$_vpn_route_table_id
-        else
-            if [ "$U_PROXY_MODE" = "3" -a "$U_T_PROXY_TYPE" = "1" ]; then
-                _tproxy_route_table_id=$(($_tproxy_route_table_id + 1))
-            fi
+        elif [ "$U_PROXY_MODE" = "3" -a "$U_T_PROXY_TYPE" = "1" ]; then
+            _tproxy_route_table_id=$(($_tproxy_route_table_id + 1))
             _route_table_id=$_tproxy_route_table_id
         fi
         _pkts_mark=$(($_pkts_mark + 1))
@@ -625,12 +623,14 @@ DeleteUserInstancesNftRules() {
 }
 
 AddNftRules() {
-    local _chain_prio_first _chain_prio_local _chain_prio_fproxy _chain_prio_action _route_table_id=$VPN_ROUTE_TABLE_ID_START
+    local _chain_prio_first _chain_prio_local _chain_prio_fproxy _chain_prio_action _route_table_id=0
     _chain_prio_first=$NFT_PRIO
     _chain_prio_local=$NFT_PRIO_LOCAL
     _chain_prio_fproxy=$(($NFT_PRIO + 1))
     _chain_prio_action=$(($NFT_PRIO + 2))
-    if [ "$PROXY_MODE" = "3" -a "$T_PROXY_TYPE" = "1" ]; then
+    if [ "$PROXY_MODE" = "2" ]; then
+        _route_table_id=$VPN_ROUTE_TABLE_ID_START
+    elif [ "$PROXY_MODE" = "3" -a "$T_PROXY_TYPE" = "1" ]; then
         _route_table_id=$TPROXY_ROUTE_TABLE_ID_START
     fi
     NftAddBaseChains $_chain_prio_first $_chain_prio_local $_chain_prio_fproxy
