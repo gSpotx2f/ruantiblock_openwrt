@@ -625,12 +625,14 @@ DeleteUserInstancesNftRules() {
 }
 
 AddNftRules() {
-    local _chain_prio_first _chain_prio_local _chain_prio_fproxy _chain_prio_action _route_table_id
+    local _chain_prio_first _chain_prio_local _chain_prio_fproxy _chain_prio_action _route_table_id=$VPN_ROUTE_TABLE_ID_START
     _chain_prio_first=$NFT_PRIO
     _chain_prio_local=$NFT_PRIO_LOCAL
     _chain_prio_fproxy=$(($NFT_PRIO + 1))
     _chain_prio_action=$(($NFT_PRIO + 2))
-    _route_table_id=$VPN_ROUTE_TABLE_ID_START
+    if [ "$PROXY_MODE" = "3" -a "$T_PROXY_TYPE" = "1" ]; then
+        _route_table_id=$TPROXY_ROUTE_TABLE_ID_START
+    fi
     NftAddBaseChains $_chain_prio_first $_chain_prio_local $_chain_prio_fproxy
     NftAddActionChains $_chain_prio_action
     AddUserInstancesNftRules
