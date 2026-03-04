@@ -56,10 +56,9 @@ start() {
 		exit 1
 	fi
 	$APP_EXEC start
+	### Start() already restarts dnsmasq, no need for a separate restart
 	if [ $? -eq 0 -a "$_update_at_startup" = "1" ]; then
 		$APP_EXEC update > /dev/null &
-	else
-		/etc/init.d/dnsmasq restart
 	fi
 }
 
