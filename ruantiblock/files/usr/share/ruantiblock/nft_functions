@@ -42,7 +42,9 @@ NftRouteDelete() {
 NftRouteAdd() {
     local _vpn_ip _type="$1" _route_table_id=$2 _pkts_mark=$3 _if_vpn="$4" _vpn_gw_ip="$5"
     if [ "$_type" = "lo" ]; then
-        echo 0 > "/proc/sys/net/ipv4/conf/lo/rp_filter"
+        if [ -d "/proc/sys/net/ipv4/conf/lo" ]; then
+            echo 0 > "/proc/sys/net/ipv4/conf/lo/rp_filter"
+        fi
         $IP_CMD rule add fwmark "$_pkts_mark" table "$_route_table_id" priority "$LO_RULE_PRIO"
         $IP_CMD route add local default dev lo table "$_route_table_id"
 
@@ -58,22 +60,33 @@ NftRouteAdd() {
         else
             _vpn_ip=$($IP_CMD addr list dev "$_if_vpn" 2> /dev/null | $AWK_CMD '/inet/{f=($3 == "peer") ? 4 : 2; sub("/[0-9]{1,2}$", "", $f); print $f; exit}')
         fi
-        if [ -n "$_vpn_ip" -a "$_type" = "vpn" ]; then
-            echo 0 > "/proc/sys/net/ipv4/conf/${_if_vpn}/rp_filter"
+        if [ "$_type" = "vpn" ]; then
+            if [ -d "/proc/sys/net/ipv4/conf/${_if_vpn}" ]; then
+                echo 0 > "/proc/sys/net/ipv4/conf/${_if_vpn}/rp_filter"
+            fi
             NftRouteDelete "$_route_table_id" 2> /dev/null
             $IP_CMD rule add fwmark "$_pkts_mark" table "$_route_table_id" priority "$VPN_RULE_PRIO"
-            $IP_CMD route add default via "$_vpn_ip" table "$_route_table_id" metric 100
-            if [ $? -ne 0 ]; then
-                echo "  Error! An error occurred while adding the route. Routing table id=${_route_table_id}, VPN gateway IP=${_vpn_ip}" >&2
-                MakeLogRecord "err" "Error! An error occurred while adding the route. Routing table id=${_route_table_id}, VPN gateway IP=${_vpn_ip}"
-            fi
-            $IP_CMD route add blackhole default table "$_route_table_id" metric 200
 
             if [ $DEBUG -ge 1 ]; then
                 echo "  nft_functions.NftRouteAdd: ${IP_CMD} rule add fwmark ${_pkts_mark} table ${_route_table_id} priority ${VPN_RULE_PRIO}" >&2
                 MakeLogRecord "debug" "nft_functions.NftRouteAdd: ${IP_CMD} rule add fwmark ${_pkts_mark} table ${_route_table_id} priority ${VPN_RULE_PRIO}"
-                echo "  nft_functions.NftRouteAdd: ${IP_CMD} route add default via ${_vpn_ip} table ${_route_table_id}" >&2
-                MakeLogRecord "debug" "nft_functions.NftRouteAdd: ${IP_CMD} route add default via ${_vpn_ip} table ${_route_table_id}"
+            fi
+
+            if [ -n "$_vpn_ip" ]; then
+                $IP_CMD route add default via "$_vpn_ip" table "$_route_table_id" metric 100
+                if [ $? -ne 0 ]; then
+                    echo "  Error! An error occurred while adding the route. Routing table id=${_route_table_id}, VPN gateway IP=${_vpn_ip}" >&2
+                    MakeLogRecord "err" "Error! An error occurred while adding the route. Routing table id=${_route_table_id}, VPN gateway IP=${_vpn_ip}"
+                fi
+
+                if [ $DEBUG -ge 1 ]; then
+                    echo "  nft_functions.NftRouteAdd: ${IP_CMD} route add default via ${_vpn_ip} table ${_route_table_id}" >&2
+                    MakeLogRecord "debug" "nft_functions.NftRouteAdd: ${IP_CMD} route add default via ${_vpn_ip} table ${_route_table_id}"
+                fi
+            fi
+            $IP_CMD route add blackhole default table "$_route_table_id" metric 200
+
+            if [ $DEBUG -ge 1 ]; then
                 echo "  nft_functions.NftRouteAdd: ${IP_CMD} route add blackhole default table ${_route_table_id} metric 200" >&2
                 MakeLogRecord "debug" "nft_functions.NftRouteAdd: ${IP_CMD} route add blackhole default table ${_route_table_id} metric 200"
             fi

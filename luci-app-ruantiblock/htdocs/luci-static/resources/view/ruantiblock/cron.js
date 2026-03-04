@@ -53,13 +53,13 @@ return view.extend({
 			});
 	},
 
-	delRuabShedules() {
+	delRuabSchedules() {
 		this.currentCrontabLines = this.currentCrontabLines.filter(
 			s => s.match(this.crontabRegexp) ? false : true);
 	},
 
 	delCronSchedule(ev) {
-		this.delRuabShedules();
+		this.delRuabSchedules();
 		return this.writeCronFile();
 	},
 
@@ -82,7 +82,7 @@ return view.extend({
 			tools.execPath
 		);
 
-		this.delRuabShedules();
+		this.delRuabSchedules();
 		this.currentCrontabLines.push(task_string);
 
 		return this.writeCronFile();
@@ -96,7 +96,6 @@ return view.extend({
 		cron_hour.disabled         = bool;
 		cron_day_interval.disabled = bool;
 
-		// For luci-theme-material
 		if(bool) {
 			cron_hour.style.opacity         = '50%';
 			cron_day_interval.style.opacity = '50%';

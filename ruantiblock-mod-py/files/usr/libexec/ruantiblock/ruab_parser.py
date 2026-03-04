@@ -477,7 +477,7 @@ class Summarize:
     def _group_ip_ranges(cls, ip_list, raw_list=None):
         def remove_items(start, end):
             for ip in range(int(start), int(end) + 1):
-                raw_list.pop(str(IPv4Address(ip)), None)
+                raw_list.remove(str(IPv4Address(ip)))
 
         start = end = None
         hosts = 1

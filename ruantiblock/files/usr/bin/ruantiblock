@@ -125,7 +125,7 @@ export ENABLE_TMP_DOWNLOADS=0
 ### Скачивать блэклисты через прокси
 export ENABLE_BLLIST_PROXY=0
 ### Список хостов источников блэклиста
-export BLLIST_HOSTS="reestr.rublacklist.net raw.githubusercontent.com app.assembla.com antifilter.download"
+export BLLIST_HOSTS="reestr.rublacklist.net raw.githubusercontent.com app.assembla.com antifilter.download blockedin.org"
 ### Кол-во попыток обновления блэклиста (в случае неудачи)
 export MODULE_RUN_ATTEMPTS=3
 ### Таймаут между попытками обновления
@@ -241,11 +241,12 @@ if [ "$ENABLE_LOGGING" = "1" -a $? -ne 0 ]; then
 fi
 export LOGGER_CMD
 export LOGGER_PARAMS="-t ${APP_NAME}"
-export WGET_CMD="$(which wget)"
+WGET_CMD="$(which wget)"
 if [ $? -ne 0 ]; then
     echo " Error! Wget doesn't exists" >&2
     exit 1
 fi
+export WGET_CMD
 export WGET_PARAMS="--no-check-certificate -q -O"
 NSLOOKUP_CMD="$(which nslookup)"
 if [ $? -ne 0 ]; then
@@ -1046,7 +1047,7 @@ CheckDnsmasqConfDir() {
 }
 
 Update() {
-    local _arg="$1" _return_code=0
+    local _arg="$1" _return_code=0 _upd_sets_ret_code=0
     MakeToken
     if [ -e "$U_PID_FILE" ] && [ "$_arg" != "force-update" ]; then
         echo " ${NAME} ${_arg} - Error! Another instance of update is already running" >&2
@@ -1062,9 +1063,13 @@ Update() {
             FlushInstancesNftSets bllist
         fi
         GetBlacklistFiles
+        _return_code=$?
         FlushInstancesNftSets bllist
         UpdateBllistSets
-        _return_code=$?
+        _upd_sets_ret_code=$?
+        if [ $_return_code -eq 0 ]; then
+            _return_code=$_upd_sets_ret_code
+        fi
         RestartDnsmasq
         ToggleUPIDFile del
         ### Post-update script

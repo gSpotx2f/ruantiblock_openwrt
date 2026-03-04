@@ -93,7 +93,7 @@ return view.extend({
 
 	load() {
 		return Promise.all([
-			L.resolveDefault(fs.exec(tools.execPath, [ 'raw-status' ]), 1),
+			fs.exec(tools.execPath, [ 'raw-status' ]),
 			L.resolveDefault(fs.list(tools.parsersDir), null),
 			uci.load(tools.appName),
 		]).catch(e => {
