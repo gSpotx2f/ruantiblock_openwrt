@@ -257,7 +257,7 @@ class BlackListParser(Config):
         self.ip_pattern = re.compile(r"(([0-9]{1,3}[.]){3})[0-9]{1,3}")
         self.cidr_pattern = re.compile(r"([0-9]{1,3}[.]){3}[0-9]{1,3}/[0-9]{1,2}")
         self.fqdn_pattern = re.compile(
-            r"([а-яёa-z0-9_.*-]*?)([а-яёa-z0-9_-]+[.][а-яёa-z0-9-]+)", re.U)
+            r"([а-яёa-z0-9_-]{1,63}[.])*?([а-яёa-z0-9_-]{1,63}[.][а-яёa-z0-9-]{1,63})", re.U)
         self.www_pattern = re.compile(r"^www[0-9]?[.]")
         self.cyr_pattern = re.compile(r"[а-яё]", re.U)
         self.cidr_set = set()
@@ -391,6 +391,8 @@ class BlackListParser(Config):
                         self.site_encoding or self.default_site_encoding)
                 except UnicodeError:
                     pass
+                if not self.fqdn_pattern.fullmatch(string):
+                    raise FieldValueError()
             else:
                 raise FieldValueError()
         return string
@@ -413,14 +415,15 @@ class BlackListParser(Config):
         ):
             if self.fqdn_pattern.fullmatch(value):
                 value = self._convert_to_punycode(value)
-                sld = self._get_sld(value)
-                if (sld in self.BLLIST_GR_EXCLUDED_SLD_PATTERNS or self.check_sld_masks(sld)) or (
-                    not self.BLLIST_SD_LIMIT or (
-                        sld not in self.sld_dict or self.sld_dict[sld] < self.BLLIST_SD_LIMIT
-                    )
-                ):
-                    self.sld_dict[sld] = (self.sld_dict.get(sld) or 0) + 1
-                    self.fqdn_dict[value] = sld
+                if len(value) <= 255:
+                    sld = self._get_sld(value)
+                    if (sld in self.BLLIST_GR_EXCLUDED_SLD_PATTERNS or self.check_sld_masks(sld)) or (
+                        not self.BLLIST_SD_LIMIT or (
+                            sld not in self.sld_dict or self.sld_dict[sld] < self.BLLIST_SD_LIMIT
+                        )
+                    ):
+                        self.sld_dict[sld] = (self.sld_dict.get(sld) or 0) + 1
+                        self.fqdn_dict[value] = sld
             else:
                 raise FieldValueError()
 

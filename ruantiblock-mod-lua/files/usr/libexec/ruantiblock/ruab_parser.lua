@@ -455,6 +455,14 @@ function BlackListParser:fqdn_value_processing(value)
         else
             return false
         end
+        if #value > 255 then
+            return false
+        end
+        for i in value:gmatch("[^%.]+") do
+            if i and (#i == 0 or #i > 63) then
+                return false
+            end
+        end
         local sld = self:get_sld(value)
         if sld and ((self.BLLIST_GR_EXCLUDED_SLD_PATTERNS[sld] or self:check_sld_masks(sld)) or ((not self.BLLIST_SD_LIMIT or self.BLLIST_SD_LIMIT == 0) or (not self.sld_table[sld] or self.sld_table[sld] < self.BLLIST_SD_LIMIT))) then
             self.fqdn_table[value] = sld
