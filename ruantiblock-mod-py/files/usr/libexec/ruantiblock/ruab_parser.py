@@ -415,7 +415,7 @@ class BlackListParser(Config):
         ):
             if self.fqdn_pattern.fullmatch(value):
                 value = self._convert_to_punycode(value)
-                if len(value) <= 255:
+                if len(value) <= 254:
                     sld = self._get_sld(value)
                     if (sld in self.BLLIST_GR_EXCLUDED_SLD_PATTERNS or self.check_sld_masks(sld)) or (
                         not self.BLLIST_SD_LIMIT or (

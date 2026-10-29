@@ -455,7 +455,7 @@ function BlackListParser:fqdn_value_processing(value)
         else
             return false
         end
-        if #value > 255 then
+        if #value > 254 then
             return false
         end
         for i in value:gmatch("[^%.]+") do
